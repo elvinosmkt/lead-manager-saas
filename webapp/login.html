@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Lead Manager Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white h-screen flex items-center justify-center">
+    <div class="bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-700">
+        <h1 class="text-3xl font-bold text-center mb-8">LeadManager Pro</h1>
+        <form id="loginForm" class="space-y-6">
+            <input type="email" id="email" placeholder="Email" class="w-full bg-gray-700 border-gray-600 rounded px-4 py-3">
+            <input type="password" id="password" placeholder="Senha" class="w-full bg-gray-700 border-gray-600 rounded px-4 py-3">
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 font-bold py-3 rounded">Entrar</button>
+            <div id="errorMessage" class="hidden text-red-500 text-center"></div>
+        </form>
+        <div class="mt-6 text-center text-sm text-gray-500">
+             <a href="#" id="toggleBtn" class="text-blue-400">Criar nova conta</a>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-client.js"></script>
+    <script>
+        let isRegistering = false;
+        document.getElementById('toggleBtn').addEventListener('click', (e) => {
+            e.preventDefault();
+            isRegistering = !isRegistering;
+            document.querySelector('button').textContent = isRegistering ? 'Criar Conta' : 'Entrar';
+            e.target.textContent = isRegistering ? 'Já tem conta? Entrar' : 'Criar nova conta';
+        });
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            let res = isRegistering ? await LeadAPI.signUp(email, password) : await LeadAPI.login(email, password);
+            if(res.error) { document.getElementById('errorMessage').textContent = res.error.message; document.getElementById('errorMessage').classList.remove('hidden'); }
+            else { window.location.href = 'index.html'; }
+        });
+    </script>
+</body>
+</html>
