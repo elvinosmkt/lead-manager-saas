@@ -552,10 +552,12 @@ function updateSearchProgress(status) {
 
 async function handleSearchComplete() {
     try {
+        console.log('🔄 Buscando leads da API...');
         const response = await fetch(`${API_URL}/get-leads`, {
             headers: { 'ngrok-skip-browser-warning': 'true' }
         });
         const data = await response.json();
+        console.log('📦 Dados recebidos:', data);
 
         if (data.success && data.leads.length > 0) {
             const existingNames = new Set(leads.map(l => l.nome.toLowerCase()));
@@ -563,18 +565,26 @@ async function handleSearchComplete() {
                 .filter(lead => !existingNames.has(lead.nome.toLowerCase()))
                 .map((lead, index) => ({ ...lead, id: Date.now() + index }));
 
-            leads = [...leads, ...newLeads];
-            saveLeadsToStorage();
-            updateAllStats();
-            populateFilters();
-            renderCurrentTab();
+            console.log(`✅ ${newLeads.length} novos leads para adicionar`);
 
-            showNotification(`🎉 ${newLeads.length} novos leads importados!`);
+            if (newLeads.length > 0) {
+                // Salva no Supabase
+                showNotification('☁️ Salvando leads na nuvem...');
+                await LeadAPI.saveBatch(newLeads);
+
+                // Recarrega do banco para ter IDs corretos
+                await reloadLeads();
+
+                showNotification(`🎉 ${newLeads.length} novos leads salvos!`);
+            } else {
+                showNotification('⚠️ Leads já existem na base', 'error');
+            }
         } else {
-            showNotification('⚠️ Nenhum lead novo encontrado', 'error');
+            showNotification('⚠️ Nenhum lead encontrado', 'error');
         }
     } catch (error) {
-        showNotification('❌ Erro ao importar leads', 'error');
+        console.error('❌ Erro:', error);
+        showNotification('❌ Erro ao importar leads: ' + error.message, 'error');
     } finally {
         resetSearchUI();
     }
