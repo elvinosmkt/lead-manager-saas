@@ -459,7 +459,7 @@ function exportCurrentTab() {
 
 // Busca de Leads via API
 let searchInterval = null;
-const API_URL = 'http://localhost:5001/api';
+const API_URL = 'https://semidramatic-kory-discrepantly.ngrok-free.dev/api';
 
 async function startSearch() {
     const nicho = document.getElementById('search-nicho').value.trim();
