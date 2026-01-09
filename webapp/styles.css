@@ -905,7 +905,7 @@ body {
     box-shadow: var(--shadow-lg);
 }
 
-.btn-search, .btn-import, .btn-cancel {
+.btn-search, .btn-import {
     display: inline-flex;
     align-items: center;
     gap: 10px;
