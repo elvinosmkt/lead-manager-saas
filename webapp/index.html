@@ -269,6 +269,9 @@
 
     <!-- Scripts -->
     <script>
+        // URL da API (ngrok)
+        const API_URL = 'https://semidramatic-kory-discrepantly.ngrok-free.dev/api';
+
         let leads = [];
         let isSearching = false;
         let pollingInterval = null;
@@ -309,9 +312,12 @@
                 leads = [];
                 renderLeads();
 
-                const res = await fetch('/api/start-search', {
+                const res = await fetch(`${API_URL}/start-search`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'ngrok-skip-browser-warning': 'true'
+                    },
                     body: JSON.stringify({ nicho, cidade, max_leads: document.getElementById('maxLeadsInput').value })
                 });
                 if (res.ok) startPolling();
@@ -326,7 +332,9 @@
 
             function startPolling() {
                 pollingInterval = setInterval(async () => {
-                    const res = await fetch('/api/search-status');
+                    const res = await fetch(`${API_URL}/search-status`, {
+                        headers: { 'ngrok-skip-browser-warning': 'true' }
+                    });
                     const data = await res.json();
                     updateProgress(data);
                     if (data.leads && data.leads.length > leads.length) {
