@@ -479,7 +479,10 @@ async function startSearch() {
 
         const response = await fetch(`${API_URL}/start-search`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'ngrok-skip-browser-warning': 'true'
+            },
             body: JSON.stringify({ nicho, cidade, max_leads: maxLeads })
         });
 
@@ -510,7 +513,9 @@ function startStatusPolling() {
 
     searchInterval = setInterval(async () => {
         try {
-            const response = await fetch(`${API_URL}/search-status`);
+            const response = await fetch(`${API_URL}/search-status`, {
+                headers: { 'ngrok-skip-browser-warning': 'true' }
+            });
             const status = await response.json();
 
             updateSearchProgress(status);
@@ -547,7 +552,9 @@ function updateSearchProgress(status) {
 
 async function handleSearchComplete() {
     try {
-        const response = await fetch(`${API_URL}/get-leads`);
+        const response = await fetch(`${API_URL}/get-leads`, {
+            headers: { 'ngrok-skip-browser-warning': 'true' }
+        });
         const data = await response.json();
 
         if (data.success && data.leads.length > 0) {
@@ -591,7 +598,10 @@ function resetSearchUI() {
 
 async function cancelSearch() {
     try {
-        await fetch(`${API_URL}/cancel-search`, { method: 'POST' });
+        await fetch(`${API_URL}/cancel-search`, {
+            method: 'POST',
+            headers: { 'ngrok-skip-browser-warning': 'true' }
+        });
         clearInterval(searchInterval);
         showNotification('🛑 Busca cancelada');
         resetSearchUI();
