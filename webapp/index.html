@@ -1,490 +1,339 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CRM - Lead Manager Pro</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-
-
-        .glass {
-            background: rgba(31, 41, 55, 0.7);
-            backdrop-filter: blur(10px);
-        }
-
-
-        .card-hover:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
-        }
-
-
-        .scrollbar-hide::-webkit-scrollbar {
-            display: none;
-        }
-    </style>
+    <title>📊 Lead Manager Pro</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 
+<body>
+    <div class="container">
+        <!-- Supabase Client -->
+        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<body class="bg-gray-950 text-white min-h-screen pb-20">
-
-
-    <!-- Navbar Fixa -->
-    <nav class="border-b border-gray-800 bg-gray-900/90 backdrop-blur sticky top-0 z-40 shadow-lg">
-        <div class="max-w-7xl mx-auto px-4">
-            <div class="flex items-center justify-between h-16">
-                <!-- Logo -->
-                <div class="flex items-center gap-3">
-                    <div
-                        class="w-9 h-9 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-900/50">
-                        <i class="fas fa-rocket text-white text-sm"></i>
-                    </div>
-                    <div>
-                        <span class="font-bold text-lg tracking-tight">LeadManager</span>
-                        <span class="text-[10px] uppercase font-bold text-gray-400 block -mt-1 tracking-widest">CRM &
-                            Scraper</span>
-                    </div>
+        <!-- Scripts do App -->
+        <!-- Header -->
+        <header class="header">
+            <div class="header-top">
+                <div>
+                    <h1>📊 Lead Manager Pro</h1>
+    <script src="supabase-client.js"></script>
+                    <p class="subtitle">Encontre, Gerencie e Converta Leads com Inteligência</p>
                 </div>
-
-
-                <!-- Status Bar -->
-                <div class="flex items-center gap-6">
-                    <!-- Configurar Mensagem -->
-                    <button onclick="openScriptModal()"
-                        class="hidden md:flex items-center gap-2 text-sm text-gray-300 hover:text-white bg-gray-800/50 hover:bg-gray-800 px-3 py-1.5 rounded-full border border-gray-700 transition">
-                        <i class="fas fa-comment-dots text-green-400"></i>
-                        <span>Script de Venda</span>
-                    </button>
-
-
-                    <!-- Saldo -->
-                    <div class="bg-gray-800 rounded-full px-4 py-1.5 border border-gray-700 flex items-center gap-2">
-                        <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                        <span class="text-xs text-gray-400 uppercase font-bold">Créditos</span>
-                        <span id="creditsDisplay" class="font-mono font-bold text-green-400">---</span>
-                    </div>
-
-
-                    <!-- User -->
-                    <div class="flex items-center gap-3">
-                        <div class="text-right hidden sm:block">
-                            <h4 id="userName" class="text-sm font-bold leading-none">Admin</h4>
-                            <span class="text-xs text-blue-400">Plano Pro</span>
-                        </div>
-                        <div class="w-9 h-9 rounded-full bg-gradient-to-r from-gray-700 to-gray-600 border-2 border-gray-800 shadow-xl overflow-hidden cursor-pointer"
-                            onclick="logout()">
-                            <img src="https://ui-avatars.com/api/?name=Admin&background=random" alt="User">
-                        </div>
-                    </div>
+                <div class="header-actions">
+                    <button class="btn-review" onclick="reviewLeads()">🔍 Revisar Duplicados</button>
+                    <button class="btn-followup" onclick="openFollowUpDashboard()">📊 Follow-up</button>
+                    <button class="btn-config" onclick="openTemplates()">⚙️ Mensagens</button>
+                    <button class="btn-export" onclick="exportAllLeads()">💾 Exportar Tudo</button>
                 </div>
             </div>
-        </div>
-    </nav>
+            <div class="header-stats">
+                <div class="stat-card">
+                    <span class="stat-number" id="total-leads">0</span>
+                    <span class="stat-label">Total de Leads</span>
+                </div>
+                <div class="stat-card warning">
+                    <span class="stat-number" id="sem-site">0</span>
+                    <span class="stat-label">🎯 Sem Site </span>
+                </div>
+                <div class="stat-card info">
+                    <span class="stat-number" id="com-whatsapp">0</span>
+                    <span class="stat-label">💬 Com WhatsApp</span>
+                </div>
+                <div class="stat-card success">
+                    <span class="stat-number" id="leads-qualificados">0</span>
+                    <span class="stat-label">⭐ Ultra Qualificados</span>
+                </div>
+            </div>
+        </header>
 
-
-    <main class="max-w-7xl mx-auto px-4 mt-8">
-
-
-        <!-- Área de Busca (Compacta) -->
-        <div
-            class="bg-gradient-to-r from-gray-900 to-gray-800 rounded-2xl p-1 shadow-2xl border border-gray-800 mb-10 overflow-hidden relative group">
-            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition">
-                <i class="fas fa-search text-6xl"></i>
+        <!-- Buscar Novos Leads -->
+        <div class="search-section">
+            <div class="search-header-row">
+                <h2>🔍 Buscar Novos Leads no Google Maps</h2>
+                <button class="btn-collapse" onclick="toggleSearchSection()">▼</button>
             </div>
 
-
-            <div class="bg-gray-900/90 p-6 rounded-xl backdrop-blur-sm">
-                <div class="flex flex-col md:flex-row gap-4 items-end">
-                    <div class="flex-1 w-full space-y-1">
-                        <label class="text-xs font-bold text-gray-400 uppercase ml-1">Nicho</label>
-                        <div class="relative">
-                            <i class="fas fa-tag absolute left-4 top-3.5 text-gray-500"></i>
-                            <input type="text" id="nichoInput" placeholder="Ex: Pizzaria, Dentista..."
-                                class="w-full bg-gray-950 border border-gray-700 rounded-xl pl-10 pr-4 py-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition shadow-inner">
-                        </div>
+            <div class="search-form" id="search-form-content">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="search-nicho">🎯 Nicho / Tipo de Negócio</label>
+                        <input type="text" id="search-nicho" placeholder="Ex: barbearia, estética, restaurante..."
+                            list="nichos-sugestoes">
+                        <datalist id="nichos-sugestoes">
+                            <option value="barbearia">
+                            <option value="estética">
+                            <option value="salão de beleza">
+                            <option value="clínica odontológica">
+                            <option value="restaurante">
+                            <option value="academia">
+                            <option value="pet shop">
+                        </datalist>
                     </div>
 
-
-                    <div class="flex-1 w-full space-y-1">
-                        <label class="text-xs font-bold text-gray-400 uppercase ml-1">Cidade</label>
-                        <div class="relative">
-                            <i class="fas fa-location-dot absolute left-4 top-3.5 text-gray-500"></i>
-                            <input type="text" id="cidadeInput" placeholder="Ex: Centro, São Paulo..."
-                                class="w-full bg-gray-950 border border-gray-700 rounded-xl pl-10 pr-4 py-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition shadow-inner">
-                        </div>
+                    <div class="form-group">
+                        <label for="search-cidade">🏙️ Cidade e Estado</label>
+                        <input type="text" id="search-cidade" placeholder="Ex: Curitiba, PR" list="cidades-sugestoes">
+                        <datalist id="cidades-sugestoes">
+                            <option value="Curitiba, PR">
+                            <option value="São Paulo, SP">
+                            <option value="Rio de Janeiro, RJ">
+                            <option value="Belo Horizonte, MG">
+                        </datalist>
                     </div>
 
-
-                    <div class="w-32 space-y-1">
-                        <label class="text-xs font-bold text-gray-400 uppercase ml-1">Qtd</label>
-                        <select id="maxLeadsInput"
-                            class="w-full bg-gray-950 border border-gray-700 rounded-xl px-3 py-3 text-white outline-none">
-                            <option value="10">10 Leads</option>
-                            <option value="50">50 Leads</option>
-                            <option value="100">100 Leads</option>
+                    <div class="form-group">
+                        <label for="search-max-leads">📊 Quantidade de Leads</label>
+                        <select id="search-max-leads">
+                            <option value="25">25 empresas</option>
+                            <option value="50" selected>50 empresas</option>
+                            <option value="100">100 empresas</option>
+                            <option value="150">150 empresas</option>
+                            <option value="200">200 empresas</option>
                         </select>
                     </div>
+                </div>
 
-
-                    <button id="btnSearch" onclick="startSearch()"
-                        class="w-full md:w-auto bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-blue-900/30 transition transform active:scale-95 flex items-center justify-center gap-2 border border-blue-500/50">
-                        <i class="fas fa-search"></i>
-                        <span>BUSCAR</span>
+                <div class="search-actions">
+                    <button class="btn-search" id="btn-start-search" onclick="startSearch()">
+                        <span class="btn-icon">🚀</span>
+                        <span>Iniciar Busca Automática</span>
                     </button>
+                    <button class="btn-cancel" id="btn-cancel-search" onclick="cancelSearch()" style="display: none;">
+                        <span class="btn-icon">⏹️</span>
+                        <span>Cancelar</span>
+                    </button>
+                    <label for="file-upload" class="btn-import">
+                        <span class="btn-icon">📁</span>
+                        <span>Importar Planilha</span>
+                    </label>
+                    <input type="file" id="file-upload" accept=".xlsx,.xls" style="display: none;"
+                        onchange="handleFileUpload(event)">
+                </div>
 
+                <div id="search-progress" class="search-progress" style="display: none;">
+                    <div class="progress-header">
+                        <span id="progress-title">🔎 Buscando...</span>
+                        <span id="progress-count">0 encontrados</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                    <div class="progress-text" id="progress-text">Iniciando busca...</div>
+                </div>
+            </div>
+        </div>
 
-                    <button id="btnStop" onclick="stopSearch()"
-                        class="hidden w-full md:w-auto bg-red-600 hover:bg-red-500 text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-red-900/30 transition transform active:scale-95 flex items-center justify-center gap-2 border border-red-500/50">
-                        <i class="fas fa-stop"></i>
-                        <span>PARAR</span>
+        <!-- Tabs de Categorias -->
+        <div class="tabs-container">
+            <div class="tabs-header">
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('todos')">
+                        📋 Todos <span class="tab-count" id="tab-todos-count">0</span>
+                    </button>
+                    <button class="tab" onclick="switchTab('sem-site')">
+                        🎯 Sem Site <span class="tab-count" id="tab-sem-site-count">0</span>
+                    </button>
+                    <button class="tab" onclick="switchTab('com-whatsapp')">
+                        💬 Com WhatsApp <span class="tab-count" id="tab-com-whatsapp-count">0</span>
+                    </button>
+                    <button class="tab" onclick="switchTab('qualificados')">
+                        ⭐ Ultra Qualificados <span class="tab-count" id="tab-qualificados-count">0</span>
+                    </button>
+                    <button class="tab" onclick="switchTab('contatados')">
+                        ✅ Contatados <span class="tab-count" id="tab-contatados-count">0</span>
                     </button>
                 </div>
+            </div>
 
+            <!-- Filtros e Busca -->
+            <div class="tab-controls">
+                <button id="btn-toggle-view" class="btn-toggle-view" onclick="toggleViewMode()">📊 Modo Tabela</button>
+                <button id="btn-advanced-filters" class="btn-advanced-filters" onclick="toggleAdvancedFilters()">🔼
+                    Filtros Avançados</button>
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="search-input" placeholder="Buscar por nome, telefone, endereço..."
+                        onkeyup="searchInTab()">
+                </div>
+                <select id="filter-cidade" onchange="filterInTab()">
+                    <option value="">🏙️ Todas as Cidades</option>
+                </select>
+                <select id="filter-nicho" onchange="filterInTab()">
+                    <option value="">🎯 Todos os Nichos</option>
+                </select>
+                <select id="filter-segmento" onchange="filterInTab()">
+                    <option value="">🏷️ Todos os Segmentos</option>
+                </select>
+                <button class="btn-clear-filters" onclick="clearFilters()">🔄 Limpar Filtros</button>
+            </div>
 
-                <!-- Barra de Progresso Integrada -->
-                <div id="progressContainer"
-                    class="hidden mt-6 bg-gray-800 rounded-lg p-3 flex items-center gap-4 border border-gray-700">
-                    <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
-                        <i class="fas fa-spinner fa-spin text-blue-400"></i>
-                    </div>
-                    <div class="flex-1">
-                        <div class="flex justify-between text-xs mb-1">
-                            <span class="text-blue-300 font-bold" id="currentBusiness">Iniciando motor de
-                                busca...</span>
-                            <span class="text-gray-400 font-mono"><span id="leadsFoundCount">0</span> leads</span>
-                        </div>
-                        <div class="w-full bg-gray-700 rounded-full h-1.5">
-                            <div id="progressBar" class="bg-blue-500 h-1.5 rounded-full transition-all duration-300"
-                                style="width: 0%"></div>
-                        </div>
-                    </div>
+            <!-- Painel de Filtros Avançados (será preenchido dinamicamente) -->
+            <div id="advanced-filters-container"></div>
+        </div>
+
+        <!-- Barra de Ações em Massa -->
+        <div id="massa-actions-bar" class="massa-actions-bar" style="display: none;">
+            <div class="massa-bar-content">
+                <div class="massa-selection-info">
+                    <input type="checkbox" id="select-all-leads" onclick="toggleSelectAll()"
+                        style="width: 20px; height: 20px; cursor: pointer; margin-right: 10px;">
+                    <span class="massa-count">
+                        <strong id="selected-count">0</strong> leads selecionados
+                    </span>
+                </div>
+                <div class="massa-actions">
+                    <button id="btn-massa-send" class="btn-massa-send" onclick="startMassaSend()" disabled>
+                        🚀 Envio em Massa
+                    </button>
+                    <button class="btn-massa-export" onclick="exportSelected()">
+                        💾 Exportar Selecionados
+                    </button>
+                    <button class="btn-massa-delete" onclick="deleteSelected()">
+                        🗑️ Deletar Selecionados
+                    </button>
                 </div>
             </div>
         </div>
 
-
-        <!-- Filtros de Funil e Busca Avançada -->
-        <div class="flex flex-col md:flex-row gap-4 mb-6">
-            <!-- Filtros de Status (Abas) -->
-            <div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide flex-1">
-                <button onclick="filterLeads('all')"
-                    class="filter-btn active bg-white text-gray-900 px-4 py-3 rounded-full text-sm font-bold shadow-lg transition"
-                    data-status="all">
-                    Todos <span id="countAll"
-                        class="bg-gray-200 text-gray-800 px-1.5 py-0.5 rounded-full text-[10px] ml-1">0</span>
-                </button>
-                <button onclick="filterLeads('contacted')"
-                    class="filter-btn bg-gray-800 border border-gray-700 text-green-400 px-4 py-3 rounded-full text-sm font-medium hover:bg-gray-700 transition"
-                    data-status="contacted">
-                    Contactados
-                </button>
-            </div>
-
-
-            <!-- Filtros de Texto (Cidade/Area) -->
-            <div class="flex gap-2">
-                <div class="relative flex-1 md:flex-none">
-                    <i class="fas fa-filter absolute left-3 top-3 text-gray-500 text-xs"></i>
-                    <input type="text" id="filterCity" onkeyup="applyFilters()" placeholder="Filtrar Cidade/Bairro"
-                        class="bg-gray-900 border border-gray-700 rounded-xl pl-8 pr-3 py-2.5 text-sm text-white focus:border-blue-500 outline-none w-full md:w-48 transition shadow-inner">
+        <!-- Conteúdo das Tabs -->
+        <div class="tab-content">
+            <div id="leads-container" class="leads-grid">
+                <div class="empty-state">
+                    <div class="empty-icon">📊</div>
+                    <h3>Nenhum lead por aqui ainda</h3>
+                    <p>Comece importando uma planilha ou iniciando uma busca automática</p>
+                    <button class="btn-primary-large" onclick="document.getElementById('file-upload').click()">
+                        📁 Importar Planilha Agora
+                    </button>
                 </div>
-                <div class="relative flex-1 md:flex-none">
-                    <i class="fas fa-briefcase absolute left-3 top-3 text-gray-500 text-xs"></i>
-                    <input type="text" id="filterNiche" onkeyup="applyFilters()" placeholder="Filtrar Nicho"
-                        class="bg-gray-900 border border-gray-700 rounded-xl pl-8 pr-3 py-2.5 text-sm text-white focus:border-blue-500 outline-none w-full md:w-44 transition shadow-inner">
-                </div>
-            </div>
-
-
-            <button onclick="exportToExcel()"
-                class="bg-gray-800 hover:bg-gray-700 text-gray-100 border border-gray-600 rounded-xl px-4 py-2 text-sm font-medium transition flex items-center gap-2">
-                <i class="fas fa-download"></i> Exportar
-            </button>
-        </div>
-
-
-        <!-- Grid de Cards (CRM) -->
-        <div id="leadsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            <!-- Empty State -->
-            <div id="emptyState"
-                class="col-span-full py-20 text-center border-2 border-dashed border-gray-800 rounded-3xl bg-gray-900/30">
-                <div class="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i class="fas fa-ghost text-3xl text-gray-600"></i>
-                </div>
-                <h3 class="text-xl font-bold text-gray-300">Nenhum lead por aqui</h3>
-                <p class="text-gray-500 mt-2 max-w-sm mx-auto">Faça uma busca acima para encontrar empresas sem site e
-                    começar a vender.</p>
-            </div>
-        </div>
-
-
-    </main>
-
-
-    <!-- Modal: Script de Venda -->
-    <div id="scriptModal"
-        class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div
-            class="bg-gray-900 border border-gray-800 rounded-2xl w-full max-w-lg shadow-2xl transform transition-all p-6">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-xl font-bold flex items-center gap-2">
-                    <i class="fab fa-whatsapp text-green-500"></i> Configurar Abordagem
-                </h3>
-                <button onclick="closeScriptModal()" class="text-gray-500 hover:text-white"><i
-                        class="fas fa-times"></i></button>
-            </div>
-
-
-            <div class="space-y-4">
-                <div class="bg-blue-500/10 border border-blue-500/20 p-4 rounded-lg text-sm text-blue-200">
-                    <p class="font-bold mb-1"><i class="fas fa-info-circle"></i> Variáveis:</p>
-                    <code class="bg-black/30 px-1 rounded text-blue-300">{nome}</code>, <code
-                        class="bg-black/30 px-1 rounded text-blue-300">{nicho}</code>, <code
-                        class="bg-black/30 px-1 rounded text-blue-300">{cidade}</code>
-                </div>
-
-
-                <textarea id="msgTemplate" rows="6"
-                    class="w-full bg-gray-950 border border-gray-700 rounded-xl p-4 text-gray-300 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none resize-none"
-                    placeholder="Olá, vi a {nome} no Google..."></textarea>
-            </div>
-
-
-            <div class="mt-6 flex justify-end gap-3">
-                <button onclick="resetScript()" class="px-4 py-2 text-gray-400 hover:text-white text-sm">Padrão</button>
-                <button onclick="saveScript()"
-                    class="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-6 rounded-lg shadow-lg shadow-green-900/30 transition">
-                    Salvar
-                </button>
             </div>
         </div>
     </div>
 
+    <!-- Modal de Templates de Mensagem -->
+    <div id="templates-modal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>💬 Templates de Mensagem WhatsApp</h2>
+                <span class="close" onclick="closeTemplates()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p class="modal-description">Configure mensagens prontas que serão enviadas ao clicar em "Enviar
+                    WhatsApp". Use variáveis para personalizar!</p>
 
-    <!-- Scripts -->
-    <script>
-        let leads = [];
-        let isSearching = false;
-        let pollingInterval = null;
-        let currentStatusFilter = 'all';
-        let msgTemplate = localStorage.getItem('leadManager_msg') ||
-            "Olá! Encontrei a *{nome}* no Google Maps aqui de {cidade} e vi que a empresa ainda não tem um Site Profissional.\n\nSou especialista em criar sites para {nicho} que atraem mais clientes. Gostaria de ver uma proposta?";
+                <div class="templates-container">
+                    <div class="template-item">
+                        <label>📝 Template 1 - Apresentação</label>
+                        <textarea id="template-1" rows="4" placeholder="Olá {nome}! Eu sou...">Olá! 👋
 
+Vi que você tem um negócio de {nicho} em{cidade}.
 
-        document.addEventListener('DOMContentLoaded', () => {
-            loadUserInfo();
-            document.getElementById('msgTemplate').value = msgTemplate;
-        });
-
-
-        async function loadUserInfo() {
-            try {
-                const res = await fetch('/api/user-info');
-                const data = await res.json();
-                document.getElementById('userName').innerText = data.name;
-                document.getElementById('creditsDisplay').innerText = data.credits;
-            } catch (e) { console.error(e); }
-        }
-
-
-        async function startSearch() {
-            const nicho = document.getElementById('nichoInput').value;
-            const cidade = document.getElementById('cidadeInput').value;
-            if (!nicho || !cidade) return alert('Preencha os campos!');
-
-
-            toggleSearchUI(true);
-            leads = [];
-            renderLeads();
-
-
-            const res = await fetch('/api/start-search', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ nicho, cidade, max_leads: document.getElementById('maxLeadsInput').value })
-            });
-            if (res.ok) startPolling();
-        }
-
-
-        function toggleSearchUI(searching) {
-            isSearching = searching;
-            document.getElementById('btnSearch').classList.toggle('hidden', searching);
-            document.getElementById('btnStop').classList.toggle('hidden', !searching);
-            document.getElementById('progressContainer').classList.toggle('hidden', !searching);
-        }
-
-
-        function startPolling() {
-            pollingInterval = setInterval(async () => {
-                const res = await fetch('/api/search-status');
-                const data = await res.json();
-                updateProgress(data);
-                if (data.leads && data.leads.length > leads.length) {
-                    leads = data.leads.map(l => ({ ...l, status: l.status || 'new' }));
-                    renderLeads();
-                }
-                if (!data.running && data.completed) stopSearch();
-            }, 1000);
-        }
-
-
-        function stopSearch() {
-            isSearching = false;
-            clearInterval(pollingInterval);
-            toggleSearchUI(false);
-            fetch('/api/cancel-search', { method: 'POST' });
-        }
-
-
-        function updateProgress(data) {
-            const pct = Math.round((data.processados / (data.total || 1)) * 100);
-            document.getElementById('progressBar').style.width = `${pct}%`;
-            document.getElementById('currentBusiness').innerText = data.current || 'Processando...';
-            document.getElementById('leadsFoundCount').innerText = data.leads_found || 0;
-        }
-
-
-        function filterLeads(status) {
-            currentStatusFilter = status;
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                const isActive = btn.dataset.status === status;
-                btn.className = isActive ? 'filter-btn bg-white text-gray-900 px-4 py-3 rounded-full text-sm font-bold shadow-lg transition' : 'filter-btn bg-gray-800 border border-gray-700 text-gray-300 px-4 py-3 rounded-full text-sm font-medium hover:bg-gray-700 transition';
-            });
-            applyFilters();
-        }
-
-
-        function applyFilters() { renderLeads(); }
-
-
-        function renderLeads() {
-            const grid = document.getElementById('leadsGrid');
-            grid.innerHTML = '';
-            const cityFilter = document.getElementById('filterCity').value.toLowerCase();
-            const nicheFilter = document.getElementById('filterNiche').value.toLowerCase();
-
-
-            const filtered = leads.filter(l => {
-                if (currentStatusFilter !== 'all' && (l.status || 'new') !== currentStatusFilter) return false;
-                if (cityFilter && !(l.cidade || '').toLowerCase().includes(cityFilter) && !(l.endereco || '').toLowerCase().includes(cityFilter)) return false;
-                if (nicheFilter && !(l.nicho || '').toLowerCase().includes(nicheFilter)) return false;
-                return true;
-            });
-
-
-            if (filtered.length === 0) {
-                grid.innerHTML = `<div class="col-span-full py-10 text-center text-gray-500">Nenhum lead nos filtros atuais</div>`;
-                return;
-            }
-
-
-            filtered.slice().reverse().forEach(l => {
-                const card = document.createElement('div');
-                card.className = "bg-gray-900 border border-gray-800 rounded-2xl p-5 shadow-lg card-hover relative flex flex-col h-full transition-all";
-
-
-                // Cores de status
-                if (l.status === 'contacted') card.classList.add('border-green-800/50');
-                if (l.status === 'interested') card.classList.add('border-blue-800/50', 'bg-blue-900/5');
-                if (l.status === 'discarded') card.classList.add('opacity-40', 'grayscale');
-
-
-                card.innerHTML = `
-                    <div class="flex justify-between items-start mb-4">
-                        <div class="flex items-center gap-1 bg-yellow-500/10 px-2 py-1 rounded-lg">
-                            <i class="fas fa-star text-yellow-500 text-xs"></i>
-                            <span class="text-xs font-bold text-yellow-500">${l.avaliacao || '0.0'}</span>
-                        </div>
-                        <span class="text-[10px] text-gray-400 font-bold uppercase truncate max-w-[100px]">${l.cidade || ''}</span>
-                    </div>
-                    <div class="mb-auto">
-                        <h3 class="font-bold text-lg text-white mb-1 line-clamp-1">${l.nome}</h3>
-                        <p class="text-xs text-gray-400 flex items-start gap-2 mb-4">
-                            <i class="fas fa-location-dot mt-0.5"></i> <span class="line-clamp-2">${l.endereco || ''}</span>
-                        </p>
-                    </div>
-                    <div class="grid grid-cols-2 gap-2 mb-4">
-                        <div class="bg-gray-950 p-2 rounded-lg text-center border border-gray-800">
-                            <p class="text-[10px] text-gray-500 uppercase font-bold">Tel</p>
-                            <p class="text-xs font-mono text-gray-300 truncate">${l.telefone || '--'}</p>
-                        </div>
-                        <div class="bg-gray-950 p-2 rounded-lg text-center border border-gray-800 cursor-pointer" onclick="window.open('${l.google_maps_link}', '_blank')">
-                            <p class="text-[10px] text-gray-500 uppercase font-bold">Maps</p>
-                            <p class="text-xs text-blue-400 font-bold">Ver <i class="fas fa-external-link-alt"></i></p>
+Gostaria de conversar sobre como posso ajudar a criar um site profissional para você!</textarea>
+                        <div class="template-vars">
+                            <small>💡 Variáveis disponíveis: <code>{nome}</code>, <code>{nicho}</code>,
+                                <code>{cidade}</code></small>
                         </div>
                     </div>
-                    <div class="flex gap-2 border-t border-gray-800 pt-3">
-                        <button onclick="sendWhatsapp('${l.whatsapp}', '${l.nome}', '${l.cidade}', '${l.nicho}', this)" 
-                            class="flex-1 ${l.whatsapp ? 'bg-green-600 hover:bg-green-500' : 'bg-gray-700'} text-white font-bold py-2 rounded-xl text-sm flex items-center justify-center gap-2 transition">
-                            <i class="fab fa-whatsapp"></i> <span>${l.status === 'contacted' ? 'Enviado' : 'Abordar'}</span>
-                        </button>
-                        
-                        <div class="relative group">
-                            <button class="w-10 h-10 bg-gray-800 rounded-xl flex items-center justify-center text-gray-400 hover:text-white transition">
-                                <i class="fas fa-ellipsis-v"></i>
-                            </button>
-                            <div class="absolute bottom-full right-0 mb-2 w-40 bg-gray-800 border border-gray-700 rounded-xl shadow-2xl hidden group-hover:block p-1 z-50">
-                                <button onclick="changeStatus('${l.nome}', 'interested')" class="w-full text-left px-3 py-2 text-xs text-blue-400 hover:bg-gray-700 rounded flex items-center gap-2">
-                                    <i class="fas fa-heart"></i> Interessado
-                                </button>
-                                <button onclick="changeStatus('${l.nome}', 'new')" class="w-full text-left px-3 py-2 text-xs text-gray-400 hover:bg-gray-700 rounded flex items-center gap-2">
-                                    <i class="fas fa-undo"></i> Resetar
-                                </button>
-                                <button onclick="changeStatus('${l.nome}', 'discarded')" class="w-full text-left px-3 py-2 text-xs text-red-500 hover:bg-gray-700 rounded flex items-center gap-2">
-                                    <i class="fas fa-times-circle"></i> Descartar
-                                </button>
-                            </div>
+
+                    <div class="template-item">
+                        <label>📝 Template 2 - Oferta Direta</label>
+                        <textarea id="template-2" rows="4" placeholder="Olá {nome}! Tenho uma proposta...">Oi! 🎯
+
+Estou oferecendo criação de sites profissionais para empresas de {nicho}.
+
+Posso te mandar um orçamento sem compromisso?</textarea>
+                        <div class="template-vars">
+                            <small>💡 Variáveis disponíveis: <code>{nome}</code>, <code>{nicho}</code>,
+                                <code>{cidade}</code></small>
                         </div>
                     </div>
-                `;
-                grid.appendChild(card);
-            });
-            document.getElementById('countAll').innerText = leads.length;
-        }
 
+                    <div class="template-item">
+                        <label>📝 Template 3 - Personalizado</label>
+                        <textarea id="template-3" rows="4" placeholder="Crie sua própria mensagem...">Olá {nome}!
 
-        function sendWhatsapp(phone, name, city, niche, btn) {
-            if (!phone) return alert('Telefone não disponível');
-            const msg = (localStorage.getItem('leadManager_msg') || msgTemplate)
-                .replace(/{nome}/g, name).replace(/{nicho}/g, niche).replace(/{cidade}/g, city);
-            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
-            const lead = leads.find(l => l.nome === name);
-            if (lead) { lead.status = 'contacted'; renderLeads(); }
-        }
+[Sua mensagem personalizada aqui]</textarea>
+                        <div class="template-vars">
+                            <small>💡 Variáveis disponíveis: <code>{nome}</code>, <code>{nicho}</code>,
+                                <code>{cidade}</code></small>
+                        </div>
+                    </div>
+                </div>
 
+                <div class="template-selector">
+                    <label>🎯 Template Ativo:</label>
+                    <select id="active-template">
+                        <option value="template-1">Template 1 - Apresentação</option>
+                        <option value="template-2">Template 2 - Oferta Direta</option>
+                        <option value="template-3">Template 3 - Personalizado</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeTemplates()">Cancelar</button>
+                <button class="btn-primary" onclick="saveTemplates()">💾 Salvar Templates</button>
+            </div>
+        </div>
+    </div>
 
-        function changeStatus(name, status) {
-            const lead = leads.find(l => l.nome === name);
-            if (lead) {
-                lead.status = status;
-                renderLeads();
-            }
-        }
+    <!-- Modal de Edição -->
+    <div id="edit-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>✏️ Editar Lead</h2>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="edit-id">
 
+                <div class="form-group">
+                    <label>Nome da Empresa:</label>
+                    <input type="text" id="edit-nome" readonly>
+                </div>
 
-        function openScriptModal() { document.getElementById('scriptModal').classList.remove('hidden'); }
-        function closeScriptModal() { document.getElementById('scriptModal').classList.add('hidden'); }
-        function saveScript() { localStorage.setItem('leadManager_msg', document.getElementById('msgTemplate').value); closeScriptModal(); }
-        function resetScript() { document.getElementById('msgTemplate').value = "Olá! Encontrei a *{nome}* no Google Maps aqui de {cidade}..."; }
-        function logout() { fetch('/api/logout', { method: 'POST' }).then(() => window.location.href = '/login'); }
-        function exportToExcel() {
-            const ws = XLSX.utils.json_to_sheet(leads);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Leads");
-            XLSX.writeFile(wb, "prospects.xlsx");
-        }
-    </script>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>✅ Foi Contatado?</label>
+                        <select id="edit-contatado">
+                            <option value="Não">Não</option>
+                            <option value="Sim">Sim</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>💬 Respondeu?</label>
+                        <select id="edit-respondeu">
+                            <option value="Não">Não</option>
+                            <option value="Sim">Sim</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>📝 Observações e Anotações:</label>
+                    <textarea id="edit-observacoes" rows="4"
+                        placeholder="Digite aqui suas anotações sobre este lead..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
+                <button class="btn-primary" onclick="saveEdit()">💾 Salvar Alterações</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="advanced-filters.js"></script>
+    <script src="debug-system.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="app.js"></script>
+    <script src="massa-send.js"></script>
+    <script src="followup-system.js"></script>
+    <script src="table-tags-system.js"></script>
+    <script src="review-system.js"></script>
 </body>
 
-
 </html>
+```

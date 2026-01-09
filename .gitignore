@@ -1,0 +1,23 @@
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+.env.*
+*.log
+.DS_Store
+
+# Frontend
+node_modules/
+.next/
+out/
+build/
+dist/
+
+# Project specific
+leads_*.xlsx
+*_leads_*.xlsx
+geckodriver.log
+mn_user_data/
