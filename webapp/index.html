@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lead Manager Pro</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="container">
+        <!-- Supabase Client -->
+        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+        <!-- Scripts do App -->
+        <!-- Header -->
+        <header class="header">
+            <div class="header-top">
+                <div>
+                    <h1>Lead Manager Pro</h1>
+    <script src="supabase-client.js"></script>
+                    <p class="subtitle">Encontre, Gerencie e Converta Leads com Inteligência</p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn-review" onclick="reviewLeads()">🔍 Revisar Duplicados</button>
+                    <button class="btn-followup" onclick="openFollowUpDashboard()">📊 Follow-up</button>
+                    <button class="btn-config" onclick="openTemplates()">⚙️ Mensagens</button>
+                    <button class="btn-export" onclick="exportAllLeads()">💾 Exportar Tudo</button>
+                </div>
+            </div>
+            <div class="header-stats">
+                <div class="stat-card">
+                    <span class="stat-number" id="total-leads">0</span>
+                    <span class="stat-label">Total de Leads</span>
+                </div>
+                <div class="stat-card warning">
+                    <span class="stat-number" id="sem-site">0</span>
+                    <span class="stat-label">🎯 Sem Site </span>
+                </div>
+                <div class="stat-card info">
+                    <span class="stat-number" id="com-whatsapp">0</span>
+                    <span class="stat-label">💬 Com WhatsApp</span>
+                </div>
+                <div class="stat-card success">
+                    <span class="stat-number" id="leads-qualificados">0</span>
+                    <span class="stat-label">⭐ Ultra Qualificados</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Buscar Novos Leads -->
+        <div class="search-section">
+            <div class="search-header-row">
+                <h2>🔍 Buscar Novos Leads no Google Maps</h2>
+                <button class="btn-collapse" onclick="toggleSearchSection()">▼</button>
+            </div>
+
+            <div class="search-form" id="search-form-content">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="search-nicho">🎯 Nicho / Tipo de Negócio</label>
+                        <input type="text" id="search-nicho" placeholder="Ex: barbearia, estética, restaurante..."
+                            list="nichos-sugestoes">
+                        <datalist id="nichos-sugestoes">
+                            <option value="barbearia">
+                            <option value="estética">
+                            <option value="salão de beleza">
+                            <option value="clínica odontológica">
+                            <option value="restaurante">
+                            <option value="academia">
+                            <option value="pet shop">
+                        </datalist>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="search-cidade">🏙️ Cidade e Estado</label>
+                        <input type="text" id="search-cidade" placeholder="Ex: Curitiba, PR" list="cidades-sugestoes">
+                        <datalist id="cidades-sugestoes">
+                            <option value="Curitiba, PR">
+                            <option value="São Paulo, SP">
+                            <option value="Rio de Janeiro, RJ">
+                            <option value="Belo Horizonte, MG">
+                        </datalist>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="search-max-leads">📊 Quantidade de Leads</label>
+                        <select id="search-max-leads">
+                            <option value="25">25 empresas</option>
+                            <option value="50" selected>50 empresas</option>
+                            <option value="100">100 empresas</option>
+                            <option value="150">150 empresas</option>
+                            <option value="200">200 empresas</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="search-actions">
+                    <button class="btn-search" id="btn-start-search" onclick="startSearch()">
+                        <span class="btn-icon">🚀</span>
+                        <span>Iniciar Busca Automática</span>
+                    </button>
+                    <button class="btn-cancel" id="btn-cancel-search" onclick="cancelSearch()" style="display: none;">
+                        <span class="btn-icon">⏹️</span>
+                        <span>Cancelar</span>
+                    </button>
+                    <label for="file-upload" class="btn-import">
+                        <span class="btn-icon">📁</span>
+                        <span>Importar Planilha</span>
+                    </label>
+                    <input type="file" id="file-upload" accept=".xlsx,.xls" style="display: none;"
+                        onchange="handleFileUpload(event)">
+                </div>
+
+                <div id="search-progress" class="search-progress" style="display: none;">
+                    <div class="progress-header">
+                        <span id="progress-title">🔎 Buscando...</span>
+                        <span id="progress-count">0 encontrados</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                    <div class="progress-text" id="progress-text">Iniciando busca...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs de Categorias -->
+        <div class="tabs-container">
+            <div class="tabs-header">
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('todos')">
+                        📋 Todos <span class="tab-count" id="tab-todos-count">0</span>
+                    </button>
+                    <button class="tab" onclick="switchTab('sem-site')">
+                        🎯 Sem Site <span class="tab-count" id="tab-sem-site-count">0</span>
+                    </button>
+                    <button class="tab" onclick="switchTab('com-whatsapp')">
+                        💬 Com WhatsApp <span class="tab-count" id="tab-com-whatsapp-count">0</span>
+                    </button>
+                    <button class="tab" onclick="switchTab('qualificados')">
+                        ⭐ Ultra Qualificados <span class="tab-count" id="tab-qualificados-count">0</span>
+                    </button>
+                    <button class="tab" onclick="switchTab('contatados')">
+                        ✅ Contatados <span class="tab-count" id="tab-contatados-count">0</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filtros e Busca -->
+            <div class="tab-controls">
+                <button id="btn-toggle-view" class="btn-toggle-view" onclick="toggleViewMode()">📊 Modo Tabela</button>
+                <button id="btn-advanced-filters" class="btn-advanced-filters" onclick="toggleAdvancedFilters()">🔼
+                    Filtros Avançados</button>
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="search-input" placeholder="Buscar por nome, telefone, endereço..."
+                        onkeyup="searchInTab()">
+                </div>
+                <select id="filter-cidade" onchange="filterInTab()">
+                    <option value="">🏙️ Todas as Cidades</option>
+                </select>
+                <select id="filter-nicho" onchange="filterInTab()">
+                    <option value="">🎯 Todos os Nichos</option>
+                </select>
+                <select id="filter-segmento" onchange="filterInTab()">
+                    <option value="">🏷️ Todos os Segmentos</option>
+                </select>
+                <button class="btn-clear-filters" onclick="clearFilters()">🔄 Limpar Filtros</button>
+            </div>
+
+            <!-- Painel de Filtros Avançados (será preenchido dinamicamente) -->
+            <div id="advanced-filters-container"></div>
+        </div>
+
+        <!-- Barra de Ações em Massa -->
+        <div id="massa-actions-bar" class="massa-actions-bar" style="display: none;">
+            <div class="massa-bar-content">
+                <div class="massa-selection-info">
+                    <input type="checkbox" id="select-all-leads" onclick="toggleSelectAll()"
+                        style="width: 20px; height: 20px; cursor: pointer; margin-right: 10px;">
+                    <span class="massa-count">
+                        <strong id="selected-count">0</strong> leads selecionados
+                    </span>
+                </div>
+                <div class="massa-actions">
+                    <button id="btn-massa-send" class="btn-massa-send" onclick="startMassaSend()" disabled>
+                        🚀 Envio em Massa
+                    </button>
+                    <button class="btn-massa-export" onclick="exportSelected()">
+                        💾 Exportar Selecionados
+                    </button>
+                    <button class="btn-massa-delete" onclick="deleteSelected()">
+                        🗑️ Deletar Selecionados
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Conteúdo das Tabs -->
+        <div class="tab-content">
+            <div id="leads-container" class="leads-grid">
+                <div class="empty-state">
+                    <div class="empty-icon">📊</div>
+                    <h3>Nenhum lead por aqui ainda</h3>
+                    <p>Comece importando uma planilha ou iniciando uma busca automática</p>
+                    <button class="btn-primary-large" onclick="document.getElementById('file-upload').click()">
+                        📁 Importar Planilha Agora
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Templates de Mensagem -->
+    <div id="templates-modal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>💬 Templates de Mensagem WhatsApp</h2>
+                <span class="close" onclick="closeTemplates()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p class="modal-description">Configure mensagens prontas que serão enviadas ao clicar em "Enviar
+                    WhatsApp". Use variáveis para personalizar!</p>
+
+                <div class="templates-container">
+                    <div class="template-item">
+                        <label>📝 Template 1 - Apresentação</label>
+                        <textarea id="template-1" rows="4" placeholder="Olá {nome}! Eu sou...">Olá! 👋
+
+
+Vi que você tem um negócio de {nicho} em{cidade}.
+
+
+Gostaria de conversar sobre como posso ajudar a criar um site profissional para você!</textarea>
+                        <div class="template-vars">
+                            <small>💡 Variáveis disponíveis: <code>{nome}</code>, <code>{nicho}</code>,
+                                <code>{cidade}</code></small>
+                        </div>
+                    </div>
+
+                    <div class="template-item">
+                        <label>📝 Template 2 - Oferta Direta</label>
+                        <textarea id="template-2" rows="4" placeholder="Olá {nome}! Tenho uma proposta...">Oi! 🎯
+
+
+Estou oferecendo criação de sites profissionais para empresas de {nicho}.
+
+
+Posso te mandar um orçamento sem compromisso?</textarea>
+                        <div class="template-vars">
+                            <small>💡 Variáveis disponíveis: <code>{nome}</code>, <code>{nicho}</code>,
+                                <code>{cidade}</code></small>
+                        </div>
+                    </div>
+
+                    <div class="template-item">
+                        <label>📝 Template 3 - Personalizado</label>
+                        <textarea id="template-3" rows="4" placeholder="Crie sua própria mensagem...">Olá {nome}!
+
+
+[Sua mensagem personalizada aqui]</textarea>
+                        <div class="template-vars">
+                            <small>💡 Variáveis disponíveis: <code>{nome}</code>, <code>{nicho}</code>,
+                                <code>{cidade}</code></small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="template-selector">
+                    <label>🎯 Template Ativo:</label>
+                    <select id="active-template">
+                        <option value="template-1">Template 1 - Apresentação</option>
+                        <option value="template-2">Template 2 - Oferta Direta</option>
+                        <option value="template-3">Template 3 - Personalizado</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeTemplates()">Cancelar</button>
+                <button class="btn-primary" onclick="saveTemplates()">💾 Salvar Templates</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Edição -->
+    <div id="edit-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>✏️ Editar Lead</h2>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="edit-id">
+
+                <div class="form-group">
+                    <label>Nome da Empresa:</label>
+                    <input type="text" id="edit-nome" readonly>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>✅ Foi Contatado?</label>
+                        <select id="edit-contatado">
+                            <option value="Não">Não</option>
+                            <option value="Sim">Sim</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>💬 Respondeu?</label>
+                        <select id="edit-respondeu">
+                            <option value="Não">Não</option>
+                            <option value="Sim">Sim</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>📝 Observações e Anotações:</label>
+                    <textarea id="edit-observacoes" rows="4"
+                        placeholder="Digite aqui suas anotações sobre este lead..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
+                <button class="btn-primary" onclick="saveEdit()">💾 Salvar Alterações</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="advanced-filters.js"></script>
+    <script src="debug-system.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="app.js"></script>
+    <script src="massa-send.js"></script>
+    <script src="followup-system.js"></script>
+    <script src="table-tags-system.js"></script>
+    <script src="review-system.js"></script>
+</body>
+
+</html>
