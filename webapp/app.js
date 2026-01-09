@@ -462,9 +462,18 @@ let searchInterval = null;
 const API_URL = 'https://semidramatic-kory-discrepantly.ngrok-free.dev/api';
 
 async function startSearch() {
-    const nicho = document.getElementById('search-nicho').value.trim();
-    const cidade = document.getElementById('search-cidade').value.trim();
-    const maxLeads = document.getElementById('search-max-leads').value;
+    // IDs do novo dashboard (Tailwind)
+    const nichoEl = document.getElementById('nichoInput') || document.getElementById('search-nicho');
+    const cidadeEl = document.getElementById('cidadeInput') || document.getElementById('search-cidade');
+    const maxLeadsEl = document.getElementById('maxLeadsInput') || document.getElementById('search-max-leads');
+    const filterSiteEl = document.getElementById('filterSiteInput');
+    const filterWhatsEl = document.getElementById('filterWhatsInput');
+
+    const nicho = nichoEl?.value?.trim() || '';
+    const cidade = cidadeEl?.value?.trim() || '';
+    const maxLeads = maxLeadsEl?.value || '50';
+    const filterSite = filterSiteEl?.value || 'todos';
+    const filterWhats = filterWhatsEl?.value || 'todos';
 
     if (!nicho || !cidade) {
         showNotification('❌ Preencha nicho e cidade!', 'error');
@@ -472,10 +481,17 @@ async function startSearch() {
     }
 
     try {
-        const btnStart = document.getElementById('btn-start-search');
-        const btnCancel = document.getElementById('btn-cancel-search');
-        btnStart.disabled = true;
-        btnStart.textContent = '⏳ Iniciando...';
+        // Botões (compatível com ambos os layouts)
+        const btnSearch = document.getElementById('btnSearch') || document.getElementById('btn-start-search');
+        const btnStop = document.getElementById('btnStop') || document.getElementById('btn-cancel-search');
+        const progressContainer = document.getElementById('progressContainer') || document.getElementById('search-progress');
+
+        if (btnSearch) {
+            btnSearch.disabled = true;
+            btnSearch.classList.add('opacity-50');
+        }
+        if (btnStop) btnStop.classList.remove('hidden');
+        if (progressContainer) progressContainer.classList.remove('hidden');
 
         const response = await fetch(`${API_URL}/start-search`, {
             method: 'POST',
@@ -483,28 +499,27 @@ async function startSearch() {
                 'Content-Type': 'application/json',
                 'ngrok-skip-browser-warning': 'true'
             },
-            body: JSON.stringify({ nicho, cidade, max_leads: maxLeads })
+            body: JSON.stringify({
+                nicho,
+                cidade,
+                max_leads: maxLeads,
+                filter_site: filterSite,
+                filter_whats: filterWhats
+            })
         });
 
         if (!response.ok) throw new Error('Erro ao iniciar busca');
-
-        document.getElementById('search-progress').style.display = 'block';
-        btnStart.style.display = 'none';
-        btnCancel.style.display = 'inline-flex';
 
         startStatusPolling();
         showNotification(`🚀 Busca iniciada: ${nicho} em ${cidade}`);
 
     } catch (error) {
         if (error.message.includes('Failed to fetch')) {
-            showNotification('⚠️ Servidor não está rodando! Execute: python3 start_app.py', 'error');
+            showNotification('⚠️ Servidor não conectado. Verifique se o ngrok está rodando.', 'error');
         } else {
             showNotification(`❌ Erro: ${error.message}`, 'error');
         }
-
-        const btnStart = document.getElementById('btn-start-search');
-        btnStart.disabled = false;
-        btnStart.textContent = '🚀 Iniciar Busca';
+        resetSearchUI();
     }
 }
 

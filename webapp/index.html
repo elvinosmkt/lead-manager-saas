@@ -120,6 +120,26 @@
                         </select>
                     </div>
 
+                    <div class="w-40 space-y-1">
+                        <label class="text-xs font-bold text-gray-400 uppercase ml-1">Site</label>
+                        <select id="filterSiteInput"
+                            class="w-full bg-gray-950 border border-gray-700 rounded-xl px-3 py-3 text-white outline-none">
+                            <option value="todos">🌐 Todos</option>
+                            <option value="sem-site">🚫 Sem Site</option>
+                            <option value="com-site">✅ Com Site</option>
+                        </select>
+                    </div>
+
+                    <div class="w-44 space-y-1">
+                        <label class="text-xs font-bold text-gray-400 uppercase ml-1">WhatsApp</label>
+                        <select id="filterWhatsInput"
+                            class="w-full bg-gray-950 border border-gray-700 rounded-xl px-3 py-3 text-white outline-none">
+                            <option value="todos">📱 Todos</option>
+                            <option value="com-whats">✅ Com WhatsApp</option>
+                            <option value="sem-whats">🚫 Sem WhatsApp</option>
+                        </select>
+                    </div>
+
                     <button id="btnSearch" onclick="startSearch()"
                         class="w-full md:w-auto bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-blue-900/30 transition transform active:scale-95 flex items-center justify-center gap-2 border border-blue-500/50">
                         <i class="fas fa-search"></i>
@@ -243,6 +263,10 @@
         </div>
     </div>
 
+    <!-- Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-client.js"></script>
+
     <!-- Scripts -->
     <script>
         let leads = [];
@@ -252,110 +276,120 @@
         let msgTemplate = localStorage.getItem('leadManager_msg') ||
             "Olá! Encontrei a *{nome}* no Google Maps aqui de {cidade} e vi que a empresa ainda não tem um Site Profissional.\n\nSou especialista em criar sites para {nicho} que atraem mais clientes. Gostaria de ver uma proposta?";
 
-        document.addEventListener('DOMContentLoaded', () => {
-            loadUserInfo();
-            document.getElementById('msgTemplate').value = msgTemplate;
-        });
-
-        async function loadUserInfo() {
-            try {
-                const res = await fetch('/api/user-info');
-                const data = await res.json();
-                document.getElementById('userName').innerText = data.name;
-                document.getElementById('creditsDisplay').innerText = data.credits;
-            } catch (e) { console.error(e); }
-        }
-
-        async function startSearch() {
-            const nicho = document.getElementById('nichoInput').value;
-            const cidade = document.getElementById('cidadeInput').value;
-            if (!nicho || !cidade) return alert('Preencha os campos!');
-
-            toggleSearchUI(true);
-            leads = [];
-            renderLeads();
-
-            const res = await fetch('/api/start-search', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ nicho, cidade, max_leads: document.getElementById('maxLeadsInput').value })
-            });
-            if (res.ok) startPolling();
-        }
-
-        function toggleSearchUI(searching) {
-            isSearching = searching;
-            document.getElementById('btnSearch').classList.toggle('hidden', searching);
-            document.getElementById('btnStop').classList.toggle('hidden', !searching);
-            document.getElementById('progressContainer').classList.toggle('hidden', !searching);
-        }
-
-        function startPolling() {
-            pollingInterval = setInterval(async () => {
-                const res = await fetch('/api/search-status');
-                const data = await res.json();
-                updateProgress(data);
-                if (data.leads && data.leads.length > leads.length) {
-                    leads = data.leads.map(l => ({ ...l, status: l.status || 'new' }));
-                    renderLeads();
-                }
-                if (!data.running && data.completed) stopSearch();
-            }, 1000);
-        }
-
-        function stopSearch() {
-            isSearching = false;
-            clearInterval(pollingInterval);
-            toggleSearchUI(false);
-            fetch('/api/cancel-search', { method: 'POST' });
-        }
-
-        function updateProgress(data) {
-            const pct = Math.round((data.processados / (data.total || 1)) * 100);
-            document.getElementById('progressBar').style.width = `${pct}%`;
-            document.getElementById('currentBusiness').innerText = data.current || 'Processando...';
-            document.getElementById('leadsFoundCount').innerText = data.leads_found || 0;
-        }
-
-        function filterLeads(status) {
-            currentStatusFilter = status;
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                const isActive = btn.dataset.status === status;
-                btn.className = isActive ? 'filter-btn bg-white text-gray-900 px-4 py-3 rounded-full text-sm font-bold shadow-lg transition' : 'filter-btn bg-gray-800 border border-gray-700 text-gray-300 px-4 py-3 rounded-full text-sm font-medium hover:bg-gray-700 transition';
-            });
-            applyFilters();
-        }
-
-        function applyFilters() { renderLeads(); }
-
-        function renderLeads() {
-            const grid = document.getElementById('leadsGrid');
-            grid.innerHTML = '';
-            const cityFilter = document.getElementById('filterCity').value.toLowerCase();
-            const nicheFilter = document.getElementById('filterNiche').value.toLowerCase();
-
-            const filtered = leads.filter(l => {
-                if (currentStatusFilter !== 'all' && (l.status || 'new') !== currentStatusFilter) return false;
-                if (cityFilter && !(l.cidade || '').toLowerCase().includes(cityFilter) && !(l.endereco || '').toLowerCase().includes(cityFilter)) return false;
-                if (nicheFilter && !(l.nicho || '').toLowerCase().includes(nicheFilter)) return false;
-                return true;
-            });
-
-            if (filtered.length === 0) {
-                grid.innerHTML = `<div class="col-span-full py-10 text-center text-gray-500">Nenhum lead nos filtros atuais</div>`;
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Verifica login
+            const user = await LeadAPI.getUser();
+            if (!user) {
+                window.location.href = 'login.html';
                 return;
             }
 
-            filtered.slice().reverse().forEach(l => {
-                const card = document.createElement('div');
-                card.className = "bg-gray-900 border border-gray-800 rounded-2xl p-5 shadow-lg card-hover relative flex flex-col h-full transition-all";
+            // Carrega leads do Supabase
+            leads = await LeadAPI.getAll();
 
-                // Cores de status
-                if (l.status === 'contacted') card.classList.add('border-green-800/50');
-                if (l.status === 'interested') card.classList.add('border-blue-800/50', 'bg-blue-900/5');
-                if (l.status === 'discarded') card.classList.add('opacity-40', 'grayscale');
+            loadUserInfo();
+            document.getElementById('msgTemplate').value = msgTemplate;
+            renderLeads();
 
-                card.innerHTML = `
+            async function loadUserInfo() {
+                try {
+                    const res = await fetch('/api/user-info');
+                    const data = await res.json();
+                    document.getElementById('userName').innerText = data.name;
+                    document.getElementById('creditsDisplay').innerText = data.credits;
+                } catch (e) { console.error(e); }
+            }
+
+            async function startSearch() {
+                const nicho = document.getElementById('nichoInput').value;
+                const cidade = document.getElementById('cidadeInput').value;
+                if (!nicho || !cidade) return alert('Preencha os campos!');
+
+                toggleSearchUI(true);
+                leads = [];
+                renderLeads();
+
+                const res = await fetch('/api/start-search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nicho, cidade, max_leads: document.getElementById('maxLeadsInput').value })
+                });
+                if (res.ok) startPolling();
+            }
+
+            function toggleSearchUI(searching) {
+                isSearching = searching;
+                document.getElementById('btnSearch').classList.toggle('hidden', searching);
+                document.getElementById('btnStop').classList.toggle('hidden', !searching);
+                document.getElementById('progressContainer').classList.toggle('hidden', !searching);
+            }
+
+            function startPolling() {
+                pollingInterval = setInterval(async () => {
+                    const res = await fetch('/api/search-status');
+                    const data = await res.json();
+                    updateProgress(data);
+                    if (data.leads && data.leads.length > leads.length) {
+                        leads = data.leads.map(l => ({ ...l, status: l.status || 'new' }));
+                        renderLeads();
+                    }
+                    if (!data.running && data.completed) stopSearch();
+                }, 1000);
+            }
+
+            function stopSearch() {
+                isSearching = false;
+                clearInterval(pollingInterval);
+                toggleSearchUI(false);
+                fetch('/api/cancel-search', { method: 'POST' });
+            }
+
+            function updateProgress(data) {
+                const pct = Math.round((data.processados / (data.total || 1)) * 100);
+                document.getElementById('progressBar').style.width = `${pct}%`;
+                document.getElementById('currentBusiness').innerText = data.current || 'Processando...';
+                document.getElementById('leadsFoundCount').innerText = data.leads_found || 0;
+            }
+
+            function filterLeads(status) {
+                currentStatusFilter = status;
+                document.querySelectorAll('.filter-btn').forEach(btn => {
+                    const isActive = btn.dataset.status === status;
+                    btn.className = isActive ? 'filter-btn bg-white text-gray-900 px-4 py-3 rounded-full text-sm font-bold shadow-lg transition' : 'filter-btn bg-gray-800 border border-gray-700 text-gray-300 px-4 py-3 rounded-full text-sm font-medium hover:bg-gray-700 transition';
+                });
+                applyFilters();
+            }
+
+            function applyFilters() { renderLeads(); }
+
+            function renderLeads() {
+                const grid = document.getElementById('leadsGrid');
+                grid.innerHTML = '';
+                const cityFilter = document.getElementById('filterCity').value.toLowerCase();
+                const nicheFilter = document.getElementById('filterNiche').value.toLowerCase();
+
+                const filtered = leads.filter(l => {
+                    if (currentStatusFilter !== 'all' && (l.status || 'new') !== currentStatusFilter) return false;
+                    if (cityFilter && !(l.cidade || '').toLowerCase().includes(cityFilter) && !(l.endereco || '').toLowerCase().includes(cityFilter)) return false;
+                    if (nicheFilter && !(l.nicho || '').toLowerCase().includes(nicheFilter)) return false;
+                    return true;
+                });
+
+                if (filtered.length === 0) {
+                    grid.innerHTML = `<div class="col-span-full py-10 text-center text-gray-500">Nenhum lead nos filtros atuais</div>`;
+                    return;
+                }
+
+                filtered.slice().reverse().forEach(l => {
+                    const card = document.createElement('div');
+                    card.className = "bg-gray-900 border border-gray-800 rounded-2xl p-5 shadow-lg card-hover relative flex flex-col h-full transition-all";
+
+                    // Cores de status
+                    if (l.status === 'contacted') card.classList.add('border-green-800/50');
+                    if (l.status === 'interested') card.classList.add('border-blue-800/50', 'bg-blue-900/5');
+                    if (l.status === 'discarded') card.classList.add('opacity-40', 'grayscale');
+
+                    card.innerHTML = `
                     <div class="flex justify-between items-start mb-4">
                         <div class="flex items-center gap-1 bg-yellow-500/10 px-2 py-1 rounded-lg">
                             <i class="fas fa-star text-yellow-500 text-xs"></i>
@@ -403,39 +437,40 @@
                         </div>
                     </div>
                 `;
-                grid.appendChild(card);
-            });
-            document.getElementById('countAll').innerText = leads.length;
-        }
-
-        function sendWhatsapp(phone, name, city, niche, btn) {
-            if (!phone) return alert('Telefone não disponível');
-            const msg = (localStorage.getItem('leadManager_msg') || msgTemplate)
-                .replace(/{nome}/g, name).replace(/{nicho}/g, niche).replace(/{cidade}/g, city);
-            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
-            const lead = leads.find(l => l.nome === name);
-            if (lead) { lead.status = 'contacted'; renderLeads(); }
-        }
-
-        function changeStatus(name, status) {
-            const lead = leads.find(l => l.nome === name);
-            if (lead) {
-                lead.status = status;
-                renderLeads();
+                    grid.appendChild(card);
+                });
+                document.getElementById('countAll').innerText = leads.length;
             }
-        }
 
-        function openScriptModal() { document.getElementById('scriptModal').classList.remove('hidden'); }
-        function closeScriptModal() { document.getElementById('scriptModal').classList.add('hidden'); }
-        function saveScript() { localStorage.setItem('leadManager_msg', document.getElementById('msgTemplate').value); closeScriptModal(); }
-        function resetScript() { document.getElementById('msgTemplate').value = "Olá! Encontrei a *{nome}* no Google Maps aqui de {cidade}..."; }
-        function logout() { fetch('/api/logout', { method: 'POST' }).then(() => window.location.href = '/login'); }
-        function exportToExcel() {
-            const ws = XLSX.utils.json_to_sheet(leads);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Leads");
-            XLSX.writeFile(wb, "prospects.xlsx");
-        }
+            function sendWhatsapp(phone, name, city, niche, btn) {
+                if (!phone) return alert('Telefone não disponível');
+                const msg = (localStorage.getItem('leadManager_msg') || msgTemplate)
+                    .replace(/{nome}/g, name).replace(/{nicho}/g, niche).replace(/{cidade}/g, city);
+                window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+                const lead = leads.find(l => l.nome === name);
+                if (lead) { lead.status = 'contacted'; renderLeads(); }
+            }
+
+            function changeStatus(name, status) {
+                const lead = leads.find(l => l.nome === name);
+                if (lead) {
+                    lead.status = status;
+                    renderLeads();
+                }
+            }
+
+            function openScriptModal() { document.getElementById('scriptModal').classList.remove('hidden'); }
+            function closeScriptModal() { document.getElementById('scriptModal').classList.add('hidden'); }
+            function saveScript() { localStorage.setItem('leadManager_msg', document.getElementById('msgTemplate').value); closeScriptModal(); }
+            function resetScript() { document.getElementById('msgTemplate').value = "Olá! Encontrei a *{nome}* no Google Maps aqui de {cidade}..."; }
+            function logout() { fetch('/api/logout', { method: 'POST' }).then(() => window.location.href = '/login'); }
+            function exportToExcel() {
+                const ws = XLSX.utils.json_to_sheet(leads);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Leads");
+                XLSX.writeFile(wb, "prospects.xlsx");
+            }
+        }); // Fecha DOMContentLoaded
     </script>
 </body>
 
