@@ -15,6 +15,10 @@ def save_lead_to_cloud(lead_data, user_id=None):
         if user_id:
             lead_data['user_id'] = user_id
             
+        # CORREÇÃO DE SCHEMA: Supabase usa 'website', scraper usa 'site'
+        if 'site' in lead_data:
+            lead_data['website'] = lead_data.pop('site')
+            
         data = supabase.table("leads").insert(lead_data).execute()
         print(f"💾 Lead salvo no DB: {lead_data.get('nome')} | User: {user_id}")
         return True

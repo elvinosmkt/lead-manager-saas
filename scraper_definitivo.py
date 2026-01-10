@@ -144,6 +144,10 @@ class GoogleMapsScraperDefinitivo:
             
             if panel:
                 for i in range(8):
+                    # CHECAGEM DE CANCELAMENTO
+                    if hasattr(self, 'check_stop') and self.check_stop():
+                        print("🛑 Parada forçada pelo usuário (Scraper cancelado)!")
+                        break
                     self.driver.execute_script(
                         "arguments[0].scrollTop = arguments[0].scrollHeight;",
                         panel

@@ -62,125 +62,74 @@ class SearchWorker(threading.Thread):
                 
                 # Callback customizado para salvar e atualizar estado em tempo real
                 def on_lead_found(lead):
+                    # VERIFICA SE PEDIU PRA PARAR
+                    if state.get('stop_requested'):
+                        print(f"🛑 [ID: {self.session_id}] Busca interrompida pelo usuário.")
+                        return # Retorna para parar processamento
+                        
                     # Salva no estado local para o frontend pegar
                     state['leads'].append(lead)
                     state['leads_found'] += 1
                     # Tenta salvar no Supabase COM O ID DO USUÁRIO
-                    # OBS: O session_id deve ser o UUID do usuário para funcionar com RLS
                     threading.Thread(target=save_lead_to_cloud, args=(lead, self.session_id)).start()
 
                 # Inicia Scraper
                 scraper = GoogleMapsScraperDefinitivo(self.nicho, self.cidade)
-                scraper.on_lead_found_callback = on_lead_found # Conecta callback
+                scraper.on_lead_found_callback = on_lead_found 
+                
+                # Injeta a verificação de parada dentro do Scraper também (monkey patching simples)
+                # O scraper deve verificar scraper.should_stop() se implementado, ou podemos checar no callback
+                # Como o callback é chamado a cada lead, se pararmos de consumir, ele termina.
+                # Mas para parar o scroll, precisamos de mais controle. 
+                # Adicionaremos uma função check_stop no scraper.
+                scraper.check_stop = lambda: state.get('stop_requested', False)
                 
                 # Executa
                 leads = scraper.scrape()
                 
-                # Atualiza final
-                state['leads'] = leads # Garante lista completa
-                state['leads_found'] = len(leads)
-                state['completed'] = True
-                state['status'] = 'completed'
-                state['progress'] = 100
-                print(f"✅ [ID: {self.session_id}] Busca concluída: {len(leads)} leads")
+                # Atualiza final (se não foi cancelado forçado)
+                if not state.get('stop_requested'):
+                    state['leads'] = leads 
+                    state['completed'] = True
+                    state['status'] = 'completed'
+                    state['progress'] = 100
+                else:
+                    state['status'] = 'cancelled'
+                    state['running'] = False
+                
+                print(f"✅ [ID: {self.session_id}] Worker Finalizado.")
                 
             except Exception as e:
                 print(f"❌ [ID: {self.session_id}] Erro: {e}")
                 state['error'] = str(e)
                 state['status'] = 'error'
                 state['completed'] = True
+            finally:
+                # Libera vaga no semáforo
+                pass
 
 # --- ENDPOINTS ---
-
-@app.route('/')
-def index():
-    return send_from_directory('webapp', 'index.html')
-
-@app.route('/api/start-search', methods=['POST'])
-def start_search():
-    data = request.json
-    # Usa ID do usuário ou gera um temporário
-    session_id = data.get('user_id') or str(uuid.uuid4())
-    
-    # Se já tem busca rodando para esse ID, verifica se terminou
-    if session_id in active_searches:
-        prev_search = active_searches[session_id]
-        if not prev_search.get('completed', False) and prev_search.get('status') != 'error':
-             return jsonify({
-                 'success': True, 
-                 'message': 'Recuperando busca existente',
-                 'session_id': session_id,
-                 'status': prev_search['status']
-             })
-
-    nicho = data.get('nicho', '').strip()
-    cidade = data.get('cidade', '').strip()
-    try:
-        max_leads = int(data.get('max_leads', 50))
-    except:
-        max_leads = 50
-
-    if not nicho or not cidade:
-        return jsonify({'error': 'Nicho e cidade obrigatórios'}), 400
-
-    # Inicializa estado
-    active_searches[session_id] = {
-        'nicho': nicho,
-        'cidade': cidade,
-        'status': 'initializing',
-        'progress': 0,
-        'leads_found': 0,
-        'leads': [],
-        'error': None,
-        'completed': False,
-        'created_at': datetime.now()
-    }
-
-    # Filtros opcionais
-    filters = {
-        'site': data.get('filter_site', 'todos'),
-        'whatsapp': data.get('filter_whats', 'todos')
-    }
-
-    # Inicia Worker
-    worker = SearchWorker(session_id, nicho, cidade, max_leads, filters)
-    worker.start()
-
-    return jsonify({
-        'success': True,
-        'message': 'Na fila de processamento',
-        'session_id': session_id
-    })
-
-@app.route('/api/search-status', methods=['GET'])
-def get_status():
-    # Frontend deve enviar user_id ou session_id na query string ?session_id=...
-    session_id = request.args.get('session_id')
-    
-    if not session_id or session_id not in active_searches:
-        return jsonify({'running': False, 'status': 'not_found', 'leads': []})
-    
-    state = active_searches[session_id]
-    
-    # Se status for queued, retorna running=True para o frontend não parar
-    is_running = state['status'] in ['queued', 'running', 'initializing']
-    
-    return jsonify({
-        'running': is_running,
-        'completed': state['completed'],
-        'status': state['status'], # queued, running, completed, error
-        'progress': state['progress'],
-        'leads_found': state['leads_found'],
-        'leads': state['leads'],
-        'error': state['error'],
-        'nicho': state['nicho'],
-        'cidade': state['cidade']
-    })
+# ... (código existente) ...
 
 @app.route('/api/cancel-search', methods=['POST'])
 def cancel_search():
-    # Placeholder simplificado
-    return jsonify({'success': True})
+    try:
+        data = request.json or {}
+        # Tenta pegar user_id do body ou query param (para compatibilidade)
+        session_id = data.get('user_id') or request.args.get('user_id')
+        
+        if not session_id or session_id not in active_searches:
+            return jsonify({'error': 'Sessão não encontrada'}), 404
+            
+        # Marca flag de parada
+        active_searches[session_id]['stop_requested'] = True
+        active_searches[session_id]['running'] = False
+        
+        print(f"🛑 Solicitado cancelamento para: {session_id}")
+        return jsonify({'success': True, 'message': 'Parando busca...'})
+    except Exception as e:
+        print(f"Erro ao cancelar: {e}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/reset-status', methods=['POST'])
 def reset_status():
