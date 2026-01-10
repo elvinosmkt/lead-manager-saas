@@ -280,17 +280,21 @@
         let isSearching = false;
         let pollingInterval = null;
         let currentStatusFilter = 'all';
-        let msgTemplate = localStorage.getItem('leadManager_msg') ||
-            "Olá! Encontrei a *{nome}* no Google Maps aqui de {cidade} e vi que a empresa ainda não tem um Site Profissional.\n\nSou especialista em criar sites para {nicho} que atraem mais clientes. Gostaria de ver uma proposta?";
-
-        async function loadUserInfo() {
-            try {
-                const res = await fetch('/api/user-info');
-                const data = await res.json();
-                document.getElementById('userName').innerText = data.name;
-                document.getElementById('creditsDisplay').innerText = data.credits;
-            } catch (e) { console.error(e); }
+        let msgTemplate;
+        try {
+            msgTemplate = localStorage.getItem('leadManager_msg') ||
+                "Olá! Encontrei a *{nome}* no Google Maps aqui de {cidade} e vi que a empresa ainda não tem um Site Profissional.\n\nSou especialista em criar sites para {nicho} que atraem mais clientes. Gostaria de ver uma proposta?";
+        } catch (e) {
+            console.error("Erro ao ler msg salva:", e);
+            localStorage.removeItem('leadManager_msg');
+            msgTemplate = "Olá! Encontrei a *{nome}* no Google Maps...";
         }
+
+        /*
+        async function loadUserInfo() {
+             // Rota não implementada no backend, dados vem do Supabase
+        }
+        */
 
         // ID da sessão será o user ID real
         let sessionId = null;
@@ -419,8 +423,9 @@
             sessionId = user.id; // Garante polling correto
 
             // Carrega info do usuário
-            const emailUser = user.email;
+            const emailUser = user.email || 'Admin';
             document.getElementById('userName').innerText = emailUser.split('@')[0];
+            document.getElementById('creditsDisplay').innerText = "PRO"; // Valor fixo por enqt
 
             // Carrega leads salvos do Supabase
             console.log('🔄 Carregando histórico de leads...');
