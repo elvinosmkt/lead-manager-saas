@@ -297,14 +297,31 @@
             leads = [];
             renderLeads();
 
-            const res = await fetch(`${API_URL}/start-search`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ nicho, cidade, max_leads: document.getElementById('maxLeadsInput').value })
-            });
-            if (res.ok) startPolling();
+            try {
+                const res = await fetch(`${API_URL}/start-search`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nicho, cidade, max_leads: document.getElementById('maxLeadsInput').value })
+                });
+
+                if (res.ok) {
+                    startPolling();
+                } else {
+                    const err = await res.json();
+                    if (res.status === 400 && err.error && err.error.includes('andamento')) {
+                        // Tenta resetar e busca de novo
+                        console.warn('⚠️ Busca travada detectada. Resetando servidor...');
+                        await fetch(`${API_URL}/reset-status`, { method: 'POST' });
+                        setTimeout(startSearch, 1000); // Tenta de novo em 1s
+                        return;
+                    }
+                    throw new Error(err.error || 'Erro ao iniciar busca');
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Erro: ' + error.message);
+                toggleSearchUI(false);
+            }
         }
 
         function toggleSearchUI(searching) {
