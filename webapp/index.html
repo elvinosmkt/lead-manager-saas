@@ -194,14 +194,18 @@
             <!-- Filtros de Texto (Cidade/Area) -->
             <div class="flex gap-2">
                 <div class="relative flex-1 md:flex-none">
-                    <i class="fas fa-filter absolute left-3 top-3 text-gray-500 text-xs"></i>
-                    <input type="text" id="filterCity" onkeyup="applyFilters()" placeholder="Filtrar Cidade/Bairro"
-                        class="bg-gray-900 border border-gray-700 rounded-xl pl-8 pr-3 py-2.5 text-sm text-white focus:border-blue-500 outline-none w-full md:w-48 transition shadow-inner">
+                    <i class="fas fa-map-marker-alt absolute left-3 top-3 text-gray-500 text-xs"></i>
+                    <input type="text" id="filterCity" list="citiesList" oninput="applyFilters()"
+                        placeholder="Filtrar Cidade"
+                        class="bg-gray-900 border border-gray-700 rounded-xl pl-8 pr-3 py-2.5 text-sm text-white focus:border-blue-500 outline-none w-full md:w-44 transition shadow-inner">
+                    <datalist id="citiesList"></datalist>
                 </div>
                 <div class="relative flex-1 md:flex-none">
                     <i class="fas fa-briefcase absolute left-3 top-3 text-gray-500 text-xs"></i>
-                    <input type="text" id="filterNiche" onkeyup="applyFilters()" placeholder="Filtrar Nicho"
+                    <input type="text" id="filterNiche" list="nichesList" oninput="applyFilters()"
+                        placeholder="Filtrar Nicho"
                         class="bg-gray-900 border border-gray-700 rounded-xl pl-8 pr-3 py-2.5 text-sm text-white focus:border-blue-500 outline-none w-full md:w-44 transition shadow-inner">
+                    <datalist id="nichesList"></datalist>
                 </div>
             </div>
 
@@ -609,6 +613,26 @@
 
             if (document.getElementById('emptyState')) {
                 document.getElementById('emptyState').style.display = total === 0 ? 'block' : 'none';
+            }
+
+            // Atualiza opções de filtro dinâmicas
+            updateFilterOptions();
+        }
+
+        function updateFilterOptions() {
+            // Extrai cidades e nichos únicos
+            const cities = [...new Set(leads.map(l => l.cidade).filter(Boolean))].sort();
+            const niches = [...new Set(leads.map(l => l.nicho).filter(Boolean))].sort();
+
+            const citiesList = document.getElementById('citiesList');
+            const nichesList = document.getElementById('nichesList');
+
+            // Só atualiza se o elemento não estiver em foco (para não atrapalhar digitação)
+            if (document.activeElement !== document.getElementById('filterCity')) {
+                citiesList.innerHTML = cities.map(c => `<option value="${c}">`).join('');
+            }
+            if (document.activeElement !== document.getElementById('filterNiche')) {
+                nichesList.innerHTML = niches.map(n => `<option value="${n}">`).join('');
             }
         }
 
