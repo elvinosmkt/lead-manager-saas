@@ -400,10 +400,18 @@
 
         document.addEventListener('DOMContentLoaded', async () => {
             // Verifica API Status
-            console.log('Verificando API:', API_URL);
+            // Verifica login com proteção contra Tokens Corrompidos
+            let user = null;
+            try {
+                user = await LeadAPI.getUser();
+            } catch (e) {
+                console.error("Erro crítico ao recuperar usuário (Token inválido?):", e);
+                // Se der erro de padrão de string (atob) ou outro, limpa tudo e reloga
+                localStorage.clear();
+                window.location.href = 'login.html';
+                return;
+            }
 
-            // Verifica login
-            const user = await LeadAPI.getUser();
             if (!user) {
                 window.location.href = 'login.html';
                 return;
