@@ -389,14 +389,10 @@
             }, 2000);
         }
 
-        function stopSearch() {
-            isSearching = false;
-            clearInterval(pollingInterval);
-            toggleSearchUI(false);
-            // fetch(`${API_URL}/cancel-search`, { method: 'POST', body: JSON.stringify({ user_id: sessionId }) });
-        }
-
         document.addEventListener('DOMContentLoaded', async () => {
+            // Verifica API Status
+            console.log('Verificando API:', API_URL);
+
             // Verifica login
             const user = await LeadAPI.getUser();
             if (!user) {
@@ -404,13 +400,89 @@
                 return;
             }
 
-            // Carrega leads do Supabase
-            leads = await LeadAPI.getAll();
+            // Carrega info do usuário
+            const emailUser = user.email;
+            document.getElementById('userName').innerText = emailUser.split('@')[0];
 
-            //loadUserInfo(); // Desabilitado temporariamente
-            document.getElementById('msgTemplate').value = msgTemplate;
+            // Carrega leads salvos do Supabase
+            console.log('🔄 Carregando histórico de leads...');
+            leads = await LeadAPI.getAll();
+            console.log(`✅ ${leads.length} leads carregados do banco.`);
+
+            // Atualiza UI
             renderLeads();
+            updateStats();
+
+            // Configura template padrão se não existir
+            if (!localStorage.getItem('leadManager_msg')) {
+                localStorage.setItem('leadManager_msg', msgTemplate);
+            }
+            document.getElementById('msgTemplate').value = localStorage.getItem('leadManager_msg');
         });
+
+        // --- LÓGICA DE POLLING MELHORADA ---
+        function startPolling() {
+            if (pollingInterval) clearInterval(pollingInterval);
+
+            pollingInterval = setInterval(async () => {
+                try {
+                    const res = await fetch(`${API_URL}/search-status?session_id=${sessionId}`);
+                    const data = await res.json();
+
+                    const statusText = document.getElementById('statusText');
+
+                    if (data.status === 'queued') {
+                        if (statusText) statusText.innerText = '⏳ Na fila (posição ' + (data.position || '?') + ')...';
+                        return;
+                    }
+
+                    if (data.status === 'running') {
+                        if (statusText) statusText.innerText = `🔍 Buscando: ${data.current || '...'}`;
+                        updateProgress(data);
+                    }
+
+                    // ATUALIZAÇÃO EM TEMPO REAL (STREAMING)
+                    if (data.leads && data.leads.length > 0) {
+                        // Mescla leads novos com existentes
+                        let mudou = false;
+                        data.leads.forEach(newLead => {
+                            // Verifica duplicidade pelo nome/telefone ou ID se tiver
+                            const exists = leads.some(l =>
+                                (l.nome === newLead.nome && l.endereco === newLead.endereco) ||
+                                (l.telefone && l.telefone === newLead.telefone)
+                            );
+
+                            if (!exists) {
+                                leads.unshift({ ...newLead, status: 'new' }); // Adiciona no topo
+                                mudou = true;
+                            }
+                        });
+
+                        if (mudou) {
+                            renderLeads();
+                            updateStats();
+                        }
+                    }
+
+                    if (data.completed) {
+                        stopSearch();
+                        showNotification(`✅ Busca finalizada! ${data.leads_found} encontrados.`);
+                        // Recarrega do banco para garantir integridade e IDs
+                        setTimeout(async () => {
+                            leads = await LeadAPI.getAll();
+                            renderLeads();
+                        }, 1000);
+                    }
+
+                    if (data.status === 'error') {
+                        stopSearch();
+                        alert('Erro na busca: ' + data.error);
+                    }
+                } catch (e) {
+                    console.error("Erro no polling:", e);
+                }
+            }, 1000); // Polling a cada 1s para ser rápido
+        }
 
         function updateProgress(data) {
             const pct = Math.round((data.processados / (data.total || 1)) * 100);
@@ -516,14 +588,43 @@
                 .replace(/{nome}/g, name).replace(/{nicho}/g, niche).replace(/{cidade}/g, city);
             window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
             const lead = leads.find(l => l.nome === name);
-            if (lead) { lead.status = 'contacted'; renderLeads(); }
+            if (lead) {
+                lead.status = 'contacted';
+                renderLeads();
+                // Salvar status contatado
+                LeadAPI.save(lead).catch(console.error);
+            }
         }
 
-        function changeStatus(name, status) {
+        function updateStats() {
+            // Conta leads por status
+            const total = leads.length;
+            const novos = leads.filter(l => !l.status || l.status === 'new').length;
+            const contatados = leads.filter(l => l.status === 'contacted').length;
+            const interessados = leads.filter(l => l.status === 'interested').length;
+
+            document.getElementById('countAll').innerText = total;
+            // Se tiver elementos para os outros contadores, atualize-os aqui
+            // Ex: document.getElementById('countNew').innerText = novos;
+
+            if (document.getElementById('emptyState')) {
+                document.getElementById('emptyState').style.display = total === 0 ? 'block' : 'none';
+            }
+        }
+
+        async function changeStatus(name, status) {
             const lead = leads.find(l => l.nome === name);
             if (lead) {
                 lead.status = status;
                 renderLeads();
+
+                // Salvar no Supabase
+                try {
+                    // Precisamos do ID para update, se não tiver ID (lead novo da memória), buscamos pelo nome ou usamos save que trata
+                    await LeadAPI.save(lead);
+                } catch (e) {
+                    console.error('Erro ao salvar status:', e);
+                }
             }
         }
 
@@ -531,8 +632,14 @@
         function closeScriptModal() { document.getElementById('scriptModal').classList.add('hidden'); }
         function saveScript() { localStorage.setItem('leadManager_msg', document.getElementById('msgTemplate').value); closeScriptModal(); }
         function resetScript() { document.getElementById('msgTemplate').value = "Olá! Encontrei a *{nome}* no Google Maps aqui de {cidade}..."; }
-        function logout() { fetch('/api/logout', { method: 'POST' }).then(() => window.location.href = '/login'); }
+
+        async function logout() {
+            await LeadAPI.logout();
+            window.location.href = 'login.html';
+        }
+
         function exportToExcel() {
+            if (typeof XLSX === 'undefined') return alert('Biblioteca Excel não carregada');
             const ws = XLSX.utils.json_to_sheet(leads);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Leads");
