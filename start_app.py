@@ -134,6 +134,16 @@ def start_search():
         print(f"❌ Erro interno na API: {e}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/reset-status', methods=['POST'])
+def reset_status():
+    """Força o reset do estado da busca"""
+    global search_state
+    search_state['running'] = False
+    search_state['completed'] = False
+    search_state['error'] = None
+    search_state['progress'] = 0
+    return jsonify({'success': True, 'message': 'Status resetado com sucesso'})
+
 
 @app.route('/api/search-status', methods=['GET'])
 def get_status():
