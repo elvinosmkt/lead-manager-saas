@@ -42,7 +42,6 @@ class GoogleMapsScraperDefinitivo:
         chrome_options = Options()
         chrome_options.add_argument('--no-sandbox')
         chrome_options.add_argument('--disable-dev-shm-usage')
-        chrome_options.add_argument('--start-maximized')
         chrome_options.add_argument('--disable-blink-features=AutomationControlled')
         chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
         chrome_options.add_experimental_option('useAutomationExtension', False)
@@ -50,19 +49,37 @@ class GoogleMapsScraperDefinitivo:
         # User agent realista
         chrome_options.add_argument('user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
         
+        # Modo Headless (Obrigatório para Servidores/Railway)
+        if os.environ.get('CHROMEDRIVER_PATH') or os.environ.get('HEADLESS', 'false') == 'true':
+            print("🖥️  Modo Servidor detectado: Rodando em Headless")
+            chrome_options.add_argument('--headless=new')
+
         try:
-            driver_path = ChromeDriverManager().install()
-            driver_dir = os.path.dirname(driver_path)
+            # Tenta usar o driver do sistema (Docker/Railway)
+            system_driver_path = os.environ.get('CHROMEDRIVER_PATH', '/usr/bin/chromedriver')
             
-            chromedriver_path = None
-            for file in os.listdir(driver_dir):
-                if file == 'chromedriver':
-                    chromedriver_path = os.path.join(driver_dir, file)
-                    break
-            
-            os.chmod(chromedriver_path, 0o755)
-            
-            service = Service(chromedriver_path)
+            if os.path.exists(system_driver_path):
+                print(f"🔧 Usando driver do sistema: {system_driver_path}")
+                service = Service(system_driver_path)
+            else:
+                # Fallback para instalação automática (Local)
+                print("⬇️  Baixando driver automaticamente...")
+                driver_path = ChromeDriverManager().install()
+                # Ajuste para novas versões do webdriver_manager que retornam caminho completo
+                if os.path.isfile(driver_path):
+                     service = Service(driver_path)
+                else:
+                    # Fallback para lógica antiga de diretório
+                    driver_dir = os.path.dirname(driver_path)
+                    chromedriver_path = os.path.join(driver_dir, 'chromedriver')
+                    if not os.path.exists(chromedriver_path):
+                         # Tenta encontrar em qualquer lugar do diretório
+                         for root, dirs, files in os.walk(driver_dir):
+                            if 'chromedriver' in files:
+                                chromedriver_path = os.path.join(root, 'chromedriver')
+                                break
+                    service = Service(chromedriver_path)
+
             self.driver = webdriver.Chrome(service=service, options=chrome_options)
             
             # Remove webdriver flag
