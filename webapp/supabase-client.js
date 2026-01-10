@@ -4,7 +4,7 @@ const SUPABASE_URL = 'https://wpgrollhyfoszmlotfyg.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndwZ3JvbGxoeWZvc3ptbG90ZnlnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc2NDcwNjksImV4cCI6MjA4MzIyMzA2OX0.NQNWmwHxSMtcAUfMee3848r8OccACXhuuZjhvNnw3bM';
 
 // Inicializa o cliente
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabaseInstance = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 console.log('✅ Supabase conectado!');
 
@@ -12,7 +12,7 @@ console.log('✅ Supabase conectado!');
 const LeadAPI = {
     // Listar todos os leads
     async getAll() {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseInstance
             .from('leads')
             .select('*')
             .order('data_coleta', { ascending: false });
@@ -31,7 +31,7 @@ const LeadAPI = {
 
         // Se tem ID numérico válido, é update
         if (id && typeof id === 'number') {
-            const { data, error } = await supabase
+            const { data, error } = await supabaseInstance
                 .from('leads')
                 .update(leadData)
                 .eq('id', id)
@@ -40,7 +40,7 @@ const LeadAPI = {
         }
 
         // Senão, é insert
-        const { data, error } = await supabase
+        const { data, error } = await supabaseInstance
             .from('leads')
             .insert([leadData])
             .select();
@@ -56,7 +56,7 @@ const LeadAPI = {
             return rest;
         });
 
-        const { data, error } = await supabase
+        const { data, error } = await supabaseInstance
             .from('leads')
             .insert(cleanLeads)
             .select();
@@ -66,7 +66,7 @@ const LeadAPI = {
 
     // Deletar lead
     async delete(id) {
-        const { error } = await supabase
+        const { error } = await supabaseInstance
             .from('leads')
             .delete()
             .eq('id', id);
@@ -95,7 +95,7 @@ const LeadAPI = {
 
     // --- AUTHENTICATION ---
     async login(email, password) {
-        const { data, error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabaseInstance.auth.signInWithPassword({
             email,
             password
         });
@@ -103,7 +103,7 @@ const LeadAPI = {
     },
 
     async signUp(email, password) {
-        const { data, error } = await supabase.auth.signUp({
+        const { data, error } = await supabaseInstance.auth.signUp({
             email,
             password
         });
@@ -111,16 +111,16 @@ const LeadAPI = {
     },
 
     async logout() {
-        const { error } = await supabase.auth.signOut();
+        const { error } = await supabaseInstance.auth.signOut();
         return { error };
     },
 
     async getUser() {
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { user } } = await supabaseInstance.auth.getUser();
         return user;
     }
 };
 
 // Exporta globalmente
 window.LeadAPI = LeadAPI;
-window.supabaseClient = supabase;
+window.supabaseClient = supabaseInstance;
