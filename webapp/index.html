@@ -292,14 +292,17 @@
             } catch (e) { console.error(e); }
         }
 
-        // Gera ou recupera ID da sessão (para filas e multi-tenancy)
-        let sessionId = localStorage.getItem('lead_scraper_session_id');
-        if (!sessionId) {
-            sessionId = 'sess_' + Math.random().toString(36).substr(2, 9);
-            localStorage.setItem('lead_scraper_session_id', sessionId);
-        }
+        // ID da sessão será o user ID real
+        let sessionId = null;
 
         async function startSearch() {
+            const user = await LeadAPI.getUser();
+            if (!user) return alert('Faça login primeiro!');
+
+            const realUserId = user.id; // UUID do Supabase
+            // Atualiza sessionID global para polling usar o ID Certo
+            sessionId = realUserId;
+
             const nicho = document.getElementById('nichoInput').value;
             const cidade = document.getElementById('cidadeInput').value;
             if (!nicho || !cidade) return alert('Preencha os campos!');
@@ -316,7 +319,9 @@
                         nicho,
                         cidade,
                         max_leads: document.getElementById('maxLeadsInput').value,
-                        user_id: sessionId
+                        user_id: realUserId, // Envia ID real para salvar no banco
+                        filter_site: document.getElementById('filterSiteInput')?.value || 'todos', // Suporte futuro
+                        filter_whats: document.getElementById('filterWhatsInput')?.value || 'todos'
                     })
                 });
 
@@ -403,6 +408,7 @@
                 window.location.href = 'login.html';
                 return;
             }
+            sessionId = user.id; // Garante polling correto
 
             // Carrega info do usuário
             const emailUser = user.email;

@@ -65,8 +65,9 @@ class SearchWorker(threading.Thread):
                     # Salva no estado local para o frontend pegar
                     state['leads'].append(lead)
                     state['leads_found'] += 1
-                    # Tenta salvar no Supabase
-                    threading.Thread(target=save_lead_to_cloud, args=(lead,)).start()
+                    # Tenta salvar no Supabase COM O ID DO USUÁRIO
+                    # OBS: O session_id deve ser o UUID do usuário para funcionar com RLS
+                    threading.Thread(target=save_lead_to_cloud, args=(lead, self.session_id)).start()
 
                 # Inicia Scraper
                 scraper = GoogleMapsScraperDefinitivo(self.nicho, self.cidade)

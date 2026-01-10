@@ -9,9 +9,14 @@ key: str = os.environ.get("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.
 
 supabase: Client = create_client(url, key)
 
-def save_lead_to_cloud(lead_data):
+def save_lead_to_cloud(lead_data, user_id=None):
     try:
+        # Se tiver user_id, adiciona ao payload
+        if user_id:
+            lead_data['user_id'] = user_id
+            
         data = supabase.table("leads").insert(lead_data).execute()
+        print(f"💾 Lead salvo no DB: {lead_data.get('nome')} | User: {user_id}")
         return True
     except Exception as e:
         print(f"❌ Erro ao salvar no Supabase: {e}")
