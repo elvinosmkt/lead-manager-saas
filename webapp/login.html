@@ -85,17 +85,28 @@
 
                 const { data, error } = result;
 
-                if (!error && data.user) {
-                    // Se for registro, o Supabase pode logar automático ou pedir confirmação
-                    // Vamos tentar redirecionar direto
-                    window.location.href = 'index.html';
-                } else {
-                    errorMsg.textContent = error ? error.message : 'Erro desconhecido. Tente novamente.';
+                if (error) {
+                    // Erros comuns Traduzidos
+                    let msg = error.message;
+                    if (msg.includes('Invalid login')) msg = 'E-mail ou senha incorretos.';
+                    if (msg.includes('Email not confirmed')) msg = 'Você precisa confirmar seu e-mail antes de entrar.';
+                    if (msg.includes('User already registered')) msg = 'Este e-mail já está cadastrado.';
+
+                    errorMsg.textContent = msg;
                     errorMsg.classList.remove('hidden');
+                } else if (data.user) {
+                    if (isRegistering && !data.session) {
+                        // Cadastro feito mas requer confirmação
+                        alert('✅ Conta criada com sucesso!\n\nPor favor, verifique seu e-mail e clique no link de confirmação para ativar sua conta.');
+                        window.location.reload(); // Recarrega para voltar ao login limpo
+                    } else {
+                        // Login direto ou cadastro sem confirmação
+                        window.location.href = 'index.html';
+                    }
                 }
             } catch (err) {
                 console.error(err);
-                errorMsg.textContent = 'Erro técnico: ' + err.message;
+                errorMsg.textContent = 'Erro técnico: ' + (err.message || err);
                 errorMsg.classList.remove('hidden');
             } finally {
                 submitBtn.disabled = false;

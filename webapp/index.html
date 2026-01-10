@@ -533,33 +533,49 @@
                 if (l.status === 'interested') card.classList.add('border-blue-800/50', 'bg-blue-900/5');
                 if (l.status === 'discarded') card.classList.add('opacity-40', 'grayscale');
 
+                // Verifica Site e Whats para Badges
+                const hasSite = l.site && l.site.length > 5;
+                const hasWhats = l.whatsapp && l.whatsapp.length > 5;
+
                 card.innerHTML = `
-                    <div class="flex justify-between items-start mb-4">
+                    <div class="flex justify-between items-start mb-3">
+                        <div class="flex gap-2">
+                             ${!hasSite ?
+                        `<span class="bg-red-500/20 text-red-400 text-[10px] font-bold px-2 py-0.5 rounded border border-red-500/30 flex items-center gap-1"><i class="fas fa-globe"></i> SEM SITE</span>` :
+                        `<span class="bg-blue-500/20 text-blue-400 text-[10px] font-bold px-2 py-0.5 rounded border border-blue-500/30 flex items-center gap-1"><i class="fas fa-check"></i> COM SITE</span>`
+                    }
+                             ${hasWhats ?
+                        `<span class="bg-green-500/20 text-green-400 text-[10px] font-bold px-2 py-0.5 rounded border border-green-500/30 flex items-center gap-1"><i class="fab fa-whatsapp"></i> ZAP</span>` : ''
+                    }
+                        </div>
                         <div class="flex items-center gap-1 bg-yellow-500/10 px-2 py-1 rounded-lg">
                             <i class="fas fa-star text-yellow-500 text-xs"></i>
                             <span class="text-xs font-bold text-yellow-500">${l.avaliacao || '0.0'}</span>
                         </div>
-                        <span class="text-[10px] text-gray-400 font-bold uppercase truncate max-w-[100px]">${l.cidade || ''}</span>
                     </div>
+
                     <div class="mb-auto">
-                        <h3 class="font-bold text-lg text-white mb-1 line-clamp-1">${l.nome}</h3>
+                        <h3 class="font-bold text-lg text-white mb-1 line-clamp-1" title="${l.nome}">${l.nome}</h3>
+                        <p class="text-xs text-gray-500 font-bold uppercase mb-1 tracking-wider">${l.nicho || 'Geral'}</p>
                         <p class="text-xs text-gray-400 flex items-start gap-2 mb-4">
-                            <i class="fas fa-location-dot mt-0.5"></i> <span class="line-clamp-2">${l.endereco || ''}</span>
+                            <i class="fas fa-map-pin mt-0.5 text-gray-600"></i> <span class="line-clamp-2">${l.endereco || 'Endereço não detectado'}</span>
                         </p>
                     </div>
+
                     <div class="grid grid-cols-2 gap-2 mb-4">
                         <div class="bg-gray-950 p-2 rounded-lg text-center border border-gray-800">
-                            <p class="text-[10px] text-gray-500 uppercase font-bold">Tel</p>
-                            <p class="text-xs font-mono text-gray-300 truncate">${l.telefone || '--'}</p>
+                            <p class="text-[10px] text-gray-500 uppercase font-bold">Telefone</p>
+                            <p class="text-xs font-mono text-gray-300 truncate select-all">${l.telefone || '--'}</p>
                         </div>
-                        <div class="bg-gray-950 p-2 rounded-lg text-center border border-gray-800 cursor-pointer" onclick="window.open('${l.google_maps_link}', '_blank')">
-                            <p class="text-[10px] text-gray-500 uppercase font-bold">Maps</p>
-                            <p class="text-xs text-blue-400 font-bold">Ver <i class="fas fa-external-link-alt"></i></p>
-                        </div>
+                        <a href="${l.google_maps_link}" target="_blank" class="bg-blue-600/10 hover:bg-blue-600/20 border border-blue-600/30 p-2 rounded-lg text-center cursor-pointer transition flex flex-col items-center justify-center group">
+                            <p class="text-[10px] text-blue-400 uppercase font-bold group-hover:text-blue-300">Google Maps</p>
+                            <span class="text-xs text-blue-500 font-bold group-hover:text-blue-200"><i class="fas fa-external-link-alt"></i> Abrir</span>
+                        </a>
                     </div>
+
                     <div class="flex gap-2 border-t border-gray-800 pt-3">
                         <button onclick="sendWhatsapp('${l.whatsapp}', '${l.nome}', '${l.cidade}', '${l.nicho}', this)" 
-                            class="flex-1 ${l.whatsapp ? 'bg-green-600 hover:bg-green-500' : 'bg-gray-700'} text-white font-bold py-2 rounded-xl text-sm flex items-center justify-center gap-2 transition">
+                            class="flex-1 ${hasWhats ? 'bg-green-600 hover:bg-green-500' : 'bg-gray-700 opacity-50 cursor-not-allowed'} text-white font-bold py-2 rounded-xl text-sm flex items-center justify-center gap-2 transition">
                             <i class="fab fa-whatsapp"></i> <span>${l.status === 'contacted' ? 'Enviado' : 'Abordar'}</span>
                         </button>
                         
@@ -586,6 +602,45 @@
             document.getElementById('countAll').innerText = leads.length;
         }
 
+        // --- Perfil User ---
+        async function openProfileModal() {
+            const user = await LeadAPI.getUser();
+            if (!user) return;
+
+            // Cria modal dinâmicamente se não existir
+            if (!document.getElementById('profileModal')) {
+                const modal = document.createElement('div');
+                modal.id = 'profileModal';
+                modal.className = 'fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden';
+                modal.innerHTML = `
+                    <div class="bg-gray-900 border border-gray-800 rounded-2xl w-full max-w-sm shadow-2xl p-6 relative">
+                        <button onclick="document.getElementById('profileModal').classList.add('hidden')" class="absolute top-4 right-4 text-gray-500 hover:text-white"><i class="fas fa-times"></i></button>
+                        <div class="text-center mb-6">
+                            <div class="w-20 h-20 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full mx-auto flex items-center justify-center text-3xl font-bold mb-3">
+                                ${user.email[0].toUpperCase()}
+                            </div>
+                            <h3 class="text-xl font-bold text-white">${user.email.split('@')[0]}</h3>
+                            <p class="text-sm text-gray-500">${user.email}</p>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="bg-gray-950 p-3 rounded-lg border border-gray-800 flex justify-between">
+                                <span class="text-gray-400 text-sm">Plano</span>
+                                <span class="text-green-400 text-sm font-bold">PRO (Beta)</span>
+                            </div>
+                            <div class="bg-gray-950 p-3 rounded-lg border border-gray-800 flex justify-between">
+                                <span class="text-gray-400 text-sm">ID</span>
+                                <span class="text-gray-600 text-xs font-mono">${user.id.substr(0, 8)}...</span>
+                            </div>
+                        </div>
+                        <button onclick="logout()" class="w-full mt-6 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/30 font-bold py-2 rounded-xl transition">
+                            Sair do Sistema
+                        </button>
+                    </div>
+                 `;
+                document.body.appendChild(modal);
+            }
+            document.getElementById('profileModal').classList.remove('hidden');
+        }
         function sendWhatsapp(phone, name, city, niche, btn) {
             if (!phone) return alert('Telefone não disponível');
             const msg = (localStorage.getItem('leadManager_msg') || msgTemplate)

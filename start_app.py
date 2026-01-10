@@ -33,12 +33,13 @@ semaphore = threading.Semaphore(MAX_CONCURRENT_SEARCHES)
 active_searches = {}
 
 class SearchWorker(threading.Thread):
-    def __init__(self, session_id, nicho, cidade, max_leads):
+    def __init__(self, session_id, nicho, cidade, max_leads, filters={}):
         super().__init__()
         self.session_id = session_id
         self.nicho = nicho
         self.cidade = cidade
         self.max_leads = max_leads
+        self.filters = filters
         self.daemon = True
 
     def run(self):
@@ -57,6 +58,7 @@ class SearchWorker(threading.Thread):
                 
                 # Configura scraper
                 CONFIG['MAX_BUSINESSES'] = self.max_leads
+                CONFIG['FILTERS'] = self.filters # Passa filtros recebidos
                 
                 # Callback customizado para salvar e atualizar estado em tempo real
                 def on_lead_found(lead):
@@ -68,8 +70,7 @@ class SearchWorker(threading.Thread):
 
                 # Inicia Scraper
                 scraper = GoogleMapsScraperDefinitivo(self.nicho, self.cidade)
-                # Injetamos o callback na classe (vou ajustar o scraper depois para suportar melhor isso, 
-                # mas por agora, o scraper salva no array dele e depois pegamos)
+                scraper.on_lead_found_callback = on_lead_found # Conecta callback
                 
                 # Executa
                 leads = scraper.scrape()
@@ -134,8 +135,14 @@ def start_search():
         'created_at': datetime.now()
     }
 
+    # Filtros opcionais
+    filters = {
+        'site': data.get('filter_site', 'todos'),
+        'whatsapp': data.get('filter_whats', 'todos')
+    }
+
     # Inicia Worker
-    worker = SearchWorker(session_id, nicho, cidade, max_leads)
+    worker = SearchWorker(session_id, nicho, cidade, max_leads, filters)
     worker.start()
 
     return jsonify({
