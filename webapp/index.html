@@ -269,8 +269,8 @@
 
     <!-- Scripts -->
     <script>
-        // URL da API (ngrok)
-        const API_URL = 'https://semidramatic-kory-discrepantly.ngrok-free.dev/api';
+        // URL da API (Railway Production)
+        const API_URL = 'https://web-production-a818.up.railway.app/api';
 
         let leads = [];
         let isSearching = false;
@@ -315,8 +315,7 @@
                 const res = await fetch(`${API_URL}/start-search`, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'ngrok-skip-browser-warning': 'true'
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({ nicho, cidade, max_leads: document.getElementById('maxLeadsInput').value })
                 });
@@ -332,9 +331,7 @@
 
             function startPolling() {
                 pollingInterval = setInterval(async () => {
-                    const res = await fetch(`${API_URL}/search-status`, {
-                        headers: { 'ngrok-skip-browser-warning': 'true' }
-                    });
+                    const res = await fetch(`${API_URL}/search-status`);
                     const data = await res.json();
                     updateProgress(data);
                     if (data.leads && data.leads.length > leads.length) {

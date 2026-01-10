@@ -459,7 +459,7 @@ function exportCurrentTab() {
 
 // Busca de Leads via API
 let searchInterval = null;
-const API_URL = 'https://semidramatic-kory-discrepantly.ngrok-free.dev/api';
+const API_URL = 'https://web-production-a818.up.railway.app/api';
 
 async function startSearch() {
     // IDs do novo dashboard (Tailwind)
@@ -496,8 +496,7 @@ async function startSearch() {
         const response = await fetch(`${API_URL}/start-search`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'ngrok-skip-browser-warning': 'true'
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({
                 nicho,
@@ -528,9 +527,7 @@ function startStatusPolling() {
 
     searchInterval = setInterval(async () => {
         try {
-            const response = await fetch(`${API_URL}/search-status`, {
-                headers: { 'ngrok-skip-browser-warning': 'true' }
-            });
+            const response = await fetch(`${API_URL}/search-status`);
             const status = await response.json();
 
             updateSearchProgress(status);
@@ -568,9 +565,7 @@ function updateSearchProgress(status) {
 async function handleSearchComplete() {
     try {
         console.log('🔄 Buscando leads da API...');
-        const response = await fetch(`${API_URL}/get-leads`, {
-            headers: { 'ngrok-skip-browser-warning': 'true' }
-        });
+        const response = await fetch(`${API_URL}/get-leads`);
         const data = await response.json();
         console.log('📦 Dados recebidos:', data);
 
@@ -624,8 +619,7 @@ function resetSearchUI() {
 async function cancelSearch() {
     try {
         await fetch(`${API_URL}/cancel-search`, {
-            method: 'POST',
-            headers: { 'ngrok-skip-browser-warning': 'true' }
+            method: 'POST'
         });
         clearInterval(searchInterval);
         showNotification('🛑 Busca cancelada');
