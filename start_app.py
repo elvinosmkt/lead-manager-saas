@@ -1,5 +1,5 @@
 """
-Servidor Multi-usuário com Fila
+Servidor Multi-usuário com Fila e Isolamento de Sessão
 """
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
@@ -24,7 +24,7 @@ CORS(app)
 # --- CONFIGURAÇÃO DE CONCORRÊNCIA ---
 # No plano Hobby/Starter do Railway, temos ~512MB-1GB RAM.
 # Cada Chrome gasta ~300MB. 
-# MAX_CONCURRENT_SEARCHES = 2 é seguro. 3 é arriscado mas tentável.
+# MAX_CONCURRENT_SEARCHES = 2 é seguro.
 MAX_CONCURRENT_SEARCHES = 2
 semaphore = threading.Semaphore(MAX_CONCURRENT_SEARCHES)
 
@@ -52,6 +52,12 @@ class SearchWorker(threading.Thread):
         
         with semaphore:
             try:
+                # Verifica cancelamento antes de começar
+                if state.get('stop_requested'):
+                     print(f"🛑 [ID: {self.session_id}] Cancelado antes de iniciar.")
+                     state['status'] = 'cancelled'
+                     return
+
                 state['status'] = 'running'
                 state['started_at'] = datetime.now()
                 print(f"🚀 [ID: {self.session_id}] Iniciando busca: {self.nicho} - {self.cidade}")
@@ -75,13 +81,9 @@ class SearchWorker(threading.Thread):
 
                 # Inicia Scraper
                 scraper = GoogleMapsScraperDefinitivo(self.nicho, self.cidade)
-                scraper.on_lead_found_callback = on_lead_found 
+                scraper.on_lead_found_callback = on_lead_found
                 
-                # Injeta a verificação de parada dentro do Scraper também (monkey patching simples)
-                # O scraper deve verificar scraper.should_stop() se implementado, ou podemos checar no callback
-                # Como o callback é chamado a cada lead, se pararmos de consumir, ele termina.
-                # Mas para parar o scroll, precisamos de mais controle. 
-                # Adicionaremos uma função check_stop no scraper.
+                # Injeta a verificação de parada
                 scraper.check_stop = lambda: state.get('stop_requested', False)
                 
                 # Executa
@@ -105,47 +107,115 @@ class SearchWorker(threading.Thread):
                 state['status'] = 'error'
                 state['completed'] = True
             finally:
-                # Libera vaga no semáforo
                 pass
 
-# --- ENDPOINTS ---
-# ... (código existente) ...
+
+# --- ENDPOINTS (RESTAURADOS) ---
+
+@app.route('/')
+def home():
+    return send_from_directory('webapp', 'index.html')
+
+@app.route('/<path:path>')
+def static_files(path):
+    return send_from_directory('webapp', path)
+
+@app.route('/api/start-search', methods=['POST'])
+def start_search():
+    try:
+        data = request.json
+        nicho = data.get('nicho')
+        cidade = data.get('cidade')
+        max_leads = int(data.get('max_leads', 10))
+        user_id = data.get('user_id') # User ID do Supabase
+        
+        # Filtros Opcionais
+        filters = {
+            'site': data.get('filter_site', 'todos'),
+            'whats': data.get('filter_whats', 'todos')
+        }
+
+        if not nicho or not cidade or not user_id:
+            return jsonify({'error': 'Parâmetros inválidos'}), 400
+
+        # Verifica se já existe busca rodando para este user
+        if user_id in active_searches and active_searches[user_id]['status'] in ['running', 'queued']:
+             # Se tiver rodando, retorna session existente ou erro
+             # (Opcional: permitir cancelar anterior implicitamente)
+             pass
+
+        # Inicializa estado
+        active_searches[user_id] = {
+            'status': 'initializing',
+            'leads': [],
+            'leads_found': 0,
+            'total': max_leads,
+            'current': f"Inicializando {nicho}...",
+            'completed': False,
+            'stop_requested': False,
+            'started_at': None
+        }
+
+        # Inicia Worker em Background
+        worker = SearchWorker(user_id, nicho, cidade, max_leads, filters)
+        worker.start()
+
+        return jsonify({'success': True, 'session_id': user_id, 'status': 'queued'})
+
+    except Exception as e:
+        print(f"Erro ao iniciar: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/search-status', methods=['GET'])
+def search_status():
+    session_id = request.args.get('session_id')
+    
+    if not session_id or session_id not in active_searches:
+        return jsonify({'status': 'not_found', 'leads': [], 'leads_found': 0})
+        
+    state = active_searches[session_id]
+    
+    # Retorna resumo
+    return jsonify({
+        'status': state.get('status', 'unknown'),
+        'leads': state.get('leads', [])[-20:], # Retorna apenas ultimos 20 para economizar banda (frontend deve acumular)
+        'leads_found': state.get('leads_found', 0),
+        'current': state.get('current', ''),
+        'completed': state.get('completed', False),
+        'error': state.get('error'),
+        # Info de Fila
+        'position': 1 if state.get('status') == 'queued' else 0 # Simplificado
+    })
 
 @app.route('/api/cancel-search', methods=['POST'])
 def cancel_search():
     try:
         data = request.json or {}
-        # Tenta pegar user_id do body ou query param (para compatibilidade)
         session_id = data.get('user_id') or request.args.get('user_id')
         
         if not session_id or session_id not in active_searches:
             return jsonify({'error': 'Sessão não encontrada'}), 404
             
-        # Marca flag de parada
         active_searches[session_id]['stop_requested'] = True
-        active_searches[session_id]['running'] = False
-        
         print(f"🛑 Solicitado cancelamento para: {session_id}")
+        
         return jsonify({'success': True, 'message': 'Parando busca...'})
     except Exception as e:
-        print(f"Erro ao cancelar: {e}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/reset-status', methods=['POST'])
 def reset_status():
-    # Limpa apenas buscas antigas (garbage collection manual)
     global active_searches
     active_searches = {}
-    
-    # Tenta limpar processos Chrome zumbis (Funciona no Linux/Railway)
     try:
         os.system("pkill chrome")
         os.system("pkill chromium")
-        print("🧹 Memória limpa: Processos Chrome removidos.")
-    except:
-        pass
-        
-    return jsonify({'success': True, 'message': 'Sistema resetado e memória limpa'})
+    except: pass
+    return jsonify({'success': True, 'message': 'Sistema resetado'})
+
+@app.route('/api/health')
+def health():
+    return jsonify({'status': 'ok', 'message': 'Server is running', 'active_searches': len(active_searches)})
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5001))
