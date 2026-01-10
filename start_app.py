@@ -179,7 +179,16 @@ def reset_status():
     # Limpa apenas buscas antigas (garbage collection manual)
     global active_searches
     active_searches = {}
-    return jsonify({'success': True, 'message': 'Sistema resetado'})
+    
+    # Tenta limpar processos Chrome zumbis (Funciona no Linux/Railway)
+    try:
+        os.system("pkill chrome")
+        os.system("pkill chromium")
+        print("🧹 Memória limpa: Processos Chrome removidos.")
+    except:
+        pass
+        
+    return jsonify({'success': True, 'message': 'Sistema resetado e memória limpa'})
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5001))
