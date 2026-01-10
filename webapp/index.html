@@ -35,68 +35,98 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
+            background-color: #0B0F19;
+            color: #fff;
         }
 
         .glass {
-            background: rgba(31, 41, 55, 0.7);
+            background: rgba(21, 27, 43, 0.7);
             backdrop-filter: blur(10px);
         }
 
-        .card-hover:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+        .input-dark {
+            background-color: #0B0F19;
+            border-color: #1E293B;
+            color: white;
         }
 
-        .scrollbar-hide::-webkit-scrollbar {
-            display: none;
+        .input-dark:focus {
+            border-color: #10B981;
+            ring: 1px solid #10B981;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0B0F19;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #1E293B;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #374151;
         }
     </style>
 </head>
 
-<body class="bg-gray-950 text-white min-h-screen pb-20">
+<body class="min-h-screen pb-20">
 
-    <!-- Navbar Fixa -->
-    <nav class="border-b border-gray-800 bg-gray-900/90 backdrop-blur sticky top-0 z-40 shadow-lg">
+    <!-- Navbar Premium -->
+    <nav class="border-b border-dark-700 bg-dark-800 sticky top-0 z-40">
         <div class="max-w-7xl mx-auto px-4">
-            <div class="flex items-center justify-between h-16">
+            <div class="flex items-center justify-between h-18 py-3">
                 <!-- Logo -->
                 <div class="flex items-center gap-3">
                     <div
-                        class="w-9 h-9 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-900/50">
-                        <i class="fas fa-rocket text-white text-sm"></i>
+                        class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-900/50">
+                        <i class="fas fa-rocket text-white"></i>
                     </div>
                     <div>
-                        <span class="font-bold text-lg tracking-tight">LeadManager</span>
-                        <span class="text-[10px] uppercase font-bold text-gray-400 block -mt-1 tracking-widest">CRM &
-                            Scraper</span>
+                        <span class="font-bold text-xl tracking-tight text-white">LeadScraper</span>
+                        <span class="text-[9px] uppercase font-bold text-gray-400 block -mt-1 tracking-widest">Google
+                            Maps Intelligence</span>
                     </div>
                 </div>
 
-                <!-- Status Bar -->
+                <!-- Right Actions -->
                 <div class="flex items-center gap-6">
-                    <!-- Configurar Mensagem -->
                     <button onclick="openScriptModal()"
-                        class="hidden md:flex items-center gap-2 text-sm text-gray-300 hover:text-white bg-gray-800/50 hover:bg-gray-800 px-3 py-1.5 rounded-full border border-gray-700 transition">
-                        <i class="fas fa-comment-dots text-green-400"></i>
-                        <span>Script de Venda</span>
+                        class="hidden md:flex items-center gap-2 text-sm font-medium text-gray-300 hover:text-white transition">
+                        <i class="fas fa-file-alt"></i> Script de Venda
                     </button>
 
-                    <!-- Saldo -->
-                    <div class="bg-gray-800 rounded-full px-4 py-1.5 border border-gray-700 flex items-center gap-2">
-                        <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                        <span class="text-xs text-gray-400 uppercase font-bold">Créditos</span>
-                        <span id="creditsDisplay" class="font-mono font-bold text-green-400">---</span>
-                    </div>
-
-                    <!-- User -->
-                    <div class="flex items-center gap-3">
-                        <div class="text-right hidden sm:block">
-                            <h4 id="userName" class="text-sm font-bold leading-none">Admin</h4>
-                            <span class="text-xs text-blue-400">Plano Pro</span>
+                    <!-- Credits Badge -->
+                    <a href="credits.html"
+                        class="group flex items-center gap-3 bg-dark-900 border border-dark-700 hover:border-primary-500 rounded-full pl-4 pr-2 py-1.5 transition cursor-pointer">
+                        <div class="flex flex-col items-end leading-none">
+                            <span
+                                class="text-[10px] text-gray-500 font-bold uppercase group-hover:text-primary-500 transition">Créditos</span>
+                            <span id="creditsDisplay" class="font-bold text-white text-sm">PRO</span>
                         </div>
-                        <div class="w-9 h-9 rounded-full bg-gradient-to-r from-gray-700 to-gray-600 border-2 border-gray-800 shadow-xl overflow-hidden cursor-pointer"
-                            onclick="logout()">
-                            <img src="https://ui-avatars.com/api/?name=Admin&background=random" alt="User">
+                        <div
+                            class="w-7 h-7 bg-blue-600 rounded-full flex items-center justify-center group-hover:bg-primary-500 transition">
+                            <i class="fas fa-plus text-xs"></i>
+                        </div>
+                    </a>
+
+                    <!-- User Profile -->
+                    <div class="flex items-center gap-3 cursor-pointer pl-4 border-l border-dark-700"
+                        onclick="openProfileModal()">
+                        <div class="text-right hidden sm:block">
+                            <h4 id="userName" class="text-sm font-bold text-white leading-none">Admin</h4>
+                            <span
+                                class="text-[10px] text-primary-500 font-bold uppercase bg-primary-500/10 px-1.5 rounded">ONLINE</span>
+                        </div>
+                        <div
+                            class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-sm font-bold border-2 border-dark-800">
+                            AD
                         </div>
                     </div>
                 </div>
@@ -106,199 +136,166 @@
 
     <main class="max-w-7xl mx-auto px-4 mt-8">
 
-        <!-- Área de Busca (Compacta) -->
-        <div
-            class="bg-gradient-to-r from-gray-900 to-gray-800 rounded-2xl p-1 shadow-2xl border border-gray-800 mb-10 overflow-hidden relative group">
-            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition">
-                <i class="fas fa-search text-6xl"></i>
-            </div>
+        <!-- Search Area Premium -->
+        <div class="bg-dark-800 rounded-2xl p-6 border border-dark-700 shadow-2xl mb-8">
 
-            <div class="bg-gray-900/90 p-6 rounded-xl backdrop-blur-sm">
-                <div class="flex flex-col md:flex-row gap-4 items-end">
-                    <div class="flex-1 w-full space-y-1">
-                        <label class="text-xs font-bold text-gray-400 uppercase ml-1">Nicho</label>
-                        <div class="relative">
-                            <i class="fas fa-tag absolute left-4 top-3.5 text-gray-500"></i>
-                            <input type="text" id="nichoInput" placeholder="Ex: Pizzaria, Dentista..."
-                                class="w-full bg-gray-950 border border-gray-700 rounded-xl pl-10 pr-4 py-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition shadow-inner">
-                        </div>
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                <!-- Nicho -->
+                <div class="md:col-span-3 space-y-1.5">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">Nicho</label>
+                    <div class="relative group">
+                        <i
+                            class="fas fa-tag absolute left-4 top-3.5 text-gray-500 group-focus-within:text-white transition"></i>
+                        <input type="text" id="nichoInput" placeholder="Ex: Pizzaria"
+                            class="w-full bg-dark-900 border border-dark-700 rounded-xl pl-10 pr-4 py-3 text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500 outline-none transition input-dark">
                     </div>
+                </div>
 
-                    <div class="flex-1 w-full space-y-1">
-                        <label class="text-xs font-bold text-gray-400 uppercase ml-1">Cidade</label>
-                        <div class="relative">
-                            <i class="fas fa-location-dot absolute left-4 top-3.5 text-gray-500"></i>
-                            <input type="text" id="cidadeInput" placeholder="Ex: Centro, São Paulo..."
-                                class="w-full bg-gray-950 border border-gray-700 rounded-xl pl-10 pr-4 py-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition shadow-inner">
-                        </div>
+                <!-- Cidade -->
+                <div class="md:col-span-3 space-y-1.5">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">Cidade</label>
+                    <div class="relative group">
+                        <i
+                            class="fas fa-location-dot absolute left-4 top-3.5 text-gray-500 group-focus-within:text-white transition"></i>
+                        <input type="text" id="cidadeInput" placeholder="Ex: Curitiba"
+                            class="w-full bg-dark-900 border border-dark-700 rounded-xl pl-10 pr-4 py-3 text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500 outline-none transition input-dark">
                     </div>
+                </div>
 
-                    <div class="w-32 space-y-1">
-                        <label class="text-xs font-bold text-gray-400 uppercase ml-1">Qtd</label>
+                <!-- Qtd -->
+                <div class="md:col-span-2 space-y-1.5">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">Quantidade</label>
+                    <div class="relative">
+                        <i class="fas fa-hashtag absolute left-4 top-3.5 text-gray-500"></i>
                         <select id="maxLeadsInput"
-                            class="w-full bg-gray-950 border border-gray-700 rounded-xl px-3 py-3 text-white outline-none">
-                            <option value="10">10 Leads</option>
-                            <option value="50">50 Leads</option>
-                            <option value="100">100 Leads</option>
+                            class="w-full bg-dark-900 border border-dark-700 rounded-xl pl-10 pr-8 py-3 text-white appearance-none focus:border-primary-500 outline-none cursor-pointer">
+                            <option value="10"># 10 Leads</option>
+                            <option value="50"># 50 Leads</option>
+                            <option value="100"># 100 Leads</option>
                         </select>
+                        <i
+                            class="fas fa-chevron-down absolute right-4 top-4 text-gray-600 text-xs pointer-events-none"></i>
                     </div>
+                </div>
 
-                    <div class="w-40 space-y-1">
-                        <label class="text-xs font-bold text-gray-400 uppercase ml-1">Site</label>
+                <!-- Filtro Site -->
+                <div class="md:col-span-2 space-y-1.5">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">Status Site</label>
+                    <div class="relative">
+                        <i class="fas fa-globe absolute left-4 top-3.5 text-gray-500"></i>
                         <select id="filterSiteInput"
-                            class="w-full bg-gray-950 border border-gray-700 rounded-xl px-3 py-3 text-white outline-none">
+                            class="w-full bg-dark-900 border border-dark-700 rounded-xl pl-10 pr-8 py-3 text-white appearance-none focus:border-primary-500 outline-none cursor-pointer">
                             <option value="todos">🌐 Todos</option>
-                            <option value="sem-site">🚫 Sem Site</option>
+                            <option value="sem-site" selected>🔥 Sem Site (Hot)</option>
                             <option value="com-site">✅ Com Site</option>
                         </select>
+                        <i
+                            class="fas fa-chevron-down absolute right-4 top-4 text-gray-600 text-xs pointer-events-none"></i>
                     </div>
-
-                    <div class="w-44 space-y-1">
-                        <label class="text-xs font-bold text-gray-400 uppercase ml-1">WhatsApp</label>
-                        <select id="filterWhatsInput"
-                            class="w-full bg-gray-950 border border-gray-700 rounded-xl px-3 py-3 text-white outline-none">
-                            <option value="todos">📱 Todos</option>
-                            <option value="com-whats">✅ Com WhatsApp</option>
-                            <option value="sem-whats">🚫 Sem WhatsApp</option>
-                        </select>
-                    </div>
-
-                    <button id="btnSearch" onclick="startSearch()"
-                        class="w-full md:w-auto bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-blue-900/30 transition transform active:scale-95 flex items-center justify-center gap-2 border border-blue-500/50">
-                        <i class="fas fa-search"></i>
-                        <span>BUSCAR</span>
-                    </button>
-
-                    <button id="btnStop" onclick="stopSearch()"
-                        class="hidden w-full md:w-auto bg-red-600 hover:bg-red-500 text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-red-900/30 transition transform active:scale-95 flex items-center justify-center gap-2 border border-red-500/50">
-                        <i class="fas fa-stop"></i>
-                        <span>PARAR</span>
-                    </button>
                 </div>
 
-                <!-- Barra de Progresso Integrada -->
-                <div id="progressContainer"
-                    class="hidden mt-6 bg-gray-800 rounded-lg p-3 flex items-center gap-4 border border-gray-700">
-                    <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
-                        <i class="fas fa-spinner fa-spin text-blue-400"></i>
+                <!-- Action Button -->
+                <div class="md:col-span-2">
+                    <button id="btnSearch" onclick="startSearch()"
+                        class="w-full bg-primary-500 hover:bg-primary-600 text-white font-bold py-3 rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.3)] transition transform active:scale-95 flex items-center justify-center gap-2">
+                        <i class="fas fa-search"></i>
+                        <span>INICIAR BUSCA</span>
+                    </button>
+                    <button id="btnStop" onclick="stopSearch()"
+                        class="hidden w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3 rounded-xl shadow-lg transition flex items-center justify-center gap-2">
+                        <i class="fas fa-stop"></i> PARAR
+                    </button>
+                </div>
+            </div>
+
+            <!-- Progress Bar Premium -->
+            <div id="progressContainer" class="hidden mt-6 pt-6 border-t border-dark-700">
+                <div class="flex justify-between items-end mb-2">
+                    <div class="flex items-center gap-3">
+                        <div class="w-2 h-2 bg-primary-500 rounded-full animate-pulse"></div>
+                        <span class="text-primary-500 font-bold text-sm tracking-wide" id="currentBusiness">Coletando
+                            dados...</span>
                     </div>
-                    <div class="flex-1">
-                        <div class="flex justify-between text-xs mb-1">
-                            <span class="text-blue-300 font-bold" id="currentBusiness">Iniciando motor de
-                                busca...</span>
-                            <span class="text-gray-400 font-mono"><span id="leadsFoundCount">0</span> leads</span>
-                        </div>
-                        <div class="w-full bg-gray-700 rounded-full h-1.5">
-                            <div id="progressBar" class="bg-blue-500 h-1.5 rounded-full transition-all duration-300"
-                                style="width: 0%"></div>
-                        </div>
-                    </div>
+                    <span class="text-white font-mono font-bold"><span id="leadsFoundCount"
+                            class="text-primary-500">0</span> leads encontrados</span>
+                </div>
+                <div class="w-full bg-dark-900 rounded-full h-2 overflow-hidden border border-dark-700">
+                    <div id="progressBar"
+                        class="bg-primary-500 h-full rounded-full transition-all duration-300 shadow-[0_0_10px_rgba(16,185,129,0.5)]"
+                        style="width: 0%"></div>
                 </div>
             </div>
         </div>
 
-        <!-- Filtros de Funil e Busca Avançada -->
-        <div class="flex flex-col md:flex-row gap-4 mb-6">
-            <!-- Filtros de Status (Abas) -->
-            <div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide flex-1">
+        <!-- Toolbar & Filters -->
+        <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
+            <div class="flex bg-dark-800 p-1 rounded-xl border border-dark-700">
                 <button onclick="filterLeads('all')"
-                    class="filter-btn active bg-white text-gray-900 px-4 py-3 rounded-full text-sm font-bold shadow-lg transition"
+                    class="filter-btn active px-4 py-2 rounded-lg text-sm font-medium text-white bg-dark-700 shadow transition"
                     data-status="all">
-                    Todos <span id="countAll"
-                        class="bg-gray-200 text-gray-800 px-1.5 py-0.5 rounded-full text-[10px] ml-1">0</span>
+                    Todos <span id="countAll" class="ml-1 opacity-60 text-xs">0</span>
                 </button>
-                <button onclick="filterLeads('contacted')"
-                    class="filter-btn bg-gray-800 border border-gray-700 text-green-400 px-4 py-3 rounded-full text-sm font-medium hover:bg-gray-700 transition"
-                    data-status="contacted">
-                    Contactados
+                <button onclick="filterLeads('interested')"
+                    class="filter-btn px-4 py-2 rounded-lg text-sm font-medium text-gray-400 hover:text-white transition"
+                    data-status="interested">
+                    Interessados
+                </button>
+                <button onclick="filterLeads('discarded')"
+                    class="filter-btn px-4 py-2 rounded-lg text-sm font-medium text-gray-400 hover:text-white transition"
+                    data-status="discarded">
+                    Descartados
                 </button>
             </div>
 
-            <!-- Filtros de Texto (Cidade/Area) -->
-            <div class="flex gap-2">
-                <div class="relative flex-1 md:flex-none">
-                    <i class="fas fa-map-marker-alt absolute left-3 top-3 text-gray-500 text-xs"></i>
+            <div class="flex gap-3">
+                <div class="relative">
+                    <i class="fas fa-filter absolute left-3 top-3 text-gray-500 text-xs"></i>
                     <input type="text" id="filterCity" list="citiesList" oninput="applyFilters()"
-                        placeholder="Filtrar Cidade"
-                        class="bg-gray-900 border border-gray-700 rounded-xl pl-8 pr-3 py-2.5 text-sm text-white focus:border-blue-500 outline-none w-full md:w-44 transition shadow-inner">
+                        placeholder="Filtrar por nome..."
+                        class="bg-dark-800 border border-dark-700 rounded-lg pl-8 pr-3 py-2 text-sm text-white focus:border-primary-500 outline-none w-48">
                     <datalist id="citiesList"></datalist>
                 </div>
-                <div class="relative flex-1 md:flex-none">
-                    <i class="fas fa-briefcase absolute left-3 top-3 text-gray-500 text-xs"></i>
-                    <input type="text" id="filterNiche" list="nichesList" oninput="applyFilters()"
-                        placeholder="Filtrar Nicho"
-                        class="bg-gray-900 border border-gray-700 rounded-xl pl-8 pr-3 py-2.5 text-sm text-white focus:border-blue-500 outline-none w-full md:w-44 transition shadow-inner">
-                    <datalist id="nichesList"></datalist>
-                </div>
+                <button onclick="exportToExcel()"
+                    class="bg-white text-dark-900 hover:bg-gray-100 font-bold px-4 py-2 rounded-lg text-sm transition flex items-center gap-2">
+                    <i class="fas fa-download"></i> Exportar
+                </button>
             </div>
-
-            <button onclick="exportToExcel()"
-                class="bg-gray-800 hover:bg-gray-700 text-gray-100 border border-gray-600 rounded-xl px-4 py-2 text-sm font-medium transition flex items-center gap-2">
-                <i class="fas fa-download"></i> Exportar
-            </button>
         </div>
 
-        <!-- Grid de Cards (CRM) -->
-        <div id="leadsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            <!-- Empty State -->
-            <div id="emptyState"
-                class="col-span-full py-20 text-center border-2 border-dashed border-gray-800 rounded-3xl bg-gray-900/30">
-                <div class="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i class="fas fa-ghost text-3xl text-gray-600"></i>
-                </div>
-                <h3 class="text-xl font-bold text-gray-300">Nenhum lead por aqui</h3>
-                <p class="text-gray-500 mt-2 max-w-sm mx-auto">Faça uma busca acima para encontrar empresas sem site e
-                    começar a vender.</p>
-            </div>
+        <!-- Grid de Cards Premium -->
+        <div id="leadsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            <!-- Template JS Render -->
         </div>
 
     </main>
 
-    <!-- Modal: Script de Venda -->
+    <!-- Script Modal -->
     <div id="scriptModal"
         class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div
-            class="bg-gray-900 border border-gray-800 rounded-2xl w-full max-w-lg shadow-2xl transform transition-all p-6">
+        <div class="bg-dark-800 border border-dark-700 rounded-2xl w-full max-w-lg shadow-2xl p-6">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-xl font-bold flex items-center gap-2">
-                    <i class="fab fa-whatsapp text-green-500"></i> Configurar Abordagem
-                </h3>
+                <h3 class="text-lg font-bold text-white flex items-center gap-2"><i
+                        class="fas fa-file-alt text-primary-500"></i> Script de Venda</h3>
                 <button onclick="closeScriptModal()" class="text-gray-500 hover:text-white"><i
                         class="fas fa-times"></i></button>
             </div>
-
-            <div class="space-y-4">
-                <div class="bg-blue-500/10 border border-blue-500/20 p-4 rounded-lg text-sm text-blue-200">
-                    <p class="font-bold mb-1"><i class="fas fa-info-circle"></i> Variáveis:</p>
-                    <code class="bg-black/30 px-1 rounded text-blue-300">{nome}</code>, <code
-                        class="bg-black/30 px-1 rounded text-blue-300">{nicho}</code>, <code
-                        class="bg-black/30 px-1 rounded text-blue-300">{cidade}</code>
-                </div>
-
-                <textarea id="msgTemplate" rows="6"
-                    class="w-full bg-gray-950 border border-gray-700 rounded-xl p-4 text-gray-300 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none resize-none"
-                    placeholder="Olá, vi a {nome} no Google..."></textarea>
-            </div>
-
-            <div class="mt-6 flex justify-end gap-3">
-                <button onclick="resetScript()" class="px-4 py-2 text-gray-400 hover:text-white text-sm">Padrão</button>
+            <textarea id="msgTemplate" rows="6"
+                class="w-full bg-dark-900 border border-dark-700 rounded-xl p-4 text-gray-300 focus:border-primary-500 outline-none resize-none mb-4 text-sm font-mono"></textarea>
+            <div class="flex justify-end gap-3">
                 <button onclick="saveScript()"
-                    class="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-6 rounded-lg shadow-lg shadow-green-900/30 transition">
-                    Salvar
-                </button>
+                    class="bg-primary-500 hover:bg-primary-600 text-white font-bold py-2 px-6 rounded-lg transition">Salvar
+                    Configuração</button>
             </div>
         </div>
     </div>
 
-    <!-- Supabase Client -->
+    <!-- Supabase Client & Logic -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-client.js"></script>
-
     <script>
         // --- CONFIGURAÇÕES GLOBAIS ---
         const API_URL = 'https://web-production-a818.up.railway.app/api';
 
-        // Estado da Aplicação
         let state = {
             leads: [],
             isSearching: false,
@@ -335,7 +332,6 @@
 
             } catch (error) {
                 console.error("Erro crítico na inicialização:", error);
-                // Se for erro de token, limpa e redireciona
                 if (error.message && error.message.includes('token')) {
                     localStorage.clear();
                     window.location.href = 'login.html';
@@ -353,10 +349,6 @@
             if (!nicho || !cidade) return alert('Por favor, preencha Nicho e Cidade.');
 
             toggleSearchUI(true);
-
-            // Limpa leads antigos da visualização (opcional, pode manter histórico)
-            // state.leads = []; 
-            // renderLeads();
 
             try {
                 console.log('🚀 Iniciando busca:', { nicho, cidade, qtd });
@@ -385,7 +377,7 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    showNotification('Busca iniciada! Acompanhe o progresso.', 'success');
+                    // showNotification('Busca iniciada! Acompanhe o progresso.', 'success');
                     startPolling();
                 } else {
                     throw new Error(data.error || 'Falha ao iniciar busca.');
@@ -417,22 +409,18 @@
                 try {
                     const res = await fetch(`${API_URL}/search-status?session_id=${state.sessionId}`);
 
-                    // Proteção contra resposta não-JSON
                     const contentType = res.headers.get("content-type");
                     if (!contentType || !contentType.includes("application/json")) return;
 
                     const data = await res.json();
 
-                    // Atualiza UI de Progresso
                     updateProgressUI(data);
 
-                    // Streaming de Leads (Adiciona novos sem piscar a tela)
                     if (data.leads && data.leads.length > 0) {
                         let novos = 0;
                         data.leads.forEach(newLead => {
-                            // Verifica se já existe pelo nome (evita duplicatas visuais)
                             if (!state.leads.some(l => l.nome === newLead.nome)) {
-                                state.leads.unshift(newLead); // Adiciona no topo
+                                state.leads.unshift(newLead);
                                 novos++;
                             }
                         });
@@ -440,15 +428,12 @@
                         if (novos > 0) renderLeads();
                     }
 
-                    // Checa finalização
                     if (data.completed || (data.status !== 'running' && data.status !== 'queued' && data.status !== 'initializing')) {
                         stopSearch();
 
                         if (data.status === 'error') {
                             alert('A busca parou com erro: ' + data.error);
                         } else {
-                            showNotification(`Busca finalizada! ${data.leads_found} encontrados.`, 'success');
-                            // Sincroniza via API para garantir IDs corretos
                             setTimeout(async () => {
                                 state.leads = await LeadAPI.getAll();
                                 renderLeads();
@@ -466,17 +451,14 @@
         function renderLeads() {
             const grid = document.getElementById('leadsGrid');
             grid.innerHTML = '';
-
             const cityFilter = document.getElementById('filterCity').value.toLowerCase();
 
-            // Filtra leads
             const filtered = state.leads.filter(l => {
                 if (state.filterStatus !== 'all' && (l.status || 'new') !== state.filterStatus) return false;
                 if (cityFilter && !(l.cidade || '').toLowerCase().includes(cityFilter)) return false;
                 return true;
             });
 
-            // Atualiza contadores
             document.getElementById('countAll').innerText = state.leads.length;
 
             if (filtered.length === 0) {
@@ -493,8 +475,7 @@
                 const hasWhats = l.whatsapp && l.whatsapp.length > 5;
                 const card = document.createElement('div');
 
-                // Design do Card
-                card.className = "bg-gray-900 border border-gray-800 rounded-2xl p-5 shadow-lg relative group transition hover:border-gray-700";
+                card.className = "bg-dark-800 border border-dark-700 rounded-xl p-5 shadow-lg relative group transition hover:border-dark-600";
 
                 card.innerHTML = `
                    <div class="flex justify-between items-start mb-3">
@@ -521,148 +502,116 @@
                              <span class="line-clamp-2 leading-relaxed">${l.endereco || 'Endereço não disponível'}</span>
                         </p>
                         <div class="flex items-center gap-2">
-                             <div class="bg-gray-950 border border-gray-800 px-2 py-1.5 rounded text-xs font-mono text-gray-300 flex-1 truncate">
+                             <div class="bg-dark-900 border border-dark-700 px-2 py-1.5 rounded text-xs font-mono text-gray-300 flex-1 truncate">
                                 ${l.telefone || 'Sem Telefone'}
                              </div>
-                             <a href="${l.google_maps_link}" target="_blank" class="bg-gray-950 border border-gray-800 px-2 py-1.5 rounded text-blue-400 hover:text-white hover:bg-blue-600 transition">
+                             <a href="${l.google_maps_link}" target="_blank" class="bg-dark-900 border border-dark-700 px-2 py-1.5 rounded text-blue-400 hover:text-white hover:bg-blue-600 transition">
                                 <i class="fas fa-external-link-alt"></i>
                              </a>
                         </div>
                     </div>
 
-                    <div class="flex gap-2 pt-3 border-t border-gray-800">
+                    <div class="flex gap-2 pt-3 border-t border-dark-700">
                         <button onclick="sendWhatsapp('${l.whatsapp}', '${l.nome}', '${l.cidade}', '${l.nicho}')" 
-                             class="flex-1 ${hasWhats ? 'bg-green-600 hover:bg-green-500 text-white' : 'bg-gray-700 text-gray-500 cursor-not-allowed'} font-bold py-2 rounded-lg text-xs flex items-center justify-center gap-2 transition">
+                             class="flex-1 ${hasWhats ? 'bg-primary-600 hover:bg-primary-500 text-white' : 'bg-dark-700 text-gray-500 cursor-not-allowed'} font-bold py-2 rounded-lg text-xs flex items-center justify-center gap-2 transition">
                              <i class="fab fa-whatsapp text-sm"></i> ABORDAR
                         </button>
                     </div>
                 `;
                 grid.appendChild(card);
             });
-            document.getElementById('countAll').innerText = leads.length;
         }
 
-        // --- Perfil User ---
-        async function openProfileModal() {
-            const user = await LeadAPI.getUser();
-            if (!user) return;
+        function toggleSearchUI(searching) {
+            state.isSearching = searching;
+            const btnSearch = document.getElementById('btnSearch');
+            const btnStop = document.getElementById('btnStop');
+            const progress = document.getElementById('progressContainer');
 
-            // Cria modal dinâmicamente se não existir
-            if (!document.getElementById('profileModal')) {
-                const modal = document.createElement('div');
-                modal.id = 'profileModal';
-                modal.className = 'fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden';
-                modal.innerHTML = `
-                    <div class="bg-gray-900 border border-gray-800 rounded-2xl w-full max-w-sm shadow-2xl p-6 relative">
-                        <button onclick="document.getElementById('profileModal').classList.add('hidden')" class="absolute top-4 right-4 text-gray-500 hover:text-white"><i class="fas fa-times"></i></button>
-                        <div class="text-center mb-6">
-                            <div class="w-20 h-20 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full mx-auto flex items-center justify-center text-3xl font-bold mb-3">
-                                ${user.email[0].toUpperCase()}
-                            </div>
-                            <h3 class="text-xl font-bold text-white">${user.email.split('@')[0]}</h3>
-                            <p class="text-sm text-gray-500">${user.email}</p>
-                        </div>
-                        <div class="space-y-3">
-                            <div class="bg-gray-950 p-3 rounded-lg border border-gray-800 flex justify-between">
-                                <span class="text-gray-400 text-sm">Plano</span>
-                                <span class="text-green-400 text-sm font-bold">PRO (Beta)</span>
-                            </div>
-                            <div class="bg-gray-950 p-3 rounded-lg border border-gray-800 flex justify-between">
-                                <span class="text-gray-400 text-sm">ID</span>
-                                <span class="text-gray-600 text-xs font-mono">${user.id.substr(0, 8)}...</span>
-                            </div>
-                        </div>
-                        <button onclick="logout()" class="w-full mt-6 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/30 font-bold py-2 rounded-xl transition">
-                            Sair do Sistema
-                        </button>
-                    </div>
-                 `;
-                document.body.appendChild(modal);
-            }
-            document.getElementById('profileModal').classList.remove('hidden');
-        }
-        function sendWhatsapp(phone, name, city, niche, btn) {
-            if (!phone) return alert('Telefone não disponível');
-            const msg = (localStorage.getItem('leadManager_msg') || msgTemplate)
-                .replace(/{nome}/g, name).replace(/{nicho}/g, niche).replace(/{cidade}/g, city);
-            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
-            const lead = leads.find(l => l.nome === name);
-            if (lead) {
-                lead.status = 'contacted';
-                renderLeads();
-                // Salvar status contatado
-                LeadAPI.save(lead).catch(console.error);
+            if (searching) {
+                btnSearch.classList.add('hidden');
+                btnStop.classList.remove('hidden');
+                progress.classList.remove('hidden');
+            } else {
+                btnSearch.classList.remove('hidden');
+                btnStop.classList.add('hidden');
+                progress.classList.add('hidden');
             }
         }
 
-        function updateStats() {
-            // Conta leads por status
-            const total = leads.length;
-            const novos = leads.filter(l => !l.status || l.status === 'new').length;
-            const contatados = leads.filter(l => l.status === 'contacted').length;
-            const interessados = leads.filter(l => l.status === 'interested').length;
+        function updateProgressUI(data) {
+            if (data.status === 'running' || data.status === 'initializing') {
+                document.getElementById('currentBusiness').innerText = data.current || "Processando...";
+                document.getElementById('leadsFoundCount').innerText = data.leads_found || 0;
 
-            document.getElementById('countAll').innerText = total;
-            // Se tiver elementos para os outros contadores, atualize-os aqui
-            // Ex: document.getElementById('countNew').innerText = novos;
-
-            if (document.getElementById('emptyState')) {
-                document.getElementById('emptyState').style.display = total === 0 ? 'block' : 'none';
-            }
-
-            // Atualiza opções de filtro dinâmicas
-            updateFilterOptions();
-        }
-
-        function updateFilterOptions() {
-            // Extrai cidades e nichos únicos
-            const cities = [...new Set(leads.map(l => l.cidade).filter(Boolean))].sort();
-            const niches = [...new Set(leads.map(l => l.nicho).filter(Boolean))].sort();
-
-            const citiesList = document.getElementById('citiesList');
-            const nichesList = document.getElementById('nichesList');
-
-            // Só atualiza se o elemento não estiver em foco (para não atrapalhar digitação)
-            if (document.activeElement !== document.getElementById('filterCity')) {
-                citiesList.innerHTML = cities.map(c => `<option value="${c}">`).join('');
-            }
-            if (document.activeElement !== document.getElementById('filterNiche')) {
-                nichesList.innerHTML = niches.map(n => `<option value="${n}">`).join('');
+                const maxLeads = parseInt(document.getElementById('maxLeadsInput').value) || 10;
+                const pct = Math.min(100, Math.round((data.leads_found / maxLeads) * 100));
+                document.getElementById('progressBar').style.width = `${pct}%`;
             }
         }
 
-        async function changeStatus(name, status) {
-            const lead = leads.find(l => l.nome === name);
-            if (lead) {
-                lead.status = status;
-                renderLeads();
-
-                // Salvar no Supabase
-                try {
-                    // Precisamos do ID para update, se não tiver ID (lead novo da memória), buscamos pelo nome ou usamos save que trata
-                    await LeadAPI.save(lead);
-                } catch (e) {
-                    console.error('Erro ao salvar status:', e);
+        function filterLeads(status) {
+            state.filterStatus = status;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                if (btn.dataset.status === status) {
+                    btn.classList.add('bg-dark-700', 'text-white', 'shadow');
+                    btn.classList.remove('text-gray-400', 'bg-transparent');
+                } else {
+                    btn.classList.remove('bg-dark-700', 'text-white', 'shadow');
+                    btn.classList.add('text-gray-400', 'bg-transparent');
                 }
-            }
+            });
+            renderLeads();
+        }
+
+        function applyFilters() { renderLeads(); }
+
+        function sendWhatsapp(num, nome, cidade, nicho) {
+            if (!num || num.length < 5) return alert('Sem número de WhatsApp válido.');
+
+            let msg = getMessageTemplate();
+            msg = msg.replace(/{nome}/g, nome)
+                .replace(/{cidade}/g, cidade || '')
+                .replace(/{nicho}/g, nicho || '');
+
+            const cleanNum = num.replace(/\D/g, '');
+            window.open(`https://wa.me/${cleanNum}?text=${encodeURIComponent(msg)}`, '_blank');
+        }
+
+        function loadMessageTemplate() {
+            try {
+                const saved = localStorage.getItem('leadManager_msg');
+                if (saved) document.getElementById('msgTemplate').value = saved;
+                else document.getElementById('msgTemplate').value = "Olá! Vi a {nome} no Google...";
+            } catch (e) { console.error(e); }
+        }
+
+        function saveScript() {
+            const val = document.getElementById('msgTemplate').value;
+            localStorage.setItem('leadManager_msg', val);
+            alert('Script de venda salvo!');
+            closeScriptModal();
+        }
+
+        function getMessageTemplate() {
+            return document.getElementById('msgTemplate').value || "Olá {nome}!";
         }
 
         function openScriptModal() { document.getElementById('scriptModal').classList.remove('hidden'); }
         function closeScriptModal() { document.getElementById('scriptModal').classList.add('hidden'); }
-        function saveScript() { localStorage.setItem('leadManager_msg', document.getElementById('msgTemplate').value); closeScriptModal(); }
-        function resetScript() { document.getElementById('msgTemplate').value = "Olá! Encontrei a *{nome}* no Google Maps aqui de {cidade}..."; }
+        function openProfileModal() { window.location.href = 'profile.html'; }
+
+        function exportToExcel() {
+            if (state.leads.length === 0) return alert("Nada para exportar.");
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(state.leads);
+            XLSX.utils.book_append_sheet(wb, ws, "Leads");
+            XLSX.writeFile(wb, "LeadScraper_Export.xlsx");
+        }
 
         async function logout() {
             await LeadAPI.logout();
             window.location.href = 'login.html';
-        }
-
-        function exportToExcel() {
-            if (typeof XLSX === 'undefined') return alert('Biblioteca Excel não carregada');
-            const ws = XLSX.utils.json_to_sheet(leads);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Leads");
-            XLSX.writeFile(wb, "prospects.xlsx");
         }
     </script>
 </body>
