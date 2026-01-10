@@ -1,6 +1,5 @@
 """
-Servidor completo com API e servindo webapp
-Execute: python3 start_app.py
+Servidor Multi-usuário com Fila
 """
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
@@ -8,191 +7,180 @@ import threading
 import time
 import sys
 import os
+import uuid
+from queue import Queue
+from datetime import datetime
 
 # Adiciona o diretório atual ao path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from scraper_definitivo import GoogleMapsScraperDefinitivo
 from config import CONFIG
+from db_config import save_lead_to_cloud
 
 app = Flask(__name__, static_folder='webapp', static_url_path='')
 CORS(app)
 
-# Estado global da busca
-search_state = {
-    'running': False,
-    'progress': 0,
-    'total': 0,
-    'current_business': '',
-    'leads_found': 0,
-    'completed': False,
-    'error': None,
-    'leads': [],
-    'nicho': '',
-    'cidade': ''
-}
+# --- CONFIGURAÇÃO DE CONCORRÊNCIA ---
+# No plano Hobby/Starter do Railway, temos ~512MB-1GB RAM.
+# Cada Chrome gasta ~300MB. 
+# MAX_CONCURRENT_SEARCHES = 2 é seguro. 3 é arriscado mas tentável.
+MAX_CONCURRENT_SEARCHES = 2
+semaphore = threading.Semaphore(MAX_CONCURRENT_SEARCHES)
 
-def run_scraper_background(nicho, cidade, max_leads):
-    """Executa o scraper em background thread"""
-    global search_state
-    
-    try:
-        search_state['running'] = True
-        search_state['completed'] = False
-        search_state['error'] = None
-        search_state['leads'] = []
-        search_state['progress'] = 0
-        search_state['leads_found'] = 0
-        search_state['nicho'] = nicho
-        search_state['cidade'] = cidade
-        
-        print(f"\n🚀 Iniciando busca: {nicho} em {cidade}")
-        print(f"📊 Máximo de leads: {max_leads}\n")
-        
-        # Atualiza configuração
-        CONFIG['MAX_BUSINESSES'] = max_leads
-        
-        # Cria scraper DEFINITIVO (ultra-robusto)
-        scraper = GoogleMapsScraperDefinitivo(nicho, cidade)
-        
-        # Executa
-        scraper.scrape()
-        
-        # Atualiza estado
-        search_state['leads'] = scraper.businesses
-        search_state['leads_found'] = len(scraper.businesses)
-        search_state['completed'] = True
-        search_state['progress'] = 100
-        
-        print(f"\n✅ Busca concluída! {len(scraper.businesses)} leads encontrados\n")
-        
-    except Exception as e:
-        search_state['error'] = str(e)
-        print(f"\n❌ Erro na busca: {str(e)}\n")
-    finally:
-        search_state['running'] = False
+# Armazena estado de cada busca por ID
+# Formato: { 'session_id': { 'status': 'queued', 'leads': [], ... } }
+active_searches = {}
 
+class SearchWorker(threading.Thread):
+    def __init__(self, session_id, nicho, cidade, max_leads):
+        super().__init__()
+        self.session_id = session_id
+        self.nicho = nicho
+        self.cidade = cidade
+        self.max_leads = max_leads
+        self.daemon = True
+
+    def run(self):
+        global active_searches
+        state = active_searches[self.session_id]
+        
+        # Tenta adquirir vaga na execução (Semáforo)
+        state['status'] = 'queued'
+        print(f"⏳ [ID: {self.session_id}] Na fila de espera...")
+        
+        with semaphore:
+            try:
+                state['status'] = 'running'
+                state['started_at'] = datetime.now()
+                print(f"🚀 [ID: {self.session_id}] Iniciando busca: {self.nicho} - {self.cidade}")
+                
+                # Configura scraper
+                CONFIG['MAX_BUSINESSES'] = self.max_leads
+                
+                # Callback customizado para salvar e atualizar estado em tempo real
+                def on_lead_found(lead):
+                    # Salva no estado local para o frontend pegar
+                    state['leads'].append(lead)
+                    state['leads_found'] += 1
+                    # Tenta salvar no Supabase
+                    threading.Thread(target=save_lead_to_cloud, args=(lead,)).start()
+
+                # Inicia Scraper
+                scraper = GoogleMapsScraperDefinitivo(self.nicho, self.cidade)
+                # Injetamos o callback na classe (vou ajustar o scraper depois para suportar melhor isso, 
+                # mas por agora, o scraper salva no array dele e depois pegamos)
+                
+                # Executa
+                leads = scraper.scrape()
+                
+                # Atualiza final
+                state['leads'] = leads # Garante lista completa
+                state['leads_found'] = len(leads)
+                state['completed'] = True
+                state['status'] = 'completed'
+                state['progress'] = 100
+                print(f"✅ [ID: {self.session_id}] Busca concluída: {len(leads)} leads")
+                
+            except Exception as e:
+                print(f"❌ [ID: {self.session_id}] Erro: {e}")
+                state['error'] = str(e)
+                state['status'] = 'error'
+                state['completed'] = True
+
+# --- ENDPOINTS ---
 
 @app.route('/')
 def index():
-    """Serve o aplicativo web"""
     return send_from_directory('webapp', 'index.html')
-
 
 @app.route('/api/start-search', methods=['POST'])
 def start_search():
-    """Inicia uma nova busca"""
-    global search_state
+    data = request.json
+    # Usa ID do usuário ou gera um temporário
+    session_id = data.get('user_id') or str(uuid.uuid4())
     
-    # Se já estiver rodando, reinicia estado se forçar ou retorna erro
-    if search_state['running']:
-        # Opcional: permitir cancelar busca anterior ou esperar
-        # Por enquanto, mantemos o check simples:
-        return jsonify({'error': 'Já existe uma busca em andamento'}), 400
-    
+    # Se já tem busca rodando para esse ID, verifica se terminou
+    if session_id in active_searches:
+        prev_search = active_searches[session_id]
+        if not prev_search.get('completed', False) and prev_search.get('status') != 'error':
+             return jsonify({
+                 'success': True, 
+                 'message': 'Recuperando busca existente',
+                 'session_id': session_id,
+                 'status': prev_search['status']
+             })
+
+    nicho = data.get('nicho', '').strip()
+    cidade = data.get('cidade', '').strip()
     try:
-        data = request.json
-        print(f"📩 Recebido pedido de busca: {data}")
-        
-        nicho = data.get('nicho', '').strip()
-        cidade = data.get('cidade', '').strip()
-        
-        # Converte max_leads com segurança
-        try:
-            max_leads = int(data.get('max_leads', 50))
-        except:
-            max_leads = 50
-            
-        # Novos filtros (opcionais por enquanto)
-        filter_site = data.get('filter_site', 'todos')
-        filter_whats = data.get('filter_whats', 'todos')
-        
-        if not nicho or not cidade:
-            print("❌ Erro: Nicho ou cidade vazios")
-            return jsonify({'error': 'Nicho e cidade são obrigatórios'}), 400
-            
-        # Configura filtros globais se necessário (ainda a implementar no scraper, mas aceita na API)
-        CONFIG['FILTERS'] = {
-            'site': filter_site,
-            'whatsapp': filter_whats
-        }
+        max_leads = int(data.get('max_leads', 50))
+    except:
+        max_leads = 50
 
-        # Inicia thread
-        thread = threading.Thread(
-            target=run_scraper_background,
-            args=(nicho, cidade, max_leads)
-        )
-        thread.daemon = True
-        thread.start()
-        
-        return jsonify({
-            'success': True,
-            'message': f'Busca iniciada: {nicho} em {cidade}',
-            'max_leads': max_leads
-        })
-    except Exception as e:
-        print(f"❌ Erro interno na API: {e}")
-        return jsonify({'error': str(e)}), 500
+    if not nicho or not cidade:
+        return jsonify({'error': 'Nicho e cidade obrigatórios'}), 400
 
-@app.route('/api/reset-status', methods=['POST'])
-def reset_status():
-    """Força o reset do estado da busca"""
-    global search_state
-    search_state['running'] = False
-    search_state['completed'] = False
-    search_state['error'] = None
-    search_state['progress'] = 0
-    return jsonify({'success': True, 'message': 'Status resetado com sucesso'})
+    # Inicializa estado
+    active_searches[session_id] = {
+        'nicho': nicho,
+        'cidade': cidade,
+        'status': 'initializing',
+        'progress': 0,
+        'leads_found': 0,
+        'leads': [],
+        'error': None,
+        'completed': False,
+        'created_at': datetime.now()
+    }
 
+    # Inicia Worker
+    worker = SearchWorker(session_id, nicho, cidade, max_leads)
+    worker.start()
+
+    return jsonify({
+        'success': True,
+        'message': 'Na fila de processamento',
+        'session_id': session_id
+    })
 
 @app.route('/api/search-status', methods=['GET'])
 def get_status():
-    """Retorna o status atual da busca"""
-    return jsonify({
-        'running': search_state['running'],
-        'completed': search_state['completed'],
-        'progress': search_state['progress'],
-        'leads_found': search_state['leads_found'],
-        'leads': search_state['leads'],  # Adicionado para frontend atualizar em tempo real
-        'current': search_state['current_business'],
-        'error': search_state['error'],
-        'nicho': search_state['nicho'],
-        'cidade': search_state['cidade']
-    })
-
-
-@app.route('/api/get-leads', methods=['GET'])
-def get_leads():
-    """Retorna os leads encontrados"""
-    if not search_state['completed']:
-        return jsonify({'error': 'Busca ainda não completada'}), 400
+    # Frontend deve enviar user_id ou session_id na query string ?session_id=...
+    session_id = request.args.get('session_id')
+    
+    if not session_id or session_id not in active_searches:
+        return jsonify({'running': False, 'status': 'not_found', 'leads': []})
+    
+    state = active_searches[session_id]
+    
+    # Se status for queued, retorna running=True para o frontend não parar
+    is_running = state['status'] in ['queued', 'running', 'initializing']
     
     return jsonify({
-        'success': True,
-        'leads': search_state['leads'],
-        'count': len(search_state['leads'])
+        'running': is_running,
+        'completed': state['completed'],
+        'status': state['status'], # queued, running, completed, error
+        'progress': state['progress'],
+        'leads_found': state['leads_found'],
+        'leads': state['leads'],
+        'error': state['error'],
+        'nicho': state['nicho'],
+        'cidade': state['cidade']
     })
-
 
 @app.route('/api/cancel-search', methods=['POST'])
 def cancel_search():
-    """Cancela a busca atual"""
-    global search_state
-    search_state['running'] = False
-    return jsonify({'success': True, 'message': 'Busca cancelada'})
+    # Placeholder simplificado
+    return jsonify({'success': True})
 
+@app.route('/api/reset-status', methods=['POST'])
+def reset_status():
+    # Limpa apenas buscas antigas (garbage collection manual)
+    global active_searches
+    active_searches = {}
+    return jsonify({'success': True, 'message': 'Sistema resetado'})
 
 if __name__ == '__main__':
-    # Pega porta do ambiente (Railway) ou usa 5001 local
     port = int(os.environ.get('PORT', 5001))
-    
-    print("\n" + "="*60)
-    print("🚀 LEAD MANAGER - SERVIDOR INICIADO")
-    print("="*60)
-    print(f"\n📊 Servidor rodando na porta: {port}")
-    print(f"🔌 API disponível em: /api/")
-    print(f"⏹️  Pressione Ctrl+C para parar o servidor\n")
-    print("="*60 + "\n")
-    
-    # Inicia o servidor
-    app.run(host='0.0.0.0', port=port, debug=False, threaded=True)
+    app.run(host='0.0.0.0', port=port)

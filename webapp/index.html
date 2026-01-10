@@ -288,6 +288,13 @@
             } catch (e) { console.error(e); }
         }
 
+        // Gera ou recupera ID da sessão (para filas e multi-tenancy)
+        let sessionId = localStorage.getItem('lead_scraper_session_id');
+        if (!sessionId) {
+            sessionId = 'sess_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('lead_scraper_session_id', sessionId);
+        }
+
         async function startSearch() {
             const nicho = document.getElementById('nichoInput').value;
             const cidade = document.getElementById('cidadeInput').value;
@@ -295,27 +302,34 @@
 
             toggleSearchUI(true);
             leads = [];
-            renderLeads();
+            renderLeads(); // Limpa tela para nova busca
 
             try {
                 const res = await fetch(`${API_URL}/start-search`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ nicho, cidade, max_leads: document.getElementById('maxLeadsInput').value })
+                    body: JSON.stringify({
+                        nicho,
+                        cidade,
+                        max_leads: document.getElementById('maxLeadsInput').value,
+                        user_id: sessionId
+                    })
                 });
 
+                const data = await res.json();
+
                 if (res.ok) {
+                    if (data.status === 'queued') {
+                        showNotification('⏳ Você está na fila de espera...', 'info');
+                    }
                     startPolling();
                 } else {
-                    const err = await res.json();
-                    if (res.status === 400 && err.error && err.error.includes('andamento')) {
-                        // Tenta resetar e busca de novo
-                        console.warn('⚠️ Busca travada detectada. Resetando servidor...');
-                        await fetch(`${API_URL}/reset-status`, { method: 'POST' });
-                        setTimeout(startSearch, 1000); // Tenta de novo em 1s
-                        return;
+                    if (data.error && data.error.includes('andamento') && data.session_id !== sessionId) {
+                        // Erro global antigo, não deve acontecer com novo backend, mas por segurança:
+                        alert('Servidor ocupado. Tente novamente em alguns segundos.');
+                    } else {
+                        throw new Error(data.error || 'Erro ao iniciar');
                     }
-                    throw new Error(err.error || 'Erro ao iniciar busca');
                 }
             } catch (error) {
                 console.error(error);
@@ -329,26 +343,57 @@
             document.getElementById('btnSearch').classList.toggle('hidden', searching);
             document.getElementById('btnStop').classList.toggle('hidden', !searching);
             document.getElementById('progressContainer').classList.toggle('hidden', !searching);
+
+            // Texto de status
+            const statusText = document.getElementById('statusText');
+            if (statusText) statusText.innerText = searching ? 'Iniciando...' : '';
         }
 
         function startPolling() {
+            if (pollingInterval) clearInterval(pollingInterval);
+
             pollingInterval = setInterval(async () => {
-                const res = await fetch(`${API_URL}/search-status`);
-                const data = await res.json();
-                updateProgress(data);
-                if (data.leads && data.leads.length > leads.length) {
-                    leads = data.leads.map(l => ({ ...l, status: l.status || 'new' }));
-                    renderLeads();
+                try {
+                    const res = await fetch(`${API_URL}/search-status?session_id=${sessionId}`);
+                    const data = await res.json();
+
+                    // Atualiza UI baseada no status da fila
+                    const statusText = document.getElementById('statusText'); // Assumindo que existe ou criar
+                    if (data.status === 'queued') {
+                        if (statusText) statusText.innerText = '⏳ Aguardando vaga na fila...';
+                        return; // Não atualiza barra de progresso ainda
+                    } else if (data.status === 'initializing') {
+                        if (statusText) statusText.innerText = '🚀 Preparando robô...';
+                    } else if (data.status === 'running') {
+                        if (statusText) statusText.innerText = `🔍 Buscando: ${data.current || '...'}`;
+                    }
+
+                    updateProgress(data);
+
+                    if (data.leads && data.leads.length > leads.length) {
+                        leads = data.leads.map(l => ({ ...l, status: l.status || 'new' }));
+                        renderLeads();
+                    }
+
+                    if (!data.running && data.completed) {
+                        stopSearch();
+                        showNotification('✅ Busca finalizada!');
+                    }
+                    if (data.status === 'error') {
+                        stopSearch();
+                        alert('Erro na busca: ' + data.error);
+                    }
+                } catch (e) {
+                    console.error("Erro no polling:", e);
                 }
-                if (!data.running && data.completed) stopSearch();
-            }, 1000);
+            }, 2000);
         }
 
         function stopSearch() {
             isSearching = false;
             clearInterval(pollingInterval);
             toggleSearchUI(false);
-            fetch(`${API_URL}/cancel-search`, { method: 'POST' });
+            // fetch(`${API_URL}/cancel-search`, { method: 'POST', body: JSON.stringify({ user_id: sessionId }) });
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
