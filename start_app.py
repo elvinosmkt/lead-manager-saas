@@ -84,30 +84,55 @@ def start_search():
     """Inicia uma nova busca"""
     global search_state
     
+    # Se já estiver rodando, reinicia estado se forçar ou retorna erro
     if search_state['running']:
+        # Opcional: permitir cancelar busca anterior ou esperar
+        # Por enquanto, mantemos o check simples:
         return jsonify({'error': 'Já existe uma busca em andamento'}), 400
     
-    data = request.json
-    nicho = data.get('nicho', '').strip()
-    cidade = data.get('cidade', '').strip()
-    max_leads = int(data.get('max_leads', 50))
-    
-    if not nicho or not cidade:
-        return jsonify({'error': 'Nicho e cidade são obrigatórios'}), 400
-    
-    # Inicia thread
-    thread = threading.Thread(
-        target=run_scraper_background,
-        args=(nicho, cidade, max_leads)
-    )
-    thread.daemon = True
-    thread.start()
-    
-    return jsonify({
-        'success': True,
-        'message': f'Busca iniciada: {nicho} em {cidade}',
-        'max_leads': max_leads
-    })
+    try:
+        data = request.json
+        print(f"📩 Recebido pedido de busca: {data}")
+        
+        nicho = data.get('nicho', '').strip()
+        cidade = data.get('cidade', '').strip()
+        
+        # Converte max_leads com segurança
+        try:
+            max_leads = int(data.get('max_leads', 50))
+        except:
+            max_leads = 50
+            
+        # Novos filtros (opcionais por enquanto)
+        filter_site = data.get('filter_site', 'todos')
+        filter_whats = data.get('filter_whats', 'todos')
+        
+        if not nicho or not cidade:
+            print("❌ Erro: Nicho ou cidade vazios")
+            return jsonify({'error': 'Nicho e cidade são obrigatórios'}), 400
+            
+        # Configura filtros globais se necessário (ainda a implementar no scraper, mas aceita na API)
+        CONFIG['FILTERS'] = {
+            'site': filter_site,
+            'whatsapp': filter_whats
+        }
+
+        # Inicia thread
+        thread = threading.Thread(
+            target=run_scraper_background,
+            args=(nicho, cidade, max_leads)
+        )
+        thread.daemon = True
+        thread.start()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Busca iniciada: {nicho} em {cidade}',
+            'max_leads': max_leads
+        })
+    except Exception as e:
+        print(f"❌ Erro interno na API: {e}")
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/api/search-status', methods=['GET'])
