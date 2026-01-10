@@ -143,6 +143,7 @@ def get_status():
         'completed': search_state['completed'],
         'progress': search_state['progress'],
         'leads_found': search_state['leads_found'],
+        'leads': search_state['leads'],  # Adicionado para frontend atualizar em tempo real
         'current': search_state['current_business'],
         'error': search_state['error'],
         'nicho': search_state['nicho'],
