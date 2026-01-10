@@ -18,9 +18,18 @@ def save_lead_to_cloud(lead_data, user_id=None):
         # CORREÇÃO DE SCHEMA: Supabase usa 'website', scraper usa 'site'
         if 'site' in lead_data:
             lead_data['website'] = lead_data.pop('site')
+        
+        # Usa UPSERT para evitar duplicatas (requer unique constraint no banco)
+        # ignore_duplicates=True faz com que, se já existir, apenas ignore (mantenha o antigo)
+        # Se quiser atualizar dados, use ignore_duplicates=False
+        try:
+            data = supabase.table("leads").upsert(lead_data, on_conflict="user_id, nome, cidade").execute()
+            print(f"💾 Lead processado: {lead_data.get('nome')}")
+        except Exception as e:
+            # Fallback para insert normal se upsert falhar (ex: falta constraint)
+            print(f"⚠️ Upsert falhou (falta constraint?), tentando insert simples: {e}")
+            data = supabase.table("leads").insert(lead_data).execute()
             
-        data = supabase.table("leads").insert(lead_data).execute()
-        print(f"💾 Lead salvo no DB: {lead_data.get('nome')} | User: {user_id}")
         return True
     except Exception as e:
         print(f"❌ Erro ao salvar no Supabase: {e}")
