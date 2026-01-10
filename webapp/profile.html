@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfil de Usuário - LeadScraper</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        dark: { 900: '#0B0F19', 800: '#151B2B', 700: '#1E293B' },
+                        primary: { 500: '#10B981', 600: '#059669' }
+                    },
+                    fontFamily: { sans: ['Inter', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body class="bg-dark-900 text-white min-h-screen flex">
+
+    <!-- Sidebar (Opcional, mas mantém contexto) -->
+    <aside class="w-64 bg-dark-800 border-r border-dark-700 hidden md:flex flex-col p-6">
+        <div class="flex items-center gap-3 mb-10">
+            <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg"><i
+                    class="fas fa-rocket text-white text-xs"></i></div>
+            <span class="font-bold text-lg tracking-tight">LeadScraper</span>
+        </div>
+
+        <nav class="space-y-2 flex-1">
+            <a href="index.html"
+                class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-dark-700 rounded-lg transition"><i
+                    class="fas fa-home w-5"></i> Dashboard</a>
+            <a href="credits.html"
+                class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-dark-700 rounded-lg transition"><i
+                    class="fas fa-wallet w-5"></i> Assinatura</a>
+            <a href="#"
+                class="flex items-center gap-3 px-4 py-3 text-white bg-primary-500/10 border border-primary-500/20 rounded-lg font-bold"><i
+                    class="fas fa-user w-5"></i> Perfil</a>
+            <a href="#"
+                class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-dark-700 rounded-lg transition"><i
+                    class="fas fa-shield-alt w-5"></i> Segurança</a>
+        </nav>
+
+        <button onclick="logout()"
+            class="flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-red-500/10 rounded-lg transition mt-auto">
+            <i class="fas fa-sign-out-alt w-5"></i> Sair da Conta
+        </button>
+    </aside>
+
+    <main class="flex-1 p-8 md:p-12 max-w-5xl mx-auto">
+
+        <div class="mb-8 md:hidden">
+            <a href="index.html" class="text-gray-400 mb-4 block"><i class="fas fa-arrow-left"></i> Voltar</a>
+        </div>
+
+        <h1 class="text-3xl font-bold mb-2">Informações do Perfil</h1>
+        <p class="text-gray-400 mb-8">Gerencie seus dados pessoais e foto de perfil.</p>
+
+        <!-- Card Perfil -->
+        <div class="bg-dark-800 border border-dark-700 rounded-2xl p-8 mb-8">
+            <div class="flex flex-col md:flex-row gap-8 items-start">
+
+                <!-- Avatar -->
+                <div class="flex flex-col gap-4">
+                    <div
+                        class="w-24 h-24 bg-blue-600 rounded-2xl flex items-center justify-center text-3xl font-bold shadow-xl shadow-blue-900/40 relative group overflow-hidden">
+                        <span id="userInitials">AD</span>
+                        <div
+                            class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition cursor-pointer">
+                            <i class="fas fa-camera text-white"></i>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button
+                            class="bg-dark-700 hover:bg-dark-600 text-xs px-3 py-1.5 rounded transition">Alterar</button>
+                        <button class="text-red-400 hover:text-red-300 text-xs px-3 py-1.5 transition">Remover</button>
+                    </div>
+                </div>
+
+                <!-- Form -->
+                <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Nome Completo</label>
+                        <div class="relative">
+                            <i class="fas fa-user absolute left-4 top-3.5 text-gray-500"></i>
+                            <input type="text" id="profileName" value="Admin LeadScraper"
+                                class="w-full bg-dark-900 border border-dark-700 rounded-xl pl-10 pr-4 py-3 text-white focus:border-primary-500 outline-none transition">
+                        </div>
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">E-mail de Acesso</label>
+                        <div class="relative">
+                            <i class="fas fa-envelope absolute left-4 top-3.5 text-gray-500"></i>
+                            <input type="email" id="profileEmail" value="admin@leadscraper.com" disabled
+                                class="w-full bg-dark-900/50 border border-dark-700 rounded-xl pl-10 pr-4 py-3 text-gray-400 cursor-not-allowed">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card Segurança -->
+        <h2 class="text-2xl font-bold mb-2">Segurança da Conta</h2>
+        <p class="text-gray-400 mb-6">Atualize sua senha de acesso periodicamente.</p>
+
+        <div class="bg-dark-800 border border-dark-700 rounded-2xl p-8 mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-1.5">
+                    <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Senha Atual</label>
+                    <div class="relative">
+                        <i class="fas fa-lock absolute left-4 top-3.5 text-gray-500"></i>
+                        <input type="password" placeholder="••••••••"
+                            class="w-full bg-dark-900 border border-dark-700 rounded-xl pl-10 pr-4 py-3 text-white focus:border-primary-500 outline-none transition">
+                    </div>
+                </div>
+                <div class="space-y-1.5">
+                    <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Nova Senha</label>
+                    <div class="relative">
+                        <i class="fas fa-key absolute left-4 top-3.5 text-gray-500"></i>
+                        <input type="password" placeholder="Mínimo 8 caracteres"
+                            class="w-full bg-dark-900 border border-dark-700 rounded-xl pl-10 pr-4 py-3 text-white focus:border-primary-500 outline-none transition">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex justify-end gap-3 mt-8">
+            <button onclick="window.history.back()"
+                class="px-6 py-3 text-gray-400 hover:text-white font-bold transition">Cancelar</button>
+            <button
+                class="bg-primary-500 hover:bg-primary-600 text-white font-bold px-8 py-3 rounded-xl shadow-lg shadow-primary-500/20 transition transform active:scale-95 flex items-center gap-2">
+                <i class="fas fa-save"></i> SALVAR ALTERAÇÕES
+            </button>
+        </div>
+
+    </main>
+
+    <!-- Supabase Logic -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-client.js"></script>
+    <script>
+        // Init Profile
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = await LeadAPI.getUser();
+            if (!user) return window.location.href = 'login.html';
+
+            document.getElementById('profileEmail').value = user.email;
+            const name = user.email.split('@')[0];
+            document.getElementById('profileName').value = name.charAt(0).toUpperCase() + name.slice(1);
+            document.getElementById('userInitials').innerText = name.substring(0, 2).toUpperCase();
+        });
+
+        async function logout() {
+            await LeadAPI.logout();
+            window.location.href = 'login.html';
+        }
+    </script>
+</body>
+
+</html>
