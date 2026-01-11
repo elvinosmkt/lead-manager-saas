@@ -118,6 +118,40 @@ const LeadAPI = {
     async getUser() {
         const { data: { user } } = await supabaseInstance.auth.getUser();
         return user;
+    },
+
+    // --- CREDITS & BILLING ---
+    async checkCredits() {
+        const user = await this.getUser();
+        if (!user) return null;
+
+        const { data, error } = await supabaseInstance
+            .from('users')
+            .select('credits_used, credits_limit, plan')
+            .eq('id', user.id)
+            .single();
+
+        if (error) {
+            console.error('Erro ao checar créditos:', error);
+            return null;
+        }
+        return data;
+    },
+
+    async getSubscription() {
+        const user = await this.getUser();
+        if (!user) return null;
+
+        const { data, error } = await supabaseInstance
+            .from('subscriptions')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('status', 'active')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+
+        return data;
     }
 };
 

@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pagamento via PIX - LeadManager</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-pure: #0A0A0A;
+            --bg-card: #111111;
+            --bg-elevated: #161616;
+            --border-metallic: rgba(255, 255, 255, 0.08);
+            --text-primary: #FFFFFF;
+            --text-secondary: #888888;
+            --accent-red: #E63946;
+            --accent-red-glow: rgba(230, 57, 70, 0.4);
+            --success-neon: #00FF41;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-pure);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        /* Navbar */
+        .navbar {
+            padding: 16px 24px;
+            border-bottom: 0.5px solid var(--border-metallic);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 800;
+            font-size: 1rem;
+        }
+
+        .logo-icon {
+            width: 28px;
+            height: 28px;
+            background: var(--accent-red);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .nav-info {
+            text-align: right;
+        }
+
+        .nav-label {
+            color: var(--text-secondary);
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .nav-email {
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .nav-avatar {
+            width: 36px;
+            height: 36px;
+            background: var(--bg-card);
+            border: 0.5px solid var(--border-metallic);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Main */
+        .main-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 64px 24px;
+        }
+
+        /* PIX Card */
+        .pix-card {
+            background: linear-gradient(180deg, rgba(30, 10, 10, 0.8) 0%, var(--bg-card) 100%);
+            border: 0.5px solid var(--border-metallic);
+            border-radius: 24px;
+            padding: 48px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .pix-label {
+            color: var(--accent-red);
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 12px;
+        }
+
+        .pix-title {
+            font-size: 2rem;
+            font-weight: 900;
+            margin-bottom: 32px;
+        }
+
+        /* QR Code */
+        .qr-container {
+            background: #F5E6E0;
+            border-radius: 16px;
+            padding: 24px;
+            display: inline-block;
+            margin-bottom: 32px;
+        }
+
+        .qr-code {
+            width: 180px;
+            height: 180px;
+            background: white;
+            border: 8px solid white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+        }
+
+        .qr-code img {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Fake QR pattern */
+        .qr-pattern {
+            width: 160px;
+            height: 160px;
+            background:
+                linear-gradient(90deg, #000 2px, transparent 2px),
+                linear-gradient(#000 2px, transparent 2px);
+            background-size: 8px 8px;
+            opacity: 0.8;
+        }
+
+        /* Value */
+        .pix-value-label {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-bottom: 4px;
+        }
+
+        .pix-value {
+            font-size: 2.5rem;
+            font-weight: 900;
+            margin-bottom: 32px;
+        }
+
+        /* Copy Code */
+        .copy-section {
+            margin-bottom: 32px;
+        }
+
+        .copy-label {
+            color: var(--text-secondary);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+
+        .copy-box {
+            display: flex;
+            gap: 12px;
+        }
+
+        .copy-input {
+            flex: 1;
+            background: var(--bg-pure);
+            border: 0.5px solid var(--border-metallic);
+            border-radius: 10px;
+            padding: 16px;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            font-family: monospace;
+        }
+
+        .copy-btn {
+            background: var(--accent-red);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 16px 24px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+
+        .copy-btn:hover {
+            box-shadow: 0 4px 20px var(--accent-red-glow);
+        }
+
+        /* Instructions */
+        .instructions {
+            background: var(--bg-pure);
+            border: 0.5px solid var(--border-metallic);
+            border-radius: 16px;
+            padding: 24px;
+            text-align: left;
+            margin-bottom: 32px;
+        }
+
+        .instruction-item {
+            display: flex;
+            gap: 16px;
+            padding: 12px 0;
+        }
+
+        .instruction-number {
+            width: 24px;
+            height: 24px;
+            background: var(--accent-red);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .instruction-text {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .instruction-text strong {
+            color: var(--text-primary);
+        }
+
+        /* Status */
+        .status-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            background: var(--accent-red);
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.5;
+                transform: scale(0.8);
+            }
+        }
+
+        .status-spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--border-metallic);
+            border-top-color: var(--accent-red);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 48px 24px;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="logo">
+            <div class="logo-icon"><i class="fas fa-bolt"></i></div>
+            <span>LEADMANAGER + VIBE CODING</span>
+        </div>
+        <div class="nav-right">
+            <div class="nav-info">
+                <p class="nav-label">ACESSO PREMIUM</p>
+                <p class="nav-email">checkout@user.com</p>
+            </div>
+            <div class="nav-avatar"><i class="fas fa-user"></i></div>
+        </div>
+    </nav>
+
+    <!-- Main -->
+    <main class="main-container">
+        <div class="pix-card">
+            <p class="pix-label">CHECKOUT SEGURO</p>
+            <h1 class="pix-title">PAGAMENTO VIA PIX</h1>
+
+            <!-- QR Code -->
+            <div class="qr-container">
+                <div class="qr-code">
+                    <div class="qr-pattern"></div>
+                </div>
+            </div>
+
+            <p class="pix-value-label">Valor Total</p>
+            <p class="pix-value">R$ 608,00</p>
+
+            <!-- Copy Code -->
+            <div class="copy-section">
+                <p class="copy-label">Código Copia e Cola</p>
+                <div class="copy-box">
+                    <input type="text" class="copy-input" value="00020101021226850014br.gov.b..." readonly id="pixCode">
+                    <button class="copy-btn" onclick="copyCode()">
+                        <i class="fas fa-copy"></i> Copiar Código
+                    </button>
+                </div>
+            </div>
+
+            <!-- Instructions -->
+            <div class="instructions">
+                <div class="instruction-item">
+                    <div class="instruction-number">1</div>
+                    <p class="instruction-text">Abra o <strong>aplicativo do seu banco</strong> e escolha a opção PIX.
+                    </p>
+                </div>
+                <div class="instruction-item">
+                    <div class="instruction-number">2</div>
+                    <p class="instruction-text">Escaneie o <strong>QR Code</strong> acima ou cole o link do código copia
+                        e cola.</p>
+                </div>
+                <div class="instruction-item">
+                    <div class="instruction-number">3</div>
+                    <p class="instruction-text">O acesso ao <strong>LeadManager e Vibe Coding</strong> será enviado
+                        instantaneamente ao seu e-mail.</p>
+                </div>
+            </div>
+
+            <!-- Status -->
+            <div class="status-bar">
+                <div class="status-dot"></div>
+                <div class="status-spinner"></div>
+                <span>AGUARDANDO CONFIRMAÇÃO DE PAGAMENTO...</span>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        © 2024 VIBE CODING. TODOS OS DIREITOS RESERVADOS. AMBIENTE 100% SEGURO.
+    </footer>
+
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+        import { SUPABASE_URL, SUPABASE_KEY } from './supabase-client.js';
+
+        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+        // const API_URL = 'http://localhost:5001/api'; 
+        const API_URL = 'https://web-production-8968f.up.railway.app/api';
+
+        const plans = {
+            starter: { mensal: 199, trimestral: 299 },
+            pro: { mensal: 299, trimestral: 449 },
+            elite: { mensal: 459, trimestral: 689 }
+        };
+
+        let currentState = {
+            paymentId: null,
+            copyPaste: null
+        };
+
+        async function init() {
+            // Check Auth (Se não tiver, login)
+            const { data: { user } } = await supabase.auth.getUser();
+            document.querySelector('.nav-email').textContent = user ? user.email : 'Visitante';
+
+            const params = new URLSearchParams(window.location.search);
+            const plan = params.get('plan') || 'pro';
+            const billing = params.get('billing') || 'mensal';
+            const upsell = params.get('upsell') === 'true';
+
+            let price = plans[plan]?.[billing] || 299;
+            if (upsell) price += 149;
+
+            document.querySelector('.pix-value').textContent = `R$ ${price},00`;
+
+            // Só gera PIX se tiver logado
+            if (!user) {
+                document.querySelector('.status-bar span').textContent = 'FAÇA LOGIN PARA GERAR O PIX';
+                // Opcional: Redirecionar
+                return;
+            }
+
+            document.querySelector('.status-bar span').textContent = 'GERANDO PIX...';
+
+            try {
+                const response = await fetch(`${API_URL}/create-pix`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: user.id,
+                        email: user.email,
+                        name: user.user_metadata?.name || user.email.split('@')[0],
+                        cpf: user.user_metadata?.cpf || '00000000000',
+                        plan: plan,
+                        billing_cycle: billing,
+                        price: price
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    const pay = data.payment;
+                    currentState.paymentId = pay.payment_id;
+                    currentState.copyPaste = pay.copy_paste;
+
+                    // Show QR Code (Inject Image)
+                    const qrContainer = document.querySelector('.qr-code');
+                    qrContainer.innerHTML = `<img src="data:image/png;base64,${pay.qr_code_url}" style="width:100%; height:100%">`;
+
+                    // Set Copy Paste
+                    document.getElementById('pixCode').value = pay.copy_paste;
+
+                    document.querySelector('.status-bar span').textContent = 'AGUARDANDO CONFIRMAÇÃO...';
+
+                } else {
+                    document.querySelector('.status-bar span').textContent = 'ERRO: ' + (data.error || 'Falha ao gerar');
+                }
+
+            } catch (e) {
+                console.error(e);
+                document.querySelector('.status-bar span').textContent = 'ERRO DE CONEXÃO';
+            }
+        }
+
+        window.copyCode = function () {
+            if (currentState.copyPaste) {
+                navigator.clipboard.writeText(currentState.copyPaste).then(() => {
+                    const btn = document.querySelector('.copy-btn');
+                    btn.innerHTML = '<i class="fas fa-check"></i> Copiado!';
+                    setTimeout(() => { btn.innerHTML = '<i class="fas fa-copy"></i> Copiar Código'; }, 2000);
+                });
+            } else {
+                alert("Aguarde gerar o código.");
+            }
+        };
+
+        init();
+    </script>
+
+</body>
+
+</html>

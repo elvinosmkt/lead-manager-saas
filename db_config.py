@@ -63,3 +63,43 @@ def save_lead_to_cloud(lead_data, user_id=None):
     except Exception as e:
         print(f"❌ FALHA GRAVE AO SALVAR NO BANCO: {e}")
         return False
+
+def check_user_credits(user_id):
+    """Verifica se o usuário tem créditos disponíveis"""
+    try:
+        # Se for string de teste ou None, permite (modo dev)
+        if not user_id or len(user_id) < 10: 
+            return True, 9999
+            
+        res = supabase.table("users").select("credits_used, credits_limit, plan").eq("id", user_id).single().execute()
+        user = res.data
+        
+        if not user:
+            return False, 0
+            
+        used = user.get('credits_used', 0)
+        limit = user.get('credits_limit', 0)
+        
+        # Se for plano 'agency' ou 'elite' (exemplo), talvez ilimitado?
+        # Para agora, segue a regra estrita
+        if used >= limit:
+            return False, 0
+            
+        return True, limit - used
+    except Exception as e:
+        print(f"⚠️ Erro ao checar créditos: {e}")
+        return True, 10 # Fallback para não bloquear em erro
+
+def deduct_user_credits(user_id, amount=1):
+    """Deduz créditos do usuário (incrementa used)"""
+    try:
+        if not user_id or len(user_id) < 10: return
+        
+        # RPC seria ideal para atomicidade, mas vamos de read-modify-write simples por enquanto
+        res = supabase.table("users").select("credits_used").eq("id", user_id).single().execute()
+        if res.data:
+            current = res.data.get('credits_used', 0)
+            supabase.table("users").update({"credits_used": current + amount}).eq("id", user_id).execute()
+    except Exception as e:
+        print(f"⚠️ Erro ao deduzir créditos: {e}")
+

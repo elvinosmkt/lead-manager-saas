@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - LeadManager</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="admin.css">
+</head>
+
+<body>
+    <aside class="sidebar">
+        <div class="brand">
+            <i class="fas fa-bolt"></i> LEAD MANAGER
+        </div>
+        <ul class="nav-links">
+            <li><a href="index.html" class="active"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+            <li><a href="users.html"><i class="fas fa-users"></i> Usuários</a></li>
+            <li><a href="subscriptions.html"><i class="fas fa-credit-card"></i> Assinaturas</a></li>
+            <li><a href="settings.html"><i class="fas fa-cog"></i> Configurações</a></li>
+        </ul>
+    </aside>
+
+    <main class="main-content">
+        <div class="header">
+            <h1>Dashboard</h1>
+            <div class="user-menu">Admin <i class="fas fa-chevron-down"></i></div>
+        </div>
+
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-title">Usuários Totais</div>
+                <div class="kpi-value" id="totalUsers">-</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title">Assinantes Ativos</div>
+                <div class="kpi-value" id="activeSubs">-</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title">Receita Mensal (MRR)</div>
+                <div class="kpi-value" id="mrr">R$ -</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title">Leads Extraídos (30d)</div>
+                <div class="kpi-value" id="leadsExtracted">-</div>
+            </div>
+        </div>
+
+        <h2>Últimos Usuários</h2>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Usuário</th>
+                    <th>Plano</th>
+                    <th>Créditos</th>
+                    <th>Status</th>
+                    <th>Data Cadastro</th>
+                </tr>
+            </thead>
+            <tbody id="lastUsersTable">
+                <!-- Data injected via JS -->
+            </tbody>
+        </table>
+    </main>
+
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+        import { SUPABASE_URL, SUPABASE_KEY } from '../supabase-client.js';
+
+        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        async function loadDashboard() {
+            // Count users
+            const { count: userCount } = await supabase.from('users').select('*', { count: 'exact', head: true });
+            document.getElementById('totalUsers').textContent = userCount || 0;
+
+            // Fetch users for table
+            const { data: users } = await supabase.from('users').select('*').order('created_at', { ascending: false }).limit(5);
+
+            const tbody = document.getElementById('lastUsersTable');
+            tbody.innerHTML = users.map(u => `
+                <tr>
+                    <td>${u.email}</td>
+                    <td><span class="status-badge" style="background:#333">${u.plan || 'free'}</span></td>
+                    <td>${u.credits_used} / ${u.credits_limit || 0}</td>
+                    <td><span class="status-badge status-active">Ativo</span></td>
+                    <td>${new Date(u.created_at).toLocaleDateString()}</td>
+                </tr>
+            `).join('');
+
+            // Mock Data for now (until tables are populated)
+            document.getElementById('activeSubs').textContent = Math.floor(userCount * 0.2); // Mock 20% conversion
+            document.getElementById('mrr').textContent = 'R$ ' + (Math.floor(userCount * 0.2) * 299).toLocaleString();
+            document.getElementById('leadsExtracted').textContent = '12,450';
+        }
+
+        loadDashboard();
+    </script>
+</body>
+
+</html>

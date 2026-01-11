@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Usuários - Admin LeadManager</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="admin.css">
+</head>
+
+<body>
+    <aside class="sidebar">
+        <div class="brand"><i class="fas fa-bolt"></i> LEAD MANAGER</div>
+        <ul class="nav-links">
+            <li><a href="index.html"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+            <li><a href="users.html" class="active"><i class="fas fa-users"></i> Usuários</a></li>
+            <li><a href="subscriptions.html"><i class="fas fa-credit-card"></i> Assinaturas</a></li>
+            <li><a href="settings.html"><i class="fas fa-cog"></i> Configurações</a></li>
+        </ul>
+    </aside>
+
+    <main class="main-content">
+        <div class="header">
+            <h1>Gestão de Usuários</h1>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <input type="text" id="searchUser" placeholder="Buscar por email..."
+                style="padding: 10px; width: 300px; background: #111; border: 1px solid #333; color: white; border-radius: 6px;">
+        </div>
+
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Email</th>
+                    <th>Plano</th>
+                    <th>Créditos (Usado/Limite)</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="usersTable">
+                <tr>
+                    <td colspan="5">Carregando...</td>
+                </tr>
+            </tbody>
+        </table>
+    </main>
+
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+        import { SUPABASE_URL, SUPABASE_KEY } from '../supabase-client.js';
+
+        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        async function loadUsers() {
+            const { data: users, error } = await supabase
+                .from('users')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error(error);
+                return;
+            }
+
+            const tbody = document.getElementById('usersTable');
+            tbody.innerHTML = users.map(u => `
+                <tr>
+                    <td style="font-size: 0.8rem; color: #666;">${u.id.substring(0, 8)}...</td>
+                    <td>${u.email}</td>
+                    <td>
+                        <select onchange="updatePlan('${u.id}', this.value)" style="background: #222; color: white; border: 1px solid #444; padding: 4px; border-radius: 4px;">
+                            <option value="free" ${u.plan === 'free' ? 'selected' : ''}>Free</option>
+                            <option value="starter" ${u.plan === 'starter' ? 'selected' : ''}>Starter</option>
+                            <option value="pro" ${u.plan === 'pro' ? 'selected' : ''}>Pro</option>
+                            <option value="elite" ${u.plan === 'elite' ? 'selected' : ''}>Elite</option>
+                        </select>
+                    </td>
+                    <td>
+                        ${u.credits_used || 0} / 
+                        <input type="number" value="${u.credits_limit || 0}" 
+                            onchange="updateCredits('${u.id}', this.value)"
+                            style="width: 60px; background: #222; color: white; border: 1px solid #444; padding: 4px; border-radius: 4px;">
+                    </td>
+                    <td>
+                        <button onclick="addCredits('${u.id}')" style="background: var(--accent-color); border: none; color: white; padding: 4px 8px; border-radius: 4px; cursor: pointer;">+ Créditos</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        window.updatePlan = async (userId, newPlan) => {
+            if (!confirm(`Alterar plano para ${newPlan}?`)) return;
+            await supabase.from('users').update({ plan: newPlan }).eq('id', userId);
+            alert('Plano atualizado!');
+        };
+
+        window.updateCredits = async (userId, newLimit) => {
+            await supabase.from('users').update({ credits_limit: parseInt(newLimit) }).eq('id', userId);
+            console.log('Limite atualizado');
+        };
+
+        window.addCredits = async (userId) => {
+            const amount = prompt("Quantos créditos adicionar?");
+            if (amount) {
+                // Here we would ideally use an RPC or increment transaction, but simple update for now
+                const { data } = await supabase.from('users').select('credits_limit').eq('id', userId).single();
+                const newLimit = (data.credits_limit || 0) + parseInt(amount);
+                await supabase.from('users').update({ credits_limit: newLimit }).eq('id', userId);
+                loadUsers(); // refresh
+            }
+        };
+
+        loadUsers();
+    </script>
+</body>
+
+</html>

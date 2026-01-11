@@ -18,7 +18,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from scraper_definitivo import GoogleMapsScraperDefinitivo
 from config import CONFIG
-from db_config import save_lead_to_cloud
+from config import CONFIG
+from db_config import save_lead_to_cloud, check_user_credits, deduct_user_credits, supabase
+from payment_service import create_pix_payment
 
 app = Flask(__name__, static_folder='webapp', static_url_path='')
 CORS(app)
@@ -84,6 +86,15 @@ class SearchWorker(threading.Thread):
                     # Salva no Supabase (Thread separada)
                     threading.Thread(target=save_lead_to_cloud, args=(lead, self.session_id)).start()
 
+                    # Deduz Crédito
+                    deduct_user_credits(self.session_id, 1)
+                    has_now, _ = check_user_credits(self.session_id)
+                    
+                    if not has_now:
+                        print("⚠️ Créditos acabaram. Parando busca.")
+                        active_searches[self.session_id]['stop_requested'] = True
+                        state['error'] = 'Limite de créditos atingido.'
+
                 scraper = GoogleMapsScraperDefinitivo(self.nicho, self.cidade, self.max_leads, self.filters)
                 scraper.on_lead_found_callback = on_lead_found
                 scraper.check_stop = lambda: state.get('stop_requested', False)
@@ -139,6 +150,21 @@ def start_search():
             # Se estava rodando a muito tempo, mata.
             pass 
 
+        # 3. VERIFICA CRÉDITOS
+        has_credits, remaining = check_user_credits(user_id)
+        if not has_credits:
+             return jsonify({
+                 'error': 'CRÉDITOS ESCOTADOS', 
+                 'code': 'no_credits',
+                 'message': 'Você atingiu seu limite mensal. Faça upgrade para continuar.'
+             }), 402
+             
+        # Limita a busca ao que resta de créditos
+        max_requested = int(data.get('max_leads', 10))
+        if max_requested > remaining:
+            max_requested = remaining
+            print(f"⚠️ Limitando busca a {remaining} créditos restantes.")
+
         active_searches[user_id] = {
             'status': 'initializing',
             'leads': [],
@@ -152,7 +178,7 @@ def start_search():
             user_id, 
             data.get('nicho'), 
             data.get('cidade'), 
-            int(data.get('max_leads', 10)),
+            max_requested,
             {
                 'site': data.get('filter_site', 'todos'),
                 'whats': data.get('filter_whats', 'todos')
@@ -200,6 +226,91 @@ def cancel_search():
         active_searches[sid]['stop_requested'] = True
         return jsonify({'success': True})
     return jsonify({'error': 'Not found'}), 404
+
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/create-pix', methods=['POST'])
+def api_create_pix():
+    try:
+        data = request.json
+        # data = { user_id, email, name, cpf, plan, price, billing_cycle }
+        
+        description = f"Assinatura LeadManager - Plano {data.get('plan')} ({data.get('billing_cycle')})"
+        external_ref = f"{data.get('user_id')}_{int(time.time())}"
+        
+        result = create_pix_payment(
+            data, 
+            data.get('price'), 
+            description, 
+            external_ref
+        )
+        
+        if result:
+            # Salva intenção de assinatura no Supabase
+            # (Código ideal usaria INSERT no Supabase aqui)
+            try:
+                supabase.table("subscriptions").insert({
+                    "user_id": data.get('user_id'),
+                    "plan": data.get('plan'),
+                    "billing_cycle": data.get('billing_cycle'),
+                    "price": data.get('price'),
+                    "status": "pending_payment",
+                    "provider": "asaas",
+                    "provider_subscription_id": result['payment_id']
+                }).execute()
+            except Exception as dberr:
+                print(f"⚠️ Erro ao salvar subs pendente: {dberr}")
+
+            return jsonify({'success': True, 'payment': result})
+            
+        return jsonify({'error': 'Erro ao gerar PIX'}), 500
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/webhook/asaas', methods=['POST'])
+def webhook_asaas():
+    try:
+        event = request.json
+        print(f"🔔 [Webhook Asaas] Evento: {event.get('event')}")
+        
+        evt = event.get('event')
+        payment_id = event.get('payment', {}).get('id')
+        
+        if evt == 'PAYMENT_RECEIVED' or evt == 'PAYMENT_CONFIRMED':
+            # Busca assinatura pelo ID do pagamento
+            res = supabase.table("subscriptions").select("*").eq("provider_subscription_id", payment_id).execute()
+            sub = res.data[0] if res.data else None
+            
+            if sub:
+                # Ativa assinatura
+                supabase.table("subscriptions").update({
+                    "status": "active",
+                    "started_at": datetime.now().isoformat()
+                }).eq("id", sub['id']).execute()
+                
+                # Atualiza usuário (Plano e Créditos)
+                plan = sub['plan']
+                credits_map = {'starter': 500, 'pro': 1500, 'elite': 5000}
+                new_credits = credits_map.get(plan, 500)
+                
+                # Se for trimestral, multiplica por 3?
+                if sub.get('billing_cycle') == 'trimestral':
+                    new_credits *= 3
+                
+                supabase.table("users").update({
+                    "plan": plan,
+                    "credits_limit": new_credits,
+                    "credits_used": 0 # Reseta usados? Ou soma acumulativo?
+                    # Se for acumulativo, faria: credits_limit = current_limit + new_credits
+                }).eq("id", sub['user_id']).execute()
+                
+                print(f"✅ Assinatura ativada para User {sub['user_id']}")
+                
+        return jsonify({'received': True})
+    except Exception as e:
+        print(f"❌ Erro Webhook: {e}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/health')
 def health():

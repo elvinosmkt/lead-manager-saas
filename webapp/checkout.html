@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout - LeadManager</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-pure: #0A0A0A;
+            --bg-card: #111111;
+            --bg-input: #0D0D0D;
+            --border-metallic: rgba(255, 255, 255, 0.08);
+            --text-primary: #FFFFFF;
+            --text-secondary: #888888;
+            --accent-red: #E63946;
+            --accent-red-glow: rgba(230, 57, 70, 0.4);
+            --success-neon: #00FF41;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-pure);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        /* Navbar */
+        .navbar {
+            padding: 16px 24px;
+            border-bottom: 0.5px solid var(--border-metallic);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 800;
+            font-size: 1.1rem;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--accent-red);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-badges {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .nav-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .nav-badge i {
+            color: var(--success-neon);
+        }
+
+        .nav-badge.secure i {
+            color: var(--text-secondary);
+        }
+
+        /* Main Layout */
+        .checkout-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 48px 24px;
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 48px;
+        }
+
+        @media (max-width: 900px) {
+            .checkout-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Order Summary */
+        .order-summary {
+            background: var(--bg-card);
+            border: 0.5px solid var(--border-metallic);
+            border-radius: 16px;
+            padding: 32px;
+            height: fit-content;
+        }
+
+        .summary-label {
+            color: var(--text-secondary);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 24px;
+        }
+
+        .plan-selected {
+            background: var(--bg-pure);
+            border: 0.5px solid var(--border-metallic);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .plan-tag {
+            color: var(--accent-red);
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .plan-name {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .plan-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--accent-red);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .plan-price {
+            font-size: 2rem;
+            font-weight: 900;
+        }
+
+        .plan-period {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .plan-features {
+            margin-top: 24px;
+            list-style: none;
+        }
+
+        .plan-features li {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 0;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .plan-features li i {
+            color: var(--accent-red);
+            font-size: 0.7rem;
+        }
+
+        .summary-line {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            border-top: 0.5px solid var(--border-metallic);
+        }
+
+        .summary-total {
+            display: flex;
+            justify-content: space-between;
+            padding: 16px 0;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-top: 0.5px solid var(--border-metallic);
+        }
+
+        .guarantee-box {
+            background: rgba(230, 57, 70, 0.05);
+            border: 0.5px solid rgba(230, 57, 70, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 24px;
+        }
+
+        .guarantee-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            margin-bottom: 8px;
+        }
+
+        .guarantee-title i {
+            color: var(--accent-red);
+        }
+
+        .guarantee-text {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            line-height: 1.5;
+        }
+
+        /* Form Section */
+        .form-section {
+            flex: 1;
+        }
+
+        .form-step {
+            margin-bottom: 40px;
+        }
+
+        .step-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .step-number {
+            width: 32px;
+            height: 32px;
+            background: var(--accent-red);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .step-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            color: var(--text-secondary);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .form-input {
+            width: 100%;
+            background: var(--bg-input);
+            border: 0.5px solid var(--border-metallic);
+            border-radius: 10px;
+            padding: 16px 20px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent-red);
+        }
+
+        .form-input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        /* Payment Method */
+        .payment-methods {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .payment-option {
+            background: var(--bg-card);
+            border: 2px solid var(--border-metallic);
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .payment-option:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .payment-option.active {
+            border-color: var(--accent-red);
+            background: rgba(230, 57, 70, 0.05);
+        }
+
+        .payment-option i {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .payment-option span {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .card-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        /* Upsell Box */
+        .upsell-box {
+            background: linear-gradient(135deg, rgba(230, 57, 70, 0.1) 0%, var(--bg-card) 100%);
+            border: 1px solid var(--accent-red);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .upsell-box:hover {
+            box-shadow: 0 0 30px var(--accent-red-glow);
+        }
+
+        .upsell-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .upsell-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--accent-red);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .upsell-title {
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+        }
+
+        .upsell-desc {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+        }
+
+        .upsell-right {
+            text-align: right;
+        }
+
+        .upsell-price {
+            color: var(--accent-red);
+            font-weight: 700;
+        }
+
+        .upsell-tag {
+            color: var(--text-secondary);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+        }
+
+        .upsell-checkbox {
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--border-metallic);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 16px;
+        }
+
+        .upsell-checkbox.checked {
+            background: var(--accent-red);
+            border-color: var(--accent-red);
+        }
+
+        /* Submit Button */
+        .btn-submit {
+            width: 100%;
+            background: var(--accent-red);
+            color: white;
+            font-weight: 700;
+            font-size: 1.1rem;
+            padding: 20px;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.3s;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px var(--accent-red-glow);
+        }
+
+        .terms-text {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            margin-top: 16px;
+        }
+
+        .terms-text a {
+            color: var(--text-secondary);
+            text-decoration: underline;
+        }
+
+        /* Trust Badges */
+        .trust-footer {
+            margin-top: 48px;
+            padding-top: 32px;
+            border-top: 0.5px solid var(--border-metallic);
+            display: flex;
+            justify-content: center;
+            gap: 48px;
+            flex-wrap: wrap;
+        }
+
+        .trust-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+        }
+
+        .trust-item i {
+            color: var(--text-secondary);
+        }
+
+        /* Footer */
+        .checkout-footer {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 32px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 0.5px solid var(--border-metallic);
+        }
+
+        .footer-guarantee {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .footer-guarantee-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--accent-red);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+        }
+
+        .footer-copy {
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            text-align: right;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="logo">
+            <div class="logo-icon"><i class="fas fa-bolt"></i></div>
+            <span>LEADMANAGER</span>
+        </div>
+        <div class="nav-badges">
+            <div class="nav-badge">
+                <i class="fas fa-circle"></i>
+                ACESSO IMEDIATO APÓS O PAGAMENTO
+            </div>
+            <div class="nav-badge secure">
+                <i class="fas fa-lock"></i>
+                AMBIENTE SEGURO
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main -->
+    <div class="checkout-container">
+        <!-- Order Summary -->
+        <aside class="order-summary">
+            <p class="summary-label">Resumo do Pedido</p>
+
+            <div class="plan-selected">
+                <p class="plan-tag">Plano Selecionado</p>
+                <div class="plan-name">
+                    <span id="planName">Profissional</span>
+                    <div class="plan-icon"><i class="fas fa-crown"></i></div>
+                </div>
+                <p>
+                    <span class="plan-price" id="planPrice">R$ 299</span>
+                    <span class="plan-period" id="planPeriod">/mês</span>
+                </p>
+
+                <ul class="plan-features" id="planFeatures">
+                    <li><i class="fas fa-circle"></i> 1.500 leads mensais</li>
+                    <li><i class="fas fa-circle"></i> Todos os filtros</li>
+                    <li><i class="fas fa-circle"></i> Exportar Excel + CSV</li>
+                    <li><i class="fas fa-circle"></i> Suporte Prioritário</li>
+                </ul>
+            </div>
+
+            <div class="summary-line">
+                <span>Subtotal</span>
+                <span id="subtotal">R$ 299,00</span>
+            </div>
+            <div class="summary-line" id="upsellLine" style="display: none;">
+                <span>Vibe Coding</span>
+                <span>R$ 149,00</span>
+            </div>
+            <div class="summary-line">
+                <span>Taxas</span>
+                <span>R$ 0,00</span>
+            </div>
+            <div class="summary-total">
+                <span>Total hoje</span>
+                <span id="totalPrice">R$ 299,00</span>
+            </div>
+
+            <div class="guarantee-box">
+                <div class="guarantee-title">
+                    <i class="fas fa-shield-alt"></i>
+                    Garantia Blindada
+                </div>
+                <p class="guarantee-text">
+                    Você tem 7 dias de garantia incondicional. Se não extrair leads qualificados na primeira hora,
+                    devolvemos seu dinheiro.
+                </p>
+            </div>
+        </aside>
+
+        <!-- Form -->
+        <main class="form-section">
+            <!-- Step 1 -->
+            <div class="form-step">
+                <div class="step-header">
+                    <div class="step-number">1</div>
+                    <h2 class="step-title">Criação de Conta</h2>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">E-mail Profissional</label>
+                    <input type="email" class="form-input" placeholder="seu@email.com" id="email">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Defina uma Senha</label>
+                    <input type="password" class="form-input" placeholder="••••••••" id="password">
+                </div>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="form-step">
+                <div class="step-header">
+                    <div class="step-number">2</div>
+                    <h2 class="step-title">Método de Pagamento</h2>
+                </div>
+
+                <div class="payment-methods">
+                    <div class="payment-option active" onclick="selectPayment('card')">
+                        <i class="fas fa-credit-card"></i>
+                        <span>Cartão de Crédito</span>
+                    </div>
+                    <div class="payment-option" onclick="selectPayment('pix')">
+                        <i class="fas fa-qrcode"></i>
+                        <span>PIX</span>
+                    </div>
+                </div>
+
+                <div id="cardForm">
+                    <div class="form-group">
+                        <label class="form-label">Número do Cartão</label>
+                        <input type="text" class="form-input" placeholder="0000 0000 0000 0000">
+                    </div>
+
+                    <div class="card-row">
+                        <div class="form-group">
+                            <label class="form-label">Validade</label>
+                            <input type="text" class="form-input" placeholder="MM/AA">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">CVV</label>
+                            <input type="text" class="form-input" placeholder="123">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Upsell -->
+                <div class="upsell-box" onclick="toggleUpsell()">
+                    <div class="upsell-left">
+                        <div class="upsell-icon"><i class="fas fa-code"></i></div>
+                        <div>
+                            <p class="upsell-title">ADICIONAR VIBE CODING: CRIE SITES EM MINUTOS</p>
+                            <p class="upsell-desc">Aprenda a criar sites para os leads que você vai extrair</p>
+                        </div>
+                    </div>
+                    <div class="upsell-right">
+                        <p class="upsell-price">R$ 149,00</p>
+                        <p class="upsell-tag">Pagamento Único</p>
+                    </div>
+                    <div class="upsell-checkbox" id="upsellCheck">
+                        <i class="fas fa-check" style="display: none; color: white;"></i>
+                    </div>
+                </div>
+
+                <button class="btn-submit" onclick="processPayment()">
+                    <i class="fas fa-lock"></i>
+                    FINALIZAR ASSINATURA AGORA
+                </button>
+
+                <p class="terms-text">
+                    Ao assinar, você concorda com nossos <a href="#">Termos de Uso</a> e <a href="#">Política de
+                        Privacidade</a>.
+                </p>
+            </div>
+
+            <!-- Trust Footer -->
+            <div class="trust-footer">
+                <div class="trust-item"><i class="fas fa-shield-alt"></i> SSL ENCRYPTED</div>
+                <div class="trust-item"><i class="fas fa-lock"></i> SAFE CHECKOUT</div>
+                <div class="trust-item"><i class="fas fa-database"></i> DATA PROTECTED</div>
+                <div class="trust-item"><i class="fas fa-award"></i> GUARANTEED SERVICE</div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Footer -->
+    <footer class="checkout-footer">
+        <div class="footer-guarantee">
+            <div class="footer-guarantee-icon">7</div>
+            <div>
+                <p style="font-weight: 700; font-size: 0.9rem;">7 dias de garantia incondicional</p>
+                <p style="color: var(--text-secondary); font-size: 0.8rem;">Satisfação garantida ou seu dinheiro de
+                    volta.</p>
+            </div>
+        </div>
+        <div class="footer-copy">
+            <p>© 2024 LEADMANAGER - TODOS OS DIREITOS RESERVADOS.</p>
+            <p>PROCESSAMENTO SEGURO DE PAGAMENTOS.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Planos e preços
+        const plans = {
+            starter: {
+                name: 'Starter',
+                icon: 'fa-rocket',
+                mensal: { price: 199, period: '/mês' },
+                trimestral: { price: 299, period: '/trimestre' },
+                features: [
+                    '500 leads mensais',
+                    'Filtro "Sem Site"',
+                    'Filtro "Sem WhatsApp"',
+                    'Exportar CSV'
+                ]
+            },
+            pro: {
+                name: 'Profissional',
+                icon: 'fa-crown',
+                mensal: { price: 299, period: '/mês' },
+                trimestral: { price: 449, period: '/trimestre' },
+                features: [
+                    '1.500 leads mensais',
+                    'Todos os filtros',
+                    'Exportar Excel + CSV',
+                    'CRM Integrado',
+                    'Suporte Prioritário'
+                ]
+            },
+            elite: {
+                name: 'Elite',
+                icon: 'fa-gem',
+                mensal: { price: 459, period: '/mês' },
+                trimestral: { price: 689, period: '/trimestre' },
+                features: [
+                    '5.000 leads mensais',
+                    'API Ilimitada',
+                    'Multi-usuário (5 seats)',
+                    'Treinamento 1:1',
+                    'Suporte VIP WhatsApp'
+                ]
+            }
+        };
+        
+        let upsellAdded = false;
+        let currentPlan = 'pro';
+        let currentBilling = 'mensal';
+        let basePrice = 299;
+        
+        // Parse URL params
+        function init() {
+            const params = new URLSearchParams(window.location.search);
+            currentPlan = params.get('plan') || 'pro';
+            currentBilling = params.get('billing') || 'mensal';
+            
+            if (!plans[currentPlan]) currentPlan = 'pro';
+            
+            updateCheckout();
+        }
+        
+        function updateCheckout() {
+            const plan = plans[currentPlan];
+            const billing = plan[currentBilling];
+            
+            basePrice = billing.price;
+            
+            // Update UI
+            document.getElementById('planName').textContent = plan.name;
+            document.querySelector('.plan-icon i').className = `fas ${plan.icon}`;
+            document.getElementById('planPrice').textContent = `R$ ${basePrice}`;
+            document.getElementById('planPeriod').textContent = billing.period;
+            
+            // Features
+            const featuresHtml = plan.features.map(f => 
+                `<li><i class="fas fa-circle"></i> ${f}</li>`
+            ).join('');
+            document.getElementById('planFeatures').innerHTML = featuresHtml;
+            
+            // Totals
+            updateTotals();
+        }
+        
+        function updateTotals() {
+            const total = upsellAdded ? basePrice + 149 : basePrice;
+            
+            document.getElementById('subtotal').textContent = `R$ ${basePrice},00`;
+            document.getElementById('upsellLine').style.display = upsellAdded ? 'flex' : 'none';
+            document.getElementById('totalPrice').textContent = `R$ ${total},00`;
+        }
+        
+        function selectPayment(method) {
+            document.querySelectorAll('.payment-option').forEach(opt => opt.classList.remove('active'));
+            if (method === 'card') {
+                document.querySelector('.payment-option:first-child').classList.add('active');
+                document.getElementById('cardForm').style.display = 'block';
+            } else {
+                document.querySelector('.payment-option:last-child').classList.add('active');
+                document.getElementById('cardForm').style.display = 'none';
+            }
+        }
+        
+        function toggleUpsell() {
+            upsellAdded = !upsellAdded;
+            const check = document.getElementById('upsellCheck');
+            check.classList.toggle('checked', upsellAdded);
+            check.querySelector('i').style.display = upsellAdded ? 'block' : 'none';
+            updateTotals();
+        }
+        
+        function processPayment() {
+            const pixSelected = document.querySelector('.payment-option:last-child').classList.contains('active');
+            const upsellParam = upsellAdded ? '&upsell=true' : '';
+            
+            if (pixSelected) {
+                window.location.href = `pix.html?plan=${currentPlan}&billing=${currentBilling}${upsellParam}`;
+            } else {
+                window.location.href = `upsell.html?plan=${currentPlan}&billing=${currentBilling}`;
+            }
+        }
+        
+        // Initialize
+        init();
+    </script>
+
+</body>
+
+</html>

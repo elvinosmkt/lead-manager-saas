@@ -1,20 +1,20 @@
 {
     "version": 2,
-    "rewrites": [
+    "name": "leadmanager-lp",
+    "builds": [
         {
-            "source": "/(.*)",
-            "destination": "/index.html"
+            "src": "landing.html",
+            "use": "@vercel/static"
         }
     ],
-    "headers": [
+    "routes": [
         {
-            "source": "/(.*)",
-            "headers": [
-                {
-                    "key": "Cache-Control",
-                    "value": "public, max-age=0, must-revalidate"
-                }
-            ]
+            "src": "/",
+            "dest": "/landing.html"
+        },
+        {
+            "src": "/(.*)",
+            "dest": "/$1"
         }
     ]
 }

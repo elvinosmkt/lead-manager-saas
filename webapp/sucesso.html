@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pagamento Confirmado - LeadManager</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-pure: #0A0A0A;
+            --bg-card: #111111;
+            --bg-elevated: #161616;
+            --border-metallic: rgba(255, 255, 255, 0.08);
+            --text-primary: #FFFFFF;
+            --text-secondary: #888888;
+            --accent-red: #E63946;
+            --accent-red-glow: rgba(230, 57, 70, 0.4);
+            --success-neon: #00FF41;
+            --success-glow: rgba(0, 255, 65, 0.3);
+            --accent-blue: #3B82F6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-pure);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        /* Navbar */
+        .navbar {
+            padding: 16px 24px;
+            border-bottom: 0.5px solid var(--border-metallic);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 800;
+            font-size: 1rem;
+        }
+
+        .logo-icon {
+            width: 28px;
+            height: 28px;
+            background: var(--accent-red);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--text-primary);
+        }
+
+        .nav-avatar {
+            width: 36px;
+            height: 36px;
+            background: var(--accent-red);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Main */
+        .main-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 64px 24px;
+            text-align: center;
+        }
+
+        /* Success Icon */
+        .success-icon {
+            width: 100px;
+            height: 100px;
+            background: var(--success-neon);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            margin: 0 auto 32px;
+            box-shadow:
+                0 0 40px var(--success-glow),
+                0 0 80px var(--success-glow);
+            animation: success-pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes success-pulse {
+
+            0%,
+            100% {
+                box-shadow: 0 0 40px var(--success-glow), 0 0 80px var(--success-glow);
+            }
+
+            50% {
+                box-shadow: 0 0 60px var(--success-glow), 0 0 120px var(--success-glow);
+            }
+        }
+
+        .success-icon i {
+            color: var(--bg-pure);
+        }
+
+        /* Headline */
+        .headline {
+            font-size: clamp(2rem, 5vw, 3rem);
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 16px;
+        }
+
+        .headline .red {
+            color: var(--accent-red);
+        }
+
+        .subheadline {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            max-width: 500px;
+            margin: 0 auto 48px;
+            line-height: 1.6;
+        }
+
+        /* Product Cards */
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+            margin-bottom: 48px;
+        }
+
+        @media (max-width: 600px) {
+            .products-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .product-card {
+            background: var(--bg-card);
+            border: 0.5px solid var(--border-metallic);
+            border-radius: 20px;
+            padding: 32px;
+            text-align: left;
+            transition: all 0.3s;
+        }
+
+        .product-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .product-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+
+        .product-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--bg-pure);
+            border: 0.5px solid var(--border-metallic);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .product-icon.red {
+            color: var(--accent-red);
+        }
+
+        .product-icon.blue {
+            color: var(--accent-blue);
+        }
+
+        .product-tag {
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 6px 12px;
+            border-radius: 100px;
+            background: var(--bg-pure);
+            border: 0.5px solid var(--border-metallic);
+        }
+
+        .product-tag.software {
+            color: var(--accent-red);
+        }
+
+        .product-tag.training {
+            color: var(--accent-blue);
+        }
+
+        .product-name {
+            font-size: 1.3rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+
+        .product-desc {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 24px;
+        }
+
+        .product-info {
+            background: var(--bg-pure);
+            border: 0.5px solid var(--border-metallic);
+            border-radius: 10px;
+            padding: 14px 18px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+        }
+
+        .product-info i {
+            color: var(--success-neon);
+        }
+
+        .product-info.credits {
+            color: var(--accent-red);
+            font-weight: 700;
+        }
+
+        .product-info.credits i {
+            color: var(--accent-red);
+        }
+
+        .btn-access {
+            width: 100%;
+            padding: 16px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s;
+            text-decoration: none;
+            border: none;
+        }
+
+        .btn-access.red {
+            background: var(--accent-red);
+            color: white;
+        }
+
+        .btn-access.red:hover {
+            box-shadow: 0 8px 30px var(--accent-red-glow);
+        }
+
+        .btn-access.blue {
+            background: var(--accent-blue);
+            color: white;
+        }
+
+        .btn-access.blue:hover {
+            box-shadow: 0 8px 30px rgba(59, 130, 246, 0.4);
+        }
+
+        /* Community Card */
+        .community-card {
+            background: var(--bg-card);
+            border: 0.5px solid var(--border-metallic);
+            border-radius: 20px;
+            padding: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+        }
+
+        @media (max-width: 600px) {
+            .community-card {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+
+        .community-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .community-icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(0, 255, 65, 0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--success-neon);
+            font-size: 1.2rem;
+        }
+
+        .community-label {
+            color: var(--accent-red);
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+
+        .community-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .community-desc {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .btn-community {
+            background: var(--accent-blue);
+            color: white;
+            padding: 14px 28px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .btn-community:hover {
+            box-shadow: 0 8px 30px rgba(59, 130, 246, 0.4);
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 48px 24px;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            border-top: 0.5px solid var(--border-metallic);
+            margin-top: 48px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="logo">
+            <div class="logo-icon"><i class="fas fa-bolt"></i></div>
+            <span>LEADMANAGER</span>
+        </div>
+        <div class="nav-links">
+            <a href="index.html">Dashboard</a>
+            <a href="#">Suporte</a>
+            <a href="#">Minha Conta</a>
+            <div class="nav-avatar"><i class="fas fa-user"></i></div>
+        </div>
+    </nav>
+
+    <!-- Main -->
+    <main class="main-container">
+        <!-- Success Icon -->
+        <div class="success-icon">
+            <i class="fas fa-check"></i>
+        </div>
+
+        <h1 class="headline">
+            PAGAMENTO CONFIRMADO.<br>
+            <span class="red">VOCÊ ESTÁ NO JOGO.</span>
+        </h1>
+
+        <p class="subheadline">
+            O acesso ao LeadManager e ao Vibe Coding foi liberado.<br>
+            Preparamos o seu terreno para prospectar e fechar contratos ainda hoje.
+        </p>
+
+        <!-- Products -->
+        <div class="products-grid">
+            <!-- LeadManager -->
+            <div class="product-card">
+                <div class="product-header">
+                    <div class="product-icon red"><i class="fas fa-crosshairs"></i></div>
+                    <span class="product-tag software">SOFTWARE</span>
+                </div>
+                <h3 class="product-name">LeadManager</h3>
+                <p class="product-desc">Ferramenta avançada de prospecção fria automatizada.</p>
+                <div class="product-info credits">
+                    <i class="fas fa-coins"></i>
+                    5.000 Créditos Disponíveis
+                </div>
+                <a href="index.html" class="btn-access red">
+                    Acessar Software <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+
+            <!-- Vibe Coding -->
+            <div class="product-card">
+                <div class="product-header">
+                    <div class="product-icon blue"><i class="fas fa-code"></i></div>
+                    <span class="product-tag training">TREINAMENTO</span>
+                </div>
+                <h3 class="product-name">Vibe Coding</h3>
+                <p class="product-desc">Metodologia para criar sites de alta conversão em minutos.</p>
+                <div class="product-info">
+                    <i class="fas fa-play-circle"></i>
+                    Aprenda a criar sites em minutos
+                </div>
+                <a href="#" class="btn-access blue">
+                    Acessar Treinamento <i class="fas fa-play"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- Community -->
+        <div class="community-card">
+            <div class="community-left">
+                <div class="community-icon"><i class="fas fa-users"></i></div>
+                <div>
+                    <p class="community-label">GRUPO DE ELITE</p>
+                    <h4 class="community-title">Não caminhe sozinho.</h4>
+                    <p class="community-desc">Entre na nossa comunidade exclusiva de donos de agência e acelere seus
+                        resultados.</p>
+                </div>
+            </div>
+            <a href="#" class="btn-community">
+                <i class="fab fa-discord"></i>
+                Entrar na Comunidade
+            </a>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        © 2024 ELITE TEAM • LEADMANAGER & VIBE CODING • ALTA AUTORIDADE
+    </footer>
+
+</body>
+
+</html>
