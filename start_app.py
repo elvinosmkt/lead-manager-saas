@@ -234,8 +234,6 @@ def cancel_search():
         return jsonify({'success': True})
     return jsonify({'error': 'Not found'}), 404
 
-        return jsonify({'error': str(e)}), 500
-
 @app.route('/api/create-pix', methods=['POST'])
 def api_create_pix():
     try:
