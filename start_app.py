@@ -1,17 +1,19 @@
+
 """
-Servidor Multi-usuário com Fila e Isolamento de Sessão
+Servidor Multi-usuário com Fila, Memory Warning e Garbage Collection
 """
-from flask import Flask, request, jsonify, send_from_directory
-from flask_cors import CORS
+import os
+import psutil  # Para monitorar memória
 import threading
 import time
 import sys
-import os
 import uuid
+from flask import Flask, request, jsonify, send_from_directory
+from flask_cors import CORS
 from queue import Queue
 from datetime import datetime
 
-# Adiciona o diretório atual ao path
+# Path Setup
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from scraper_definitivo import GoogleMapsScraperDefinitivo
@@ -21,16 +23,19 @@ from db_config import save_lead_to_cloud
 app = Flask(__name__, static_folder='webapp', static_url_path='')
 CORS(app)
 
-# --- CONFIGURAÇÃO DE CONCORRÊNCIA ---
-# No plano Hobby/Starter do Railway, temos ~512MB-1GB RAM.
-# Cada Chrome gasta ~300MB. 
-# MAX_CONCURRENT_SEARCHES = 2 é seguro.
-MAX_CONCURRENT_SEARCHES = 2
-semaphore = threading.Semaphore(MAX_CONCURRENT_SEARCHES)
+# --- CONFIGURAÇÃO DE SEGURANÇA E RECURSOS ---
+MAX_CONCURRENT_SEARCHES = 1  # Segurança máxima para plano Free/Hobby (evita OOM)
+MAX_RAM_PERCENT = 85.0       # Se passar disso, rejeita novas buscas
 
-# Armazena estado de cada busca por ID
-# Formato: { 'session_id': { 'status': 'queued', 'leads': [], ... } }
+semaphore = threading.Semaphore(MAX_CONCURRENT_SEARCHES)
 active_searches = {}
+
+def check_system_health():
+    """Verifica se o servidor tem recursos para aceitar nova busca"""
+    mem = psutil.virtual_memory()
+    if mem.percent > MAX_RAM_PERCENT:
+        return False, f"Servidor sobrecarregado (RAM: {mem.percent}%). Tente em 1 min."
+    return True, "OK"
 
 class SearchWorker(threading.Thread):
     def __init__(self, session_id, nicho, cidade, max_leads, filters={}):
@@ -44,73 +49,66 @@ class SearchWorker(threading.Thread):
 
     def run(self):
         global active_searches
-        state = active_searches[self.session_id]
-        
-        # Tenta adquirir vaga na execução (Semáforo)
+        state = active_searches.get(self.session_id)
+        if not state: return
+
         state['status'] = 'queued'
-        print(f"⏳ [ID: {self.session_id}] Na fila de espera...")
-        
+        print(f"⏳ [ID: {self.session_id}] Na fila...")
+
         with semaphore:
+            # Double check health antes de abrir o Chrome
+            is_healthy, msg = check_system_health()
+            if not is_healthy:
+                print(f"❌ Abortando busca por falta de memória: {msg}")
+                state['error'] = "Servidor ocupado (Memória Cheia). Tente novamente."
+                state['status'] = 'error'
+                state['completed'] = True
+                return
+
             try:
-                # Verifica cancelamento antes de começar
-                if state.get('stop_requested'):
-                     print(f"🛑 [ID: {self.session_id}] Cancelado antes de iniciar.")
-                     state['status'] = 'cancelled'
-                     return
+                if state.get('stop_requested'): return
 
                 state['status'] = 'running'
-                state['started_at'] = datetime.now()
-                print(f"🚀 [ID: {self.session_id}] Iniciando busca: {self.nicho} - {self.cidade}")
-                
-                # Configura scraper
+                print(f"🚀 [ID: {self.session_id}] Iniciando Chrome...")
+
                 CONFIG['MAX_BUSINESSES'] = self.max_leads
-                CONFIG['FILTERS'] = self.filters # Passa filtros recebidos
-                
-                # Callback customizado para salvar e atualizar estado em tempo real
+                CONFIG['FILTERS'] = self.filters
+
                 def on_lead_found(lead):
-                    # VERIFICA SE PEDIU PRA PARAR
-                    if state.get('stop_requested'):
-                        print(f"🛑 [ID: {self.session_id}] Busca interrompida pelo usuário.")
-                        return # Retorna para parar processamento
-                        
-                    # Salva no estado local para o frontend pegar
+                    if state.get('stop_requested'): return
                     state['leads'].append(lead)
                     state['leads_found'] += 1
-                    # Tenta salvar no Supabase COM O ID DO USUÁRIO
+                    # Salva no Supabase (Thread separada para não bloquear)
                     threading.Thread(target=save_lead_to_cloud, args=(lead, self.session_id)).start()
 
-                # Inicia Scraper
                 scraper = GoogleMapsScraperDefinitivo(self.nicho, self.cidade)
                 scraper.on_lead_found_callback = on_lead_found
-                
-                # Injeta a verificação de parada
                 scraper.check_stop = lambda: state.get('stop_requested', False)
-                
-                # Executa
+
                 leads = scraper.scrape()
-                
-                # Atualiza final (se não foi cancelado forçado)
+
                 if not state.get('stop_requested'):
-                    state['leads'] = leads 
+                    state['leads'] = leads
                     state['completed'] = True
                     state['status'] = 'completed'
-                    state['progress'] = 100
                 else:
                     state['status'] = 'cancelled'
-                    state['running'] = False
-                
-                print(f"✅ [ID: {self.session_id}] Worker Finalizado.")
-                
+
             except Exception as e:
-                print(f"❌ [ID: {self.session_id}] Erro: {e}")
+                print(f"❌ Erro Thread: {e}")
                 state['error'] = str(e)
                 state['status'] = 'error'
                 state['completed'] = True
             finally:
-                pass
+                # GARBAGE COLLECTION FORÇADO
+                # Garante que o Chrome Driver morreu
+                try:
+                    if 'scraper' in locals() and scraper.driver:
+                        scraper.driver.quit()
+                except: pass
+                print(f"🏁 [ID: {self.session_id}] Busca finalizada/limpa.")
 
-
-# --- ENDPOINTS (RESTAURADOS) ---
+# --- ENDPOINTS ---
 
 @app.route('/')
 def home():
@@ -123,100 +121,91 @@ def static_files(path):
 @app.route('/api/start-search', methods=['POST'])
 def start_search():
     try:
+        # 1. Health Check
+        is_healthy, msg = check_system_health()
+        if not is_healthy:
+            return jsonify({'error': msg}), 503
+
         data = request.json
-        nicho = data.get('nicho')
-        cidade = data.get('cidade')
-        max_leads = int(data.get('max_leads', 10))
-        user_id = data.get('user_id') # User ID do Supabase
+        user_id = data.get('user_id')
         
-        # Filtros Opcionais
-        filters = {
-            'site': data.get('filter_site', 'todos'),
-            'whats': data.get('filter_whats', 'todos')
-        }
+        if not user_id: return jsonify({'error': 'User ID missing'}), 400
 
-        if not nicho or not cidade or not user_id:
-            return jsonify({'error': 'Parâmetros inválidos'}), 400
+        # 2. Limpa buscas antigas deste usuário (previne lixo)
+        if user_id in active_searches:
+            # Se estava rodando a muito tempo, mata.
+            pass 
 
-        # Verifica se já existe busca rodando para este user
-        if user_id in active_searches and active_searches[user_id]['status'] in ['running', 'queued']:
-             # Se tiver rodando, retorna session existente ou erro
-             # (Opcional: permitir cancelar anterior implicitamente)
-             pass
-
-        # Inicializa estado
         active_searches[user_id] = {
             'status': 'initializing',
             'leads': [],
             'leads_found': 0,
-            'total': max_leads,
-            'current': f"Inicializando {nicho}...",
             'completed': False,
             'stop_requested': False,
-            'started_at': None
+            'error': None
         }
 
-        # Inicia Worker em Background
-        worker = SearchWorker(user_id, nicho, cidade, max_leads, filters)
+        worker = SearchWorker(
+            user_id, 
+            data.get('nicho'), 
+            data.get('cidade'), 
+            int(data.get('max_leads', 10)),
+            {
+                'site': data.get('filter_site', 'todos'),
+                'whats': data.get('filter_whats', 'todos')
+            }
+        )
         worker.start()
 
         return jsonify({'success': True, 'session_id': user_id, 'status': 'queued'})
 
     except Exception as e:
-        print(f"Erro ao iniciar: {e}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/search-status', methods=['GET'])
 def search_status():
     session_id = request.args.get('session_id')
     
+    # Se sessão não existe na memória (crashou ou reiniciou), avisa o frontend
     if not session_id or session_id not in active_searches:
-        return jsonify({'status': 'not_found', 'leads': [], 'leads_found': 0})
+        return jsonify({
+            'status': 'error', 
+            'error': 'Busca perdida (Servidor reiniciou ou ID inválido). Tente novamente.',
+            'leads': [],
+            'completed': True
+        })
         
     state = active_searches[session_id]
     
-    # Retorna resumo
+    # Lógica de "Keep Alive" ou heartbeat poderia ser adicionada aqui
+    
     return jsonify({
-        'status': state.get('status', 'unknown'),
-        'leads': state.get('leads', [])[-20:], # Retorna apenas ultimos 20 para economizar banda (frontend deve acumular)
+        'status': state.get('status'),
+        'leads': state.get('leads', [])[-15:], # Delta updates
         'leads_found': state.get('leads_found', 0),
-        'current': state.get('current', ''),
         'completed': state.get('completed', False),
-        'error': state.get('error'),
-        # Info de Fila
-        'position': 1 if state.get('status') == 'queued' else 0 # Simplificado
+        'error': state.get('error')
     })
 
 @app.route('/api/cancel-search', methods=['POST'])
 def cancel_search():
-    try:
-        data = request.json or {}
-        session_id = data.get('user_id') or request.args.get('user_id')
-        
-        if not session_id or session_id not in active_searches:
-            return jsonify({'error': 'Sessão não encontrada'}), 404
-            
-        active_searches[session_id]['stop_requested'] = True
-        print(f"🛑 Solicitado cancelamento para: {session_id}")
-        
-        return jsonify({'success': True, 'message': 'Parando busca...'})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/reset-status', methods=['POST'])
-def reset_status():
-    global active_searches
-    active_searches = {}
-    try:
-        os.system("pkill chrome")
-        os.system("pkill chromium")
-    except: pass
-    return jsonify({'success': True, 'message': 'Sistema resetado'})
+    data = request.json or {}
+    sid = data.get('user_id')
+    if sid and sid in active_searches:
+        active_searches[sid]['stop_requested'] = True
+        return jsonify({'success': True})
+    return jsonify({'error': 'Not found'}), 404
 
 @app.route('/api/health')
 def health():
-    return jsonify({'status': 'ok', 'message': 'Server is running', 'active_searches': len(active_searches)})
+    mem = psutil.virtual_memory()
+    return jsonify({
+        'status': 'ok', 
+        'ram_percent': mem.percent, 
+        'active_threads': threading.active_count()
+    })
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5001))
-    app.run(host='0.0.0.0', port=port)
+    # Threaded=True é essencial para Flask processar requests enquanto worka
+    app.run(host='0.0.0.0', port=port, threaded=True)
