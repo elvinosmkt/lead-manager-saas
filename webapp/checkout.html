@@ -293,6 +293,35 @@
             color: var(--text-secondary);
         }
 
+        /* Validação Visual */
+        .form-input.error {
+            border-color: #ef4444 !important;
+            background: rgba(239, 68, 68, 0.05);
+        }
+
+        .form-input.success {
+            border-color: var(--success-neon) !important;
+        }
+
+        .form-group {
+            position: relative;
+        }
+
+        .field-error {
+            color: #ef4444;
+            font-size: 0.75rem;
+            margin-top: 6px;
+            display: none;
+        }
+
+        .field-error.show {
+            display: block;
+        }
+
+        .form-input.error+.field-error {
+            display: block;
+        }
+
         /* Payment Method */
         .payment-methods {
             display: grid;
@@ -601,7 +630,8 @@
                 <div class="form-group">
                     <label class="form-label">CPF (Obrigatório)</label>
                     <input type="text" class="form-input" placeholder="000.000.000-00" id="cpf" maxlength="14"
-                        oninput="maskCPF(this)">
+                        oninput="maskCPF(this)" onblur="validateCPFField(this)">
+                    <span class="field-error" id="cpf-error">CPF inválido. Verifique os dígitos.</span>
                 </div>
 
                 <div class="form-group">
@@ -658,14 +688,45 @@
                     </div>
 
                     <div class="card-row">
-                        <div class="form-group">
-                            <label class="form-label">Validade</label>
-                            <input type="text" id="card-expiry" class="form-input" placeholder="MM/AA" maxlength="5"
-                                oninput="maskExpiry(this)">
+                        <div class="form-group" style="flex: 1;">
+                            <label class="form-label">Mês</label>
+                            <select id="card-month" class="form-input">
+                                <option value="">Mês</option>
+                                <option value="01">01</option>
+                                <option value="02">02</option>
+                                <option value="03">03</option>
+                                <option value="04">04</option>
+                                <option value="05">05</option>
+                                <option value="06">06</option>
+                                <option value="07">07</option>
+                                <option value="08">08</option>
+                                <option value="09">09</option>
+                                <option value="10">10</option>
+                                <option value="11">11</option>
+                                <option value="12">12</option>
+                            </select>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group" style="flex: 1;">
+                            <label class="form-label">Ano</label>
+                            <select id="card-year" class="form-input">
+                                <option value="">Ano</option>
+                                <option value="2025">2025</option>
+                                <option value="2026">2026</option>
+                                <option value="2027">2027</option>
+                                <option value="2028">2028</option>
+                                <option value="2029">2029</option>
+                                <option value="2030">2030</option>
+                                <option value="2031">2031</option>
+                                <option value="2032">2032</option>
+                                <option value="2033">2033</option>
+                                <option value="2034">2034</option>
+                                <option value="2035">2035</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="flex: 0.7;">
                             <label class="form-label">CVV</label>
-                            <input type="text" id="card-cvv" class="form-input" placeholder="123" maxlength="4">
+                            <input type="text" id="card-cvv" class="form-input" placeholder="123" maxlength="4"
+                                inputmode="numeric">
                         </div>
                     </div>
 
@@ -822,6 +883,28 @@
             return true;
         }
 
+        // Validação visual do CPF em tempo real
+        function validateCPFField(input) {
+            const cpf = input.value;
+            const errorSpan = document.getElementById('cpf-error');
+
+            // Só valida se tiver 14 caracteres (formato completo)
+            if (cpf.length === 14) {
+                if (validateCPF(cpf)) {
+                    input.classList.remove('error');
+                    input.classList.add('success');
+                    if (errorSpan) errorSpan.classList.remove('show');
+                } else {
+                    input.classList.remove('success');
+                    input.classList.add('error');
+                    if (errorSpan) errorSpan.classList.add('show');
+                }
+            } else if (cpf.length > 0) {
+                input.classList.remove('success', 'error');
+                if (errorSpan) errorSpan.classList.remove('show');
+            }
+        }
+
         function init() {
             const params = new URLSearchParams(window.location.search);
             currentPlan = params.get('plan') || 'pro';
@@ -957,12 +1040,13 @@
                 if (selectedPaymentMethod === 'card') {
                     const cardHolder = document.getElementById('card-holder')?.value?.trim();
                     const cardNumber = document.getElementById('card-number')?.value?.replace(/\s/g, '');
-                    const cardExpiry = document.getElementById('card-expiry')?.value;
+                    const cardMonth = document.getElementById('card-month')?.value;
+                    const cardYear = document.getElementById('card-year')?.value;
                     const cardCvv = document.getElementById('card-cvv')?.value;
                     const cardCep = document.getElementById('card-cep')?.value?.replace(/\D/g, '');
                     const cardAddressNum = document.getElementById('card-address-number')?.value?.trim();
 
-                    if (!cardHolder || !cardNumber || !cardExpiry || !cardCvv) {
+                    if (!cardHolder || !cardNumber || !cardMonth || !cardYear || !cardCvv) {
                         alert("Por favor, preencha todos os dados do cartão.");
                         resetButton();
                         return;
@@ -1045,14 +1129,11 @@
 
                     const cardHolder = document.getElementById('card-holder').value.trim().toUpperCase();
                     const cardNumber = document.getElementById('card-number').value.replace(/\s/g, '');
-                    const cardExpiry = document.getElementById('card-expiry').value;
+                    const cardMonth = document.getElementById('card-month').value;
+                    const cardYear = document.getElementById('card-year').value;
                     const cardCvv = document.getElementById('card-cvv').value;
                     const cardCep = document.getElementById('card-cep').value.replace(/\D/g, '');
                     const cardAddressNum = document.getElementById('card-address-number').value.trim();
-
-                    // Parse validade MM/AA
-                    const [expiryMonth, expiryYear] = cardExpiry.split('/');
-                    const fullYear = '20' + expiryYear;
 
                     const response = await fetch(`${API_URL}/create-card-subscription`, {
                         method: 'POST',
@@ -1071,8 +1152,8 @@
                             card: {
                                 holderName: cardHolder,
                                 number: cardNumber,
-                                expiryMonth: expiryMonth,
-                                expiryYear: fullYear,
+                                expiryMonth: cardMonth,
+                                expiryYear: cardYear,
                                 ccv: cardCvv
                             }
                         })
