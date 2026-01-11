@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Scraper Turbo v2 - Extração via Painel Lateral (5x mais rápido)
+Scraper Estável v3 - Método clássico com seletores robustos
 """
 import time
 import re
@@ -11,7 +11,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.action_chains import ActionChains
 from config import CONFIG
 
 class GoogleMapsScraperDefinitivo:
@@ -22,10 +21,9 @@ class GoogleMapsScraperDefinitivo:
         self.businesses = []
         self.empresas_processadas = set()
         
-        # Callbacks (injetados pelo backend)
+        # Callbacks
         self.on_lead_found_callback = None
         self.check_stop = None
-        self.on_progress_update = None  # NOVO: Para atualizar progresso
         
         self._setup_driver()
 
@@ -38,22 +36,16 @@ class GoogleMapsScraperDefinitivo:
         chrome_options.add_argument("--lang=pt-BR")
         chrome_options.add_argument("--disable-blink-features=AutomationControlled")
         chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-        
-        # Performance
         chrome_options.add_argument("--disable-extensions")
         chrome_options.add_argument("--disable-gpu")
         chrome_options.page_load_strategy = 'eager'
-        
-        # Desabilitar imagens para velocidade
-        prefs = {"profile.managed_default_content_settings.images": 2}
-        chrome_options.add_experimental_option("prefs", prefs)
 
-        print("🔧 Iniciando Chrome Driver (Turbo Mode)...")
+        print("🔧 Iniciando Chrome Driver...")
         try:
             self.driver = webdriver.Chrome(options=chrome_options)
+            self.driver.set_page_load_timeout(30)
         except Exception as e:
-            print(f"❌ Erro ao iniciar Chrome: {e}")
-            # Fallback
+            print(f"❌ Erro Chrome: {e}")
             try:
                 from selenium.webdriver.chrome.service import Service
                 from webdriver_manager.chrome import ChromeDriverManager
@@ -70,21 +62,64 @@ class GoogleMapsScraperDefinitivo:
             url = f"https://www.google.com/maps/search/{query.replace(' ', '+')}/?hl=pt-BR"
             self.driver.get(url)
             
-            # Espera lista carregar
-            try:
-                WebDriverWait(self.driver, 12).until(
-                    EC.presence_of_element_located((By.CSS_SELECTOR, "div[role='feed']"))
-                )
-                print("✅ Lista de resultados carregada")
-            except:
-                print("⚠️ Timeout no carregamento inicial")
-
-            # Scroll para carregar mais resultados
+            # Espera resultados carregarem
+            time.sleep(4)
+            
+            # Scroll para carregar mais
             self._scroll_results()
             
-            # Coleta via CLIQUE (Método Turbo)
-            print("📊 Extraindo dados via painel lateral...")
-            self._collect_via_panel_click()
+            # Coleta links dos resultados
+            links = self._get_business_links()
+            print(f"📍 {len(links)} links encontrados")
+            
+            if not links:
+                print("⚠️ Nenhum resultado encontrado")
+                return []
+            
+            max_leads = CONFIG.get("MAX_BUSINESSES", 10)
+            filters = CONFIG.get('FILTERS', {})
+            
+            # Processa cada link
+            for idx, link in enumerate(links[:max_leads * 2]):  # Pega mais para compensar filtros
+                if self.check_stop and self.check_stop():
+                    print("🛑 Parada solicitada")
+                    break
+                    
+                if len(self.businesses) >= max_leads:
+                    break
+                
+                try:
+                    data = self._extract_business_data(link)
+                    
+                    if not data or not data.get('nome'):
+                        continue
+                    
+                    # Filtros
+                    if filters.get('site') == 'sem-site' and data.get('tem_site'):
+                        continue
+                    if filters.get('site') == 'com-site' and not data.get('tem_site'):
+                        continue
+                    
+                    # Evita duplicatas
+                    if data['nome'] in self.empresas_processadas:
+                        continue
+                    
+                    self.empresas_processadas.add(data['nome'])
+                    self.businesses.append(data)
+                    
+                    # Callback tempo real
+                    if self.on_lead_found_callback:
+                        try:
+                            self.on_lead_found_callback(data)
+                        except: pass
+                    
+                    site_icon = "🌐" if data.get('tem_site') else "❌"
+                    whats_icon = "💬" if data.get('whatsapp') else ""
+                    print(f"✅ [{len(self.businesses)}/{max_leads}] {data['nome'][:35]}... {site_icon} {whats_icon}")
+                    
+                except Exception as e:
+                    print(f"⚠️ Erro item: {e}")
+                    continue
             
             print(f"\n🎉 Coleta concluída: {len(self.businesses)} leads\n")
             
@@ -99,138 +134,119 @@ class GoogleMapsScraperDefinitivo:
         return self.businesses
 
     def _scroll_results(self):
-        """Scroll no painel de resultados para carregar mais itens"""
+        """Scroll no painel de resultados"""
         try:
-            panel = self.driver.find_element(By.CSS_SELECTOR, 'div[role="feed"]')
+            # Tenta encontrar o painel de resultados
+            selectors = [
+                'div[role="feed"]',
+                'div.m6QErb[aria-label]',
+                'div.m6QErb.DxyBCb'
+            ]
             
-            max_scrolls = 5  # Menos scrolls, mas suficiente
-            for i in range(max_scrolls):
+            panel = None
+            for sel in selectors:
+                try:
+                    panel = self.driver.find_element(By.CSS_SELECTOR, sel)
+                    if panel:
+                        break
+                except:
+                    continue
+            
+            if not panel:
+                print("⚠️ Painel de scroll não encontrado")
+                return
+            
+            for i in range(5):
                 if self.check_stop and self.check_stop(): break
-                
                 self.driver.execute_script(
                     "arguments[0].scrollTop = arguments[0].scrollHeight;", 
                     panel
                 )
-                time.sleep(1)
+                time.sleep(1.5)
                 
         except Exception as e:
             print(f"⚠️ Scroll: {e}")
 
-    def _collect_via_panel_click(self):
-        """
-        MÉTODO TURBO: Clica em cada resultado para abrir o painel lateral
-        e extrai os dados SEM navegar para outra página.
-        """
+    def _get_business_links(self):
+        """Pega todos os links de negócios"""
+        links = []
+        
         try:
-            # Pega todos os cards de resultado
-            # O Google Maps mostra cada resultado como um <a> ou <div> clicável
-            results = self.driver.find_elements(By.CSS_SELECTOR, 'a[href*="/maps/place/"]')
+            # Seletores para links de negócios no Maps
+            selectors = [
+                'a.hfpxzc',  # Seletor principal atual
+                'a[href*="/maps/place/"]',
+                'div[role="article"] a[href*="maps"]',
+            ]
             
-            if not results:
-                # Fallback: tenta outro seletor
-                results = self.driver.find_elements(By.CSS_SELECTOR, 'div[jsaction*="click"] div[role="article"]')
-            
-            max_leads = min(len(results), CONFIG.get("MAX_BUSINESSES", 100))
-            filters = CONFIG.get('FILTERS', {})
-            
-            print(f"📍 {len(results)} resultados encontrados. Processando {max_leads}...")
-
-            for idx, result in enumerate(results[:max_leads]):
-                if self.check_stop and self.check_stop():
-                    print("🛑 Parada solicitada")
-                    break
-
+            for sel in selectors:
                 try:
-                    # Scroll para o elemento (garante visibilidade)
-                    self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", result)
-                    time.sleep(0.3)
-                    
-                    # Clica para abrir o painel lateral
-                    result.click()
-                    time.sleep(1.5)  # Espera painel carregar
-                    
-                    # Extrai dados do painel
-                    data = self._extract_from_panel()
-                    
-                    if not data or not data.get('nome'):
-                        continue
-                    
-                    # Aplica Filtros
-                    if filters.get('site') == 'sem-site' and data.get('tem_site'):
-                        continue
-                    if filters.get('site') == 'com-site' and not data.get('tem_site'):
-                        continue
-                    if filters.get('whats') == 'com-whats' and not data.get('whatsapp'):
-                        continue
-
-                    # Evita duplicatas
-                    if data['nome'] in self.empresas_processadas:
-                        continue
-                    
-                    self.empresas_processadas.add(data['nome'])
-                    self.businesses.append(data)
-                    
-                    # CALLBACK: Envia lead em tempo real
-                    if self.on_lead_found_callback:
-                        try:
-                            self.on_lead_found_callback(data)
-                        except: pass
-                    
-                    # Log visual
-                    site_icon = "🌐" if data.get('tem_site') else "❌"
-                    whats_icon = "💬" if data.get('whatsapp') else ""
-                    print(f"✅ [{idx+1}/{max_leads}] {data['nome'][:30]}... {site_icon} {whats_icon}")
-
-                except Exception as e:
-                    # Erro em um item específico, continua
-                    pass
-
+                    elements = self.driver.find_elements(By.CSS_SELECTOR, sel)
+                    if elements:
+                        links = [e.get_attribute('href') for e in elements if e.get_attribute('href')]
+                        if links:
+                            break
+                except:
+                    continue
+            
+            # Remove duplicatas mantendo ordem
+            seen = set()
+            unique_links = []
+            for link in links:
+                if link and link not in seen:
+                    seen.add(link)
+                    unique_links.append(link)
+            
+            return unique_links
+            
         except Exception as e:
-            print(f"Erro coleta: {e}")
-            traceback.print_exc()
+            print(f"⚠️ Erro links: {e}")
+            return []
 
-    def _extract_from_panel(self):
-        """Extrai dados do painel lateral aberto"""
+    def _extract_business_data(self, url):
+        """Extrai dados de uma página de negócio"""
         data = {}
         
         try:
-            # NOME (H1 ou aria-label principal)
-            nome = ""
-            try:
-                h1 = self.driver.find_element(By.CSS_SELECTOR, "h1")
-                nome = h1.text.strip()
-            except:
-                try:
-                    # Fallback: Título no painel
-                    el = self.driver.find_element(By.CSS_SELECTOR, "[role='main'] h1, div[aria-label]")
-                    nome = el.get_attribute("aria-label") or el.text
-                except: pass
+            self.driver.get(url)
+            time.sleep(2)
             
-            if not nome or len(nome) < 2:
+            data['google_maps_link'] = url
+            
+            # NOME
+            try:
+                h1 = WebDriverWait(self.driver, 5).until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, "h1"))
+                )
+                data['nome'] = h1.text.strip()
+            except:
+                data['nome'] = ""
+            
+            if not data['nome']:
                 return None
             
-            data['nome'] = nome
-            data['google_maps_link'] = self.driver.current_url
-            
-            # TELEFONE
-            telefone = ""
+            # Pega todo o texto da página para extrair dados
+            page_text = ""
             try:
-                # Botão com data-item-id="phone"
-                phone_btn = self.driver.find_element(By.CSS_SELECTOR, "button[data-item-id*='phone']")
-                telefone = phone_btn.get_attribute("aria-label") or phone_btn.text
-                telefone = telefone.replace("Telefone:", "").replace("Ligar:", "").strip()
+                main = self.driver.find_element(By.CSS_SELECTOR, "div[role='main']")
+                page_text = main.text
             except:
-                # Fallback: Regex no texto da página
-                try:
-                    body_text = self.driver.find_element(By.CSS_SELECTOR, "[role='main']").text
-                    phones = re.findall(r'\(?\d{2}\)?\s?\d{4,5}[\s-]?\d{4}', body_text)
-                    if phones:
-                        telefone = phones[0]
-                except: pass
+                page_text = self.driver.find_element(By.TAG_NAME, "body").text
             
+            # TELEFONE (regex)
+            telefone = ""
+            phone_patterns = [
+                r'\(?\d{2}\)?\s?\d{4,5}[-\s]?\d{4}',
+                r'\+55\s?\d{2}\s?\d{4,5}[-\s]?\d{4}'
+            ]
+            for pattern in phone_patterns:
+                matches = re.findall(pattern, page_text)
+                if matches:
+                    telefone = matches[0]
+                    break
             data['telefone'] = telefone
             
-            # WHATSAPP (deriva do telefone)
+            # WHATSAPP
             data['whatsapp'] = ""
             if telefone:
                 nums = re.sub(r'\D', '', telefone)
@@ -242,9 +258,19 @@ class GoogleMapsScraperDefinitivo:
             # WEBSITE
             website = ""
             try:
-                web_link = self.driver.find_element(By.CSS_SELECTOR, "a[data-item-id='authority']")
-                website = web_link.get_attribute("href")
-            except: pass
+                web_btn = self.driver.find_element(By.CSS_SELECTOR, "a[data-item-id='authority']")
+                website = web_btn.get_attribute('href') or ""
+            except:
+                # Fallback: procura no texto
+                try:
+                    links = self.driver.find_elements(By.CSS_SELECTOR, "a[href*='http']")
+                    for link in links:
+                        href = link.get_attribute('href') or ""
+                        if href and 'google' not in href and 'facebook' not in href.lower():
+                            website = href
+                            break
+                except:
+                    pass
             
             data['website'] = website
             data['tem_site'] = bool(website and len(website) > 5)
@@ -252,21 +278,32 @@ class GoogleMapsScraperDefinitivo:
             # AVALIAÇÃO
             avaliacao = "0.0"
             try:
-                star_el = self.driver.find_element(By.CSS_SELECTOR, "span[aria-label*='estrela'], span[role='img'][aria-label*='star']")
-                val = star_el.get_attribute("aria-label")
-                match = re.search(r'(\d+[.,]\d+)', val)
-                if match:
-                    avaliacao = match.group(1).replace(',', '.')
-            except: pass
+                rating_match = re.search(r'(\d[,\.]\d)\s*estrela', page_text, re.IGNORECASE)
+                if rating_match:
+                    avaliacao = rating_match.group(1).replace(',', '.')
+                else:
+                    spans = self.driver.find_elements(By.CSS_SELECTOR, "span[aria-label*='estrela'], span[role='img']")
+                    for span in spans:
+                        label = span.get_attribute('aria-label') or ""
+                        match = re.search(r'(\d[,\.]\d)', label)
+                        if match:
+                            avaliacao = match.group(1).replace(',', '.')
+                            break
+            except:
+                pass
             data['avaliacao'] = avaliacao
             
             # ENDEREÇO
             endereco = ""
             try:
                 addr_btn = self.driver.find_element(By.CSS_SELECTOR, "button[data-item-id='address']")
-                endereco = addr_btn.get_attribute("aria-label") or addr_btn.text
-                endereco = endereco.replace("Endereço:", "").strip()
-            except: pass
+                endereco = addr_btn.get_attribute('aria-label') or addr_btn.text
+                endereco = endereco.replace('Endereço:', '').strip()
+            except:
+                # Fallback: procura padrão de endereço no texto
+                addr_match = re.search(r'([A-Z][^,]+,\s*\d+[^,]*,\s*[^,]+)', page_text)
+                if addr_match:
+                    endereco = addr_match.group(1)
             data['endereco'] = endereco
             
             # Metadata
@@ -274,6 +311,7 @@ class GoogleMapsScraperDefinitivo:
             data['cidade'] = self.cidade
             
             return data
-
+            
         except Exception as e:
+            print(f"⚠️ Extração: {e}")
             return None
