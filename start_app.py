@@ -78,7 +78,10 @@ class SearchWorker(threading.Thread):
                     if state.get('stop_requested'): return
                     state['leads'].append(lead)
                     state['leads_found'] += 1
-                    # Salva no Supabase (Thread separada para não bloquear)
+                    # Atualiza info de progresso em tempo real
+                    state['current'] = lead.get('nome', 'Processando...')[:40]
+                    state['progress'] = min(100, int((state['leads_found'] / self.max_leads) * 100))
+                    # Salva no Supabase (Thread separada)
                     threading.Thread(target=save_lead_to_cloud, args=(lead, self.session_id)).start()
 
                 scraper = GoogleMapsScraperDefinitivo(self.nicho, self.cidade)
@@ -181,8 +184,10 @@ def search_status():
     
     return jsonify({
         'status': state.get('status'),
-        'leads': state.get('leads', [])[-15:], # Delta updates
+        'leads': state.get('leads', [])[-15:],
         'leads_found': state.get('leads_found', 0),
+        'current': state.get('current', 'Aguardando...'),
+        'progress': state.get('progress', 0),
         'completed': state.get('completed', False),
         'error': state.get('error')
     })

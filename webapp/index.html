@@ -52,7 +52,24 @@
 
         .input-dark:focus {
             border-color: #10B981;
-            ring: 1px solid #10B981;
+            outline: 1px solid #10B981;
+        }
+
+        /* Animação para cards novos */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card-new {
+            animation: fadeInUp 0.4s ease-out;
         }
 
         /* Scrollbar */
@@ -537,7 +554,7 @@
                 const hasWhats = l.whatsapp && l.whatsapp.length > 5;
                 const card = document.createElement('div');
 
-                card.className = "bg-dark-800 border border-dark-700 rounded-xl p-5 shadow-lg relative group transition hover:border-dark-600";
+                card.className = "bg-dark-800 border border-dark-700 rounded-xl p-5 shadow-lg relative group transition hover:border-dark-600 card-new";
 
                 card.innerHTML = `
                    <div class="flex justify-between items-start mb-3">
@@ -602,12 +619,12 @@
         }
 
         function updateProgressUI(data) {
-            if (data.status === 'running' || data.status === 'initializing') {
-                document.getElementById('currentBusiness').innerText = data.current || "Processando...";
+            if (data.status === 'running' || data.status === 'initializing' || data.status === 'queued') {
+                document.getElementById('currentBusiness').innerText = data.current || "Aguardando início...";
                 document.getElementById('leadsFoundCount').innerText = data.leads_found || 0;
 
-                const maxLeads = parseInt(document.getElementById('maxLeadsInput').value) || 10;
-                const pct = Math.min(100, Math.round((data.leads_found / maxLeads) * 100));
+                // Usa progress do backend (mais preciso)
+                const pct = data.progress || 0;
                 document.getElementById('progressBar').style.width = `${pct}%`;
             }
         }

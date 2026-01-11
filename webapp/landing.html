@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LeadManager - Capte Clientes do Google Maps Sem Gastar com Anúncios</title>
+    <meta name="description"
+        content="Encontre leads qualificados direto do Google Maps. Sem site, sem anúncios, só resultados. Comece a prospectar hoje.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        dark: { 900: '#0a0a0a', 800: '#111111', 700: '#1a1a1a' },
+                        accent: { 500: '#DC2626', 600: '#B91C1C', glow: 'rgba(220, 38, 38, 0.4)' }
+                    },
+                    fontFamily: { sans: ['Inter', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0a0a;
+            color: #fff;
+            scroll-behavior: smooth;
+        }
+
+        .gradient-hero {
+            background: linear-gradient(180deg, #1a0505 0%, #0a0a0a 50%, #0a0a0a 100%);
+        }
+
+        .gradient-text {
+            background: linear-gradient(90deg, #fff 0%, #aaa 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .glow-red {
+            box-shadow: 0 0 40px rgba(220, 38, 38, 0.3);
+        }
+
+        .card-hover {
+            transition: all 0.3s;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .highlight {
+            color: #DC2626;
+        }
+
+        .line-through-custom {
+            text-decoration: line-through;
+            opacity: 0.5;
+        }
+
+        .badge-popular {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #DC2626;
+            padding: 4px 16px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="fixed top-0 w-full z-50 bg-dark-900/90 backdrop-blur-md border-b border-white/5">
+        <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-accent-500 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-bolt text-white text-sm"></i>
+                </div>
+                <span class="font-bold text-lg">LeadManager</span>
+            </div>
+            <div class="hidden md:flex items-center gap-8 text-sm text-gray-400">
+                <a href="#como-funciona" class="hover:text-white transition">Como Funciona</a>
+                <a href="#resultados" class="hover:text-white transition">Resultados</a>
+                <a href="#precos" class="hover:text-white transition">Preços</a>
+            </div>
+            <a href="login.html"
+                class="bg-accent-500 hover:bg-accent-600 text-white font-bold px-6 py-2.5 rounded-lg text-sm transition">
+                ACESSAR PLATAFORMA
+            </a>
+        </div>
+    </nav>
+
+    <!-- HERO SECTION -->
+    <section class="gradient-hero min-h-screen flex items-center pt-20">
+        <div class="max-w-6xl mx-auto px-6 py-20 text-center">
+            <div
+                class="inline-block bg-accent-500/10 border border-accent-500/30 text-accent-500 text-xs font-bold px-4 py-1.5 rounded-full mb-6 uppercase tracking-widest">
+                🚀 Prospecção Inteligente
+            </div>
+
+            <h1 class="text-4xl md:text-6xl lg:text-7xl font-black leading-tight mb-6">
+                VOCÊ <span class="highlight">NÃO PRECISA MAIS</span><br>
+                ANUNCIAR PARA<br>
+                <span class="gradient-text">CONSEGUIR CLIENTES.</span>
+            </h1>
+
+            <p class="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
+                O LeadManager extrai empresas do <strong class="text-white">Google Maps</strong> que já estavam lá, mas
+                você não via. Clientes reais com telefone, WhatsApp e email. <strong class="text-white">Pare de queimar
+                    dinheiro com tráfego</strong>.
+            </p>
+
+            <div class="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+                <a href="login.html"
+                    class="bg-accent-500 hover:bg-accent-600 text-white font-bold px-10 py-4 rounded-xl text-lg glow-red transition transform hover:scale-105">
+                    QUERO CAPTAR CLIENTES AGORA <i class="fas fa-arrow-right ml-2"></i>
+                </a>
+            </div>
+
+            <div class="flex justify-center items-center gap-6 text-sm text-gray-500">
+                <span><i class="fas fa-check text-green-500 mr-2"></i> Sem cartão de crédito</span>
+                <span><i class="fas fa-check text-green-500 mr-2"></i> 10 leads grátis</span>
+                <span><i class="fas fa-check text-green-500 mr-2"></i> Cancele quando quiser</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- PROBLEMA / DOR -->
+    <section class="py-24 border-t border-white/5">
+        <div class="max-w-6xl mx-auto px-6">
+            <p class="text-accent-500 font-bold text-sm uppercase tracking-widest mb-4">A cruel verdade</p>
+            <h2 class="text-3xl md:text-5xl font-black mb-6">
+                O cemitério das<br>
+                <span class="highlight">agências de indicação.</span>
+            </h2>
+            <p class="text-gray-400 text-lg max-w-xl mb-16">
+                Você já cansou de depender de indicação. Já tentou tráfego pago e viu o dinheiro evaporar.
+                A verdade é: <strong class="text-white">existem milhares de clientes procurando você agora no
+                    Google</strong>. Você só não está vendo.
+            </p>
+
+            <div class="grid md:grid-cols-2 gap-8">
+                <!-- Cards de Problema -->
+                <div class="bg-dark-800 border border-white/5 rounded-2xl p-6 card-hover">
+                    <div class="flex items-start gap-4">
+                        <div
+                            class="w-10 h-10 bg-red-500/10 rounded-full flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-times text-red-500"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-white mb-2">Investidores Frustrados</h4>
+                            <p class="text-gray-500 text-sm">Gastou R$ 5.000 em anúncios e recebeu 3 leads frios que
+                                nunca responderam. Soa familiar?</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-dark-800 border border-white/5 rounded-2xl p-6 card-hover">
+                    <div class="flex items-start gap-4">
+                        <div
+                            class="w-10 h-10 bg-red-500/10 rounded-full flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-hourglass-half text-red-500"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-white mb-2">Leads = Roleta Russa</h4>
+                            <p class="text-gray-500 text-sm">Um mês vem 20 indicações, no outro vem zero. Seu fluxo de
+                                caixa vira montanha-russa.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-dark-800 border border-white/5 rounded-2xl p-6 card-hover">
+                    <div class="flex items-start gap-4">
+                        <div
+                            class="w-10 h-10 bg-red-500/10 rounded-full flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-user-slash text-red-500"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-white mb-2">Faturamento Estagnado</h4>
+                            <p class="text-gray-500 text-sm">Você é bom no que faz, mas ninguém sabe que você existe.
+                                Seus concorrentes com marketing ruim estão fechando mais que você.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-dark-800 border border-white/5 rounded-2xl p-6 card-hover">
+                    <div class="flex items-start gap-4">
+                        <div
+                            class="w-10 h-10 bg-green-500/10 rounded-full flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-check text-green-500"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-white mb-2">A Solução Existe</h4>
+                            <p class="text-gray-500 text-sm">"Eu usava o método de indicação e fechava 5/mês. Com o
+                                LeadManager, fechei <span class="text-white font-bold">14 clientes em 30 dias</span>." —
+                                Ricardo M.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- COMO FUNCIONA -->
+    <section id="como-funciona" class="py-24 bg-dark-800/50 border-t border-b border-white/5">
+        <div class="max-w-6xl mx-auto px-6 text-center">
+            <p class="text-accent-500 font-bold text-sm uppercase tracking-widest mb-4">O Mecanismo</p>
+            <h2 class="text-3xl md:text-5xl font-black mb-6">
+                Prospecção de Precisão
+            </h2>
+            <p class="text-gray-400 text-lg max-w-2xl mx-auto mb-16">
+                Pesquise "Oficina em São Paulo" no Google Maps. Aparecem 500 resultados. Quantos deles <strong
+                    class="text-white">NÃO TEM SITE</strong>? Esses são seus clientes.
+            </p>
+
+            <div class="grid md:grid-cols-3 gap-8 text-left">
+                <div class="bg-dark-900 border border-white/5 rounded-2xl p-8 card-hover">
+                    <div class="w-12 h-12 bg-accent-500/10 rounded-xl flex items-center justify-center mb-6">
+                        <span class="text-accent-500 font-black text-xl">1</span>
+                    </div>
+                    <h4 class="font-bold text-xl mb-3">Escolha o Nicho e Cidade</h4>
+                    <p class="text-gray-500">Digite "Pizzaria" + "Curitiba" e deixe a IA trabalhar. Em minutos, você tem
+                        uma lista de leads qualificados.</p>
+                </div>
+                <div class="bg-dark-900 border border-white/5 rounded-2xl p-8 card-hover">
+                    <div class="w-12 h-12 bg-accent-500/10 rounded-xl flex items-center justify-center mb-6">
+                        <span class="text-accent-500 font-black text-xl">2</span>
+                    </div>
+                    <h4 class="font-bold text-xl mb-3">Filtre: Sem Site + Com WhatsApp</h4>
+                    <p class="text-gray-500">O sistema já entrega só as empresas que NÃO TEM site próprio (precisam de
+                        você!) e TEM WhatsApp (fácil contato).</p>
+                </div>
+                <div class="bg-dark-900 border border-white/5 rounded-2xl p-8 card-hover">
+                    <div class="w-12 h-12 bg-accent-500/10 rounded-xl flex items-center justify-center mb-6">
+                        <span class="text-accent-500 font-black text-xl">3</span>
+                    </div>
+                    <h4 class="font-bold text-xl mb-3">Aborde com 1 Clique</h4>
+                    <p class="text-gray-500">Clique no botão "Abordar" e o WhatsApp abre com uma mensagem personalizada
+                        pronta. Fechou. Próximo.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- RESULTADOS / PROVA SOCIAL -->
+    <section id="resultados" class="py-24 bg-gradient-to-b from-[#1a0505] to-dark-900">
+        <div class="max-w-4xl mx-auto px-6 text-center">
+            <div class="bg-dark-800 border border-accent-500/30 rounded-3xl p-10 md:p-16 glow-red">
+                <div class="w-16 h-16 bg-accent-500 rounded-2xl flex items-center justify-center mx-auto mb-8">
+                    <i class="fas fa-chart-line text-white text-2xl"></i>
+                </div>
+                <h2 class="text-2xl md:text-4xl font-black mb-6 leading-tight">
+                    Domingo, 14h. <span class="highlight">30 abordagens.</span> No<br>
+                    12º contato: R$ 1.000 de setup +<br>
+                    R$ 2.000/mês de gestão. <span class="text-green-400">Sem<br>
+                        gastar 1 centavo em tráfego.</span>
+                </h2>
+                <p class="text-gray-400 text-lg max-w-2xl mx-auto">
+                    "Eu nem sabia que era possível captar cliente assim. O cara nem sabia que precisava de site, eu
+                    mostrei pra ele no Maps mesmo e fechamos na hora." — <strong class="text-white">André Silva,
+                        Freelancer</strong>
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- PREÇOS -->
+    <section id="precos" class="py-24 border-t border-white/5">
+        <div class="max-w-6xl mx-auto px-6 text-center">
+            <p class="text-accent-500 font-bold text-sm uppercase tracking-widest mb-4">Escolha seu arsenal</p>
+            <h2 class="text-3xl md:text-5xl font-black mb-4">
+                Pacotes de Créditos
+            </h2>
+            <p class="text-gray-400 text-lg max-w-xl mx-auto mb-16">
+                Cada crédito = 1 lead extraído. Quanto mais créditos, menor o custo por lead.
+            </p>
+
+            <div class="grid md:grid-cols-4 gap-6">
+                <!-- Plano Starter -->
+                <div class="bg-dark-800 border border-white/5 rounded-2xl p-8 card-hover text-left">
+                    <h4 class="font-bold text-lg mb-1">Starter</h4>
+                    <p class="text-gray-500 text-sm mb-6">Para testar</p>
+                    <div class="mb-6">
+                        <span class="text-4xl font-black">R$ 49</span>
+                        <span class="text-gray-500">/único</span>
+                    </div>
+                    <ul class="space-y-3 text-sm text-gray-400 mb-8">
+                        <li><i class="fas fa-check text-green-500 mr-2"></i> 100 créditos</li>
+                        <li><i class="fas fa-check text-green-500 mr-2"></i> R$ 0,49/lead</li>
+                        <li><i class="fas fa-check text-green-500 mr-2"></i> Suporte básico</li>
+                    </ul>
+                    <a href="login.html"
+                        class="block w-full text-center bg-white/10 hover:bg-white/20 text-white font-bold py-3 rounded-xl transition">
+                        Começar
+                    </a>
+                </div>
+
+                <!-- Plano Pro -->
+                <div class="bg-dark-800 border border-white/5 rounded-2xl p-8 card-hover text-left">
+                    <h4 class="font-bold text-lg mb-1">Profissional</h4>
+                    <p class="text-gray-500 text-sm mb-6">Mais popular</p>
+                    <div class="mb-6">
+                        <span class="text-4xl font-black">R$ 149</span>
+                        <span class="text-gray-500">/único</span>
+                    </div>
+                    <ul class="space-y-3 text-sm text-gray-400 mb-8">
+                        <li><i class="fas fa-check text-green-500 mr-2"></i> 500 créditos</li>
+                        <li><i class="fas fa-check text-green-500 mr-2"></i> R$ 0,30/lead</li>
+                        <li><i class="fas fa-check text-green-500 mr-2"></i> Exportar Excel</li>
+                    </ul>
+                    <a href="login.html"
+                        class="block w-full text-center bg-white/10 hover:bg-white/20 text-white font-bold py-3 rounded-xl transition">
+                        Assinar
+                    </a>
+                </div>
+
+                <!-- Plano Agência - POPULAR -->
+                <div
+                    class="bg-dark-800 border-2 border-accent-500 rounded-2xl p-8 card-hover text-left relative glow-red">
+                    <div class="badge-popular">MAIS VENDIDO</div>
+                    <h4 class="font-bold text-lg mb-1">Agência</h4>
+                    <p class="text-gray-500 text-sm mb-6">Melhor custo-benefício</p>
+                    <div class="mb-6">
+                        <span class="text-4xl font-black text-accent-500">R$ 349</span>
+                        <span class="text-gray-500">/único</span>
+                    </div>
+                    <ul class="space-y-3 text-sm text-gray-400 mb-8">
+                        <li><i class="fas fa-check text-green-500 mr-2"></i> 1.500 créditos</li>
+                        <li><i class="fas fa-check text-green-500 mr-2"></i> R$ 0,23/lead</li>
+                        <li><i class="fas fa-check text-green-500 mr-2"></i> Multi-usuário</li>
+                        <li><i class="fas fa-check text-green-500 mr-2"></i> Suporte prioritário</li>
+                    </ul>
+                    <a href="login.html"
+                        class="block w-full text-center bg-accent-500 hover:bg-accent-600 text-white font-bold py-3 rounded-xl transition">
+                        QUERO ESSE <i class="fas fa-arrow-right ml-1"></i>
+                    </a>
+                </div>
+
+                <!-- Plano Enterprise -->
+                <div class="bg-dark-800 border border-white/5 rounded-2xl p-8 card-hover text-left">
+                    <h4 class="font-bold text-lg mb-1">Enterprise</h4>
+                    <p class="text-gray-500 text-sm mb-6">Para times</p>
+                    <div class="mb-6">
+                        <span class="text-4xl font-black">R$ 799</span>
+                        <span class="text-gray-500">/único</span>
+                    </div>
+                    <ul class="space-y-3 text-sm text-gray-400 mb-8">
+                        <li><i class="fas fa-check text-green-500 mr-2"></i> 5.000 créditos</li>
+                        <li><i class="fas fa-check text-green-500 mr-2"></i> R$ 0,16/lead</li>
+                        <li><i class="fas fa-check text-green-500 mr-2"></i> API Access</li>
+                        <li><i class="fas fa-check text-green-500 mr-2"></i> Treinamento 1:1</li>
+                    </ul>
+                    <a href="login.html"
+                        class="block w-full text-center bg-white/10 hover:bg-white/20 text-white font-bold py-3 rounded-xl transition">
+                        Falar com vendas
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA FINAL -->
+    <section class="py-24 bg-gradient-to-b from-dark-900 to-[#1a0505] border-t border-white/5">
+        <div class="max-w-3xl mx-auto px-6 text-center">
+            <h2 class="text-3xl md:text-5xl font-black mb-6">
+                Pronto para nunca mais<br>
+                <span class="highlight">depender de indicação?</span>
+            </h2>
+            <p class="text-gray-400 text-lg mb-10">
+                Crie sua conta grátis agora e receba 10 créditos de bônus para testar. Sem compromisso.
+            </p>
+            <a href="login.html"
+                class="inline-block bg-accent-500 hover:bg-accent-600 text-white font-bold px-12 py-5 rounded-xl text-lg glow-red transition transform hover:scale-105">
+                QUERO CAPTAR CLIENTES TODOS OS DIAS <i class="fas fa-arrow-right ml-2"></i>
+            </a>
+            <p class="text-gray-600 text-sm mt-6">
+                🔒 Seus dados estão seguros conosco.
+            </p>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="py-12 border-t border-white/5">
+        <div class="max-w-6xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-accent-500 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-bolt text-white text-sm"></i>
+                </div>
+                <span class="font-bold">LeadManager</span>
+            </div>
+            <div class="flex gap-6 text-sm text-gray-500">
+                <a href="#" class="hover:text-white">Termos de Uso</a>
+                <a href="#" class="hover:text-white">Privacidade</a>
+                <a href="#" class="hover:text-white">Suporte</a>
+            </div>
+            <p class="text-gray-600 text-sm">© 2025 LeadManager. Todos os direitos reservados.</p>
+        </div>
+    </footer>
+
+</body>
+
+</html>
