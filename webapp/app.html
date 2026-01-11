@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LeadScraper - Google Maps Intelligence</title>
+    <title>LeadManager - CRM & Scraper</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -12,14 +12,14 @@
                 extend: {
                     colors: {
                         dark: {
-                            900: '#0B0F19', // Fundo Principal
-                            800: '#151B2B', // Cards/Nav
-                            700: '#1E293B', // Bordas
+                            900: '#0A0A0A', // Fundo Principal
+                            800: '#111111', // Cards/Nav
+                            700: '#1a1a1a', // Bordas
                         },
                         primary: {
-                            500: '#10B981', // Verde Neon Principal
-                            600: '#059669',
-                            glow: 'rgba(16, 185, 129, 0.5)'
+                            500: '#E63946', // Vermelho Principal
+                            600: '#d32f3f',
+                            glow: 'rgba(230, 57, 70, 0.5)'
                         }
                     },
                     fontFamily: {
@@ -35,7 +35,7 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #0B0F19;
+            background-color: #0A0A0A;
             color: #fff;
         }
 
@@ -45,14 +45,14 @@
         }
 
         .input-dark {
-            background-color: #0B0F19;
-            border-color: #1E293B;
+            background-color: #0A0A0A;
+            border-color: #1a1a1a;
             color: white;
         }
 
         .input-dark:focus {
-            border-color: #10B981;
-            outline: 1px solid #10B981;
+            border-color: #E63946;
+            outline: 1px solid #E63946;
         }
 
         /* Animação para cards novos */
@@ -79,16 +79,16 @@
         }
 
         ::-webkit-scrollbar-track {
-            background: #0B0F19;
+            background: #0A0A0A;
         }
 
         ::-webkit-scrollbar-thumb {
-            background: #1E293B;
+            background: #1a1a1a;
             border-radius: 4px;
         }
 
         ::-webkit-scrollbar-thumb:hover {
-            background: #374151;
+            background: #333;
         }
     </style>
 </head>
@@ -102,13 +102,13 @@
                 <!-- Logo -->
                 <div class="flex items-center gap-3">
                     <div
-                        class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-900/50">
-                        <i class="fas fa-rocket text-white"></i>
+                        class="w-10 h-10 bg-primary-500 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/50">
+                        <i class="fas fa-bolt text-white"></i>
                     </div>
                     <div>
-                        <span class="font-bold text-xl tracking-tight text-white">LeadScraper</span>
-                        <span class="text-[9px] uppercase font-bold text-gray-400 block -mt-1 tracking-widest">Google
-                            Maps Intelligence</span>
+                        <span class="font-bold text-xl tracking-tight text-white">LeadManager</span>
+                        <span class="text-[9px] uppercase font-bold text-gray-400 block -mt-1 tracking-widest">CRM &
+                            SCRAPER</span>
                     </div>
                 </div>
 
@@ -128,7 +128,7 @@
                             <span id="creditsDisplay" class="font-bold text-white text-sm">PRO</span>
                         </div>
                         <div
-                            class="w-7 h-7 bg-blue-600 rounded-full flex items-center justify-center group-hover:bg-primary-500 transition">
+                            class="w-7 h-7 bg-primary-500 rounded-full flex items-center justify-center group-hover:bg-primary-600 transition">
                             <i class="fas fa-plus text-xs"></i>
                         </div>
                     </a>
@@ -141,8 +141,8 @@
                             <span
                                 class="text-[10px] text-primary-500 font-bold uppercase bg-primary-500/10 px-1.5 rounded">ONLINE</span>
                         </div>
-                        <div
-                            class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-sm font-bold border-2 border-dark-800">
+                        <div class="w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center text-sm font-bold border-2 border-dark-800"
+                            id="userInitials">
                             AD
                         </div>
                     </div>
@@ -376,6 +376,7 @@
                     // 2. Atualiza UI do Usuário
                     const userName = user.email.split('@')[0];
                     document.getElementById('userName').innerText = userName.charAt(0).toUpperCase() + userName.slice(1);
+                    document.getElementById('userInitials').innerText = userName.substring(0, 2).toUpperCase();
 
                     // 3. Carrega Leads do Banco
                     console.log('🔄 Carregando leads...');
@@ -385,6 +386,15 @@
 
                     // 4. Carrega Template de Mensagem
                     loadMessageTemplate();
+
+                    // 5. Carrega Créditos
+                    const credits = await LeadAPI.checkCredits();
+                    if (credits) {
+                        const used = credits.credits_used || 0;
+                        const limit = credits.credits_limit || 500;
+                        const remaining = limit - used;
+                        document.getElementById('creditsDisplay').innerText = `${remaining.toLocaleString()} / ${limit.toLocaleString()}`;
+                    }
 
                 } catch (error) {
                     console.error("Erro crítico na inicialização:", error);
