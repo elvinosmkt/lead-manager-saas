@@ -84,7 +84,7 @@ class SearchWorker(threading.Thread):
                     # Salva no Supabase (Thread separada)
                     threading.Thread(target=save_lead_to_cloud, args=(lead, self.session_id)).start()
 
-                scraper = GoogleMapsScraperDefinitivo(self.nicho, self.cidade, self.max_leads)
+                scraper = GoogleMapsScraperDefinitivo(self.nicho, self.cidade, self.max_leads, self.filters)
                 scraper.on_lead_found_callback = on_lead_found
                 scraper.check_stop = lambda: state.get('stop_requested', False)
 

@@ -211,6 +211,23 @@
                     </div>
                 </div>
 
+                <!-- Filtro WhatsApp -->
+                <div class="md:col-span-2 space-y-1.5">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">Status
+                        WhatsApp</label>
+                    <div class="relative">
+                        <i class="fab fa-whatsapp absolute left-4 top-3.5 text-gray-500"></i>
+                        <select id="filterWhatsInput"
+                            class="w-full bg-dark-900 border border-dark-700 rounded-xl pl-10 pr-8 py-3 text-white appearance-none focus:border-primary-500 outline-none cursor-pointer">
+                            <option value="todos">📱 Todos</option>
+                            <option value="com-whats" selected>💬 Com WhatsApp (Hot)</option>
+                            <option value="sem-whats">❌ Sem WhatsApp</option>
+                        </select>
+                        <i
+                            class="fas fa-chevron-down absolute right-4 top-4 text-gray-600 text-xs pointer-events-none"></i>
+                    </div>
+                </div>
+
                 <!-- Action Button -->
                 <div class="md:col-span-2">
                     <button id="btnSearch" onclick="startSearch()"
@@ -281,6 +298,18 @@
                         class="bg-dark-800 border border-dark-700 rounded-lg pl-8 pr-3 py-2 text-sm text-white focus:border-primary-500 outline-none w-40">
                     <datalist id="citiesList"></datalist>
                 </div>
+
+                <!-- Filtro WhatsApp Display -->
+                <div class="relative">
+                    <select id="filterWhatsDisplay" onchange="applyFilters()"
+                        class="bg-dark-800 border border-dark-700 rounded-lg px-3 py-2 text-sm text-white focus:border-primary-500 outline-none appearance-none pr-8 cursor-pointer">
+                        <option value="todos">📱 Todos</option>
+                        <option value="com-whats">💬 Com WhatsApp</option>
+                        <option value="sem-whats">❌ Sem WhatsApp</option>
+                    </select>
+                    <i class="fas fa-chevron-down absolute right-3 top-3 text-gray-500 text-xs pointer-events-none"></i>
+                </div>
+
                 <button onclick="exportToExcel()"
                     class="bg-white text-dark-900 hover:bg-gray-100 font-bold px-4 py-2 rounded-lg text-sm transition flex items-center gap-2">
                     <i class="fas fa-download"></i> Exportar
@@ -373,6 +402,7 @@
             const cidade = document.getElementById('cidadeInput').value.trim();
             const qtd = document.getElementById('maxLeadsInput').value;
             const siteFilter = document.getElementById('filterSiteInput').value;
+            const whatsFilter = document.getElementById('filterWhatsInput').value;
 
             if (!nicho || !cidade) return alert('Por favor, preencha Nicho e Cidade.');
 
@@ -385,7 +415,7 @@
             const tryFetch = async () => {
                 attempts++;
                 try {
-                    console.log(`🚀 Iniciando busca (Tentativa ${attempts}/${maxAttempts}):`, { nicho, cidade });
+                    console.log(`🚀 Iniciando busca (Tentativa ${attempts}/${maxAttempts}):`, { nicho, cidade, whatsFilter });
 
                     const response = await fetch(`${API_URL}/start-search`, {
                         method: 'POST',
@@ -396,7 +426,7 @@
                             max_leads: qtd,
                             user_id: state.sessionId,
                             filter_site: siteFilter,
-                            filter_whats: 'todos'
+                            filter_whats: whatsFilter
                         })
                     });
 
@@ -526,6 +556,9 @@
             const cityFilter = document.getElementById('filterCity').value.toLowerCase();
             const nicheFilter = document.getElementById('filterNiche').value.toLowerCase();
 
+            // Filtro WhatsApp da lista
+            const whatsFilter = document.getElementById('filterWhatsDisplay')?.value || 'todos';
+
             const filtered = state.leads.filter(l => {
                 if (state.filterStatus !== 'all' && (l.status || 'new') !== state.filterStatus) return false;
 
@@ -534,6 +567,10 @@
 
                 // Filtro Nicho (Parcial)
                 if (nicheFilter && !(l.nicho || '').toLowerCase().includes(nicheFilter)) return false;
+
+                // Filtro WhatsApp
+                if (whatsFilter === 'com-whats' && !l.whatsapp) return false;
+                if (whatsFilter === 'sem-whats' && l.whatsapp) return false;
 
                 return true;
             });

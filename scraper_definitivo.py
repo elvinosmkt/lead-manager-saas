@@ -12,10 +12,11 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 class GoogleMapsScraperDefinitivo:
-    def __init__(self, nicho, cidade, max_leads=10):
+    def __init__(self, nicho, cidade, max_leads=10, filters=None):
         self.nicho = nicho
         self.cidade = cidade
         self.max_leads = max_leads  # Recebe direto
+        self.filters = filters or {}  # Filtros: site, whats
         self.driver = None
         self.businesses = []
         self.empresas_processadas = set()
@@ -113,6 +114,26 @@ class GoogleMapsScraperDefinitivo:
                     # Evita duplicatas
                     if data['nome'] in self.empresas_processadas:
                         print(f"  ⚠️ Duplicado: {data['nome'][:30]}")
+                        continue
+                    
+                    # Aplica Filtros
+                    site_filter = self.filters.get('site', 'todos')
+                    whats_filter = self.filters.get('whats', 'todos')
+                    
+                    # Filtro Site
+                    if site_filter == 'sem-site' and data.get('tem_site'):
+                        print(f"  ⏭️ Pulando (tem site): {data['nome'][:30]}")
+                        continue
+                    if site_filter == 'com-site' and not data.get('tem_site'):
+                        print(f"  ⏭️ Pulando (sem site): {data['nome'][:30]}")
+                        continue
+                    
+                    # Filtro WhatsApp
+                    if whats_filter == 'com-whats' and not data.get('whatsapp'):
+                        print(f"  ⏭️ Pulando (sem WhatsApp): {data['nome'][:30]}")
+                        continue
+                    if whats_filter == 'sem-whats' and data.get('whatsapp'):
+                        print(f"  ⏭️ Pulando (tem WhatsApp): {data['nome'][:30]}")
                         continue
                     
                     self.empresas_processadas.add(data['nome'])
