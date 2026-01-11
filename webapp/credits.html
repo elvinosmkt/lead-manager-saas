@@ -4,15 +4,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Créditos & Faturamento - LeadScraper</title>
+    <title>Créditos & Faturamento - LeadManager</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        dark: { 900: '#0B0F19', 800: '#151B2B', 700: '#1E293B' },
-                        primary: { 500: '#10B981', 600: '#059669' }
+                        dark: { 900: '#0A0A0A', 800: '#111111', 700: '#1a1a1a' },
+                        primary: { 500: '#E63946', 600: '#d32f3f' }
                     },
                     fontFamily: { sans: ['Inter', 'sans-serif'] }
                 }
@@ -21,14 +21,16 @@
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-client.js"></script>
 </head>
 
 <body class="bg-dark-900 text-white min-h-screen font-sans">
 
-    <!-- Navbar Simplificada -->
+    <!-- Navbar -->
     <nav class="border-b border-dark-700 bg-dark-800">
         <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-            <a href="index.html" class="flex items-center gap-2 text-gray-400 hover:text-white transition">
+            <a href="dashboard.html" class="flex items-center gap-2 text-gray-400 hover:text-white transition">
                 <i class="fas fa-arrow-left"></i> Voltar ao Dashboard
             </a>
             <div class="flex items-center gap-3 bg-dark-900 border border-dark-700 rounded-lg px-4 py-2">
@@ -37,7 +39,7 @@
                 </div>
                 <div>
                     <span class="text-[10px] uppercase text-gray-500 font-bold block">Saldo Atual</span>
-                    <span class="text-lg font-bold">1.450 <span
+                    <span id="creditsDisplay" class="text-lg font-bold">--- <span
                             class="text-xs font-normal text-gray-400">créditos</span></span>
                 </div>
             </div>
@@ -46,27 +48,26 @@
 
     <main class="max-w-7xl mx-auto px-4 py-12">
         <div class="text-center mb-12">
-            <h1 class="text-3xl font-bold mb-3">Créditos & Faturamento</h1>
-            <p class="text-gray-400 max-w-xl mx-auto">Gerencie seu saldo e escolha o pacote ideal para suas buscas de
-                leads.</p>
+            <h1 class="text-3xl font-bold mb-3">Comprar Créditos</h1>
+            <p class="text-gray-400 max-w-xl mx-auto">Escolha o pacote ideal para suas buscas de leads.</p>
         </div>
 
         <!-- Pricing Grid -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
 
-            <!-- Basic -->
+            <!-- Starter -->
             <div
                 class="bg-dark-800 border border-dark-700 rounded-2xl p-8 hover:border-gray-600 transition relative flex flex-col">
                 <span
                     class="bg-dark-700 text-gray-300 text-xs font-bold px-3 py-1 rounded-full w-max mb-6">STARTER</span>
-                <h3 class="text-2xl font-bold mb-2">Basic</h3>
+                <h3 class="text-2xl font-bold mb-2">Starter</h3>
                 <div class="flex items-end gap-1 mb-8">
                     <span class="text-4xl font-bold text-white">R$ 97</span>
-                    <span class="text-gray-500 mb-1">/único</span>
+                    <span class="text-gray-500 mb-1">/mês</span>
                 </div>
                 <ul class="space-y-4 mb-8 flex-1">
                     <li class="flex items-center gap-3 text-sm text-gray-300"><i
-                            class="fas fa-check-circle text-primary-500"></i> 1.000 Créditos</li>
+                            class="fas fa-check-circle text-primary-500"></i> 500 Créditos/mês</li>
                     <li class="flex items-center gap-3 text-sm text-gray-300"><i
                             class="fas fa-check-circle text-primary-500"></i> Busca Ilimitada</li>
                     <li class="flex items-center gap-3 text-sm text-gray-300"><i
@@ -74,9 +75,10 @@
                     <li class="flex items-center gap-3 text-sm text-gray-500"><i class="fas fa-ban text-gray-600"></i>
                         Suporte Prioritário</li>
                 </ul>
-                <button
-                    class="w-full bg-transparent border border-gray-600 hover:border-white text-white font-bold py-3 rounded-xl transition">Comprar
-                    Agora</button>
+                <a href="checkout.html?plan=starter"
+                    class="w-full bg-transparent border border-gray-600 hover:border-white text-white font-bold py-3 rounded-xl transition text-center block">
+                    Assinar Agora
+                </a>
             </div>
 
             <!-- Pro -->
@@ -84,17 +86,18 @@
                 class="bg-dark-800 border-2 border-primary-500 rounded-2xl p-8 transform md:-translate-y-4 shadow-2xl shadow-primary-500/10 relative flex flex-col">
                 <div
                     class="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary-500 text-white text-xs font-bold px-4 py-1 rounded-full shadow-lg">
-                    MAIS POPULAR</div>
+                    MAIS POPULAR
+                </div>
                 <span
                     class="bg-primary-500/20 text-primary-500 text-xs font-bold px-3 py-1 rounded-full w-max mb-6">PROFESSIONAL</span>
                 <h3 class="text-2xl font-bold mb-2">Pro</h3>
                 <div class="flex items-end gap-1 mb-8">
-                    <span class="text-4xl font-bold text-white">R$ 247</span>
-                    <span class="text-gray-500 mb-1">/único</span>
+                    <span class="text-4xl font-bold text-white">R$ 197</span>
+                    <span class="text-gray-500 mb-1">/mês</span>
                 </div>
                 <ul class="space-y-4 mb-8 flex-1">
                     <li class="flex items-center gap-3 text-sm text-white"><i
-                            class="fas fa-check-circle text-primary-500"></i> <b>5.000 Créditos</b></li>
+                            class="fas fa-check-circle text-primary-500"></i> <b>1.500 Créditos/mês</b></li>
                     <li class="flex items-center gap-3 text-sm text-gray-300"><i
                             class="fas fa-check-circle text-primary-500"></i> Busca Ilimitada</li>
                     <li class="flex items-center gap-3 text-sm text-gray-300"><i
@@ -102,75 +105,103 @@
                     <li class="flex items-center gap-3 text-sm text-gray-300"><i
                             class="fas fa-check-circle text-primary-500"></i> Suporte Via WhatsApp</li>
                 </ul>
-                <button
-                    class="w-full bg-primary-500 hover:bg-primary-600 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-primary-500/25">Comprar
-                    Agora</button>
+                <a href="checkout.html?plan=pro"
+                    class="w-full bg-primary-500 hover:bg-primary-600 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-primary-500/25 text-center block">
+                    Assinar Agora
+                </a>
             </div>
 
-            <!-- Enterprise -->
+            <!-- Elite -->
             <div
                 class="bg-dark-800 border border-dark-700 rounded-2xl p-8 hover:border-gray-600 transition relative flex flex-col">
                 <span
                     class="bg-dark-700 text-gray-300 text-xs font-bold px-3 py-1 rounded-full w-max mb-6">ESCALÁVEL</span>
-                <h3 class="text-2xl font-bold mb-2">Enterprise</h3>
+                <h3 class="text-2xl font-bold mb-2">Elite</h3>
                 <div class="flex items-end gap-1 mb-8">
-                    <span class="text-4xl font-bold text-white">R$ 497</span>
-                    <span class="text-gray-500 mb-1">/único</span>
+                    <span class="text-4xl font-bold text-white">R$ 397</span>
+                    <span class="text-gray-500 mb-1">/mês</span>
                 </div>
                 <ul class="space-y-4 mb-8 flex-1">
                     <li class="flex items-center gap-3 text-sm text-gray-300"><i
-                            class="fas fa-check-circle text-primary-500"></i> 15.000 Créditos</li>
+                            class="fas fa-check-circle text-primary-500"></i> 5.000 Créditos/mês</li>
                     <li class="flex items-center gap-3 text-sm text-gray-300"><i
                             class="fas fa-check-circle text-primary-500"></i> Manager Dedicado</li>
                     <li class="flex items-center gap-3 text-sm text-gray-300"><i
                             class="fas fa-check-circle text-primary-500"></i> Todos recursos Pro</li>
                 </ul>
-                <button
-                    class="w-full bg-transparent border border-gray-600 hover:border-white text-white font-bold py-3 rounded-xl transition">Comprar
-                    Agora</button>
+                <a href="checkout.html?plan=elite"
+                    class="w-full bg-transparent border border-gray-600 hover:border-white text-white font-bold py-3 rounded-xl transition text-center block">
+                    Assinar Agora
+                </a>
             </div>
 
         </div>
 
-        <!-- Histórico (Visual apenas) -->
-        <h3 class="font-bold text-lg mb-4">Transações Recentes</h3>
-        <div class="overflow-x-auto rounded-xl border border-dark-700">
-            <table class="w-full text-left text-sm text-gray-400">
-                <thead class="bg-dark-800 text-gray-200 uppercase font-bold text-xs">
-                    <tr>
-                        <th class="px-6 py-4">Transação</th>
-                        <th class="px-6 py-4">Data</th>
-                        <th class="px-6 py-4">Qtd</th>
-                        <th class="px-6 py-4 text-right">Valor</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-dark-700 bg-dark-900">
-                    <tr class="hover:bg-dark-800 transition">
-                        <td class="px-6 py-4 font-medium text-white flex items-center gap-3">
-                            <div
-                                class="w-8 h-8 rounded bg-primary-500/20 flex items-center justify-center text-primary-500">
-                                <i class="fas fa-shopping-cart"></i></div>
-                            Compra de Pacote Pro
-                        </td>
-                        <td class="px-6 py-4">Hoje, 14:30</td>
-                        <td class="px-6 py-4 text-primary-500 font-bold">+5.000</td>
-                        <td class="px-6 py-4 text-right">R$ 247,00</td>
-                    </tr>
-                    <tr class="hover:bg-dark-800 transition">
-                        <td class="px-6 py-4 font-medium text-white flex items-center gap-3">
-                            <div class="w-8 h-8 rounded bg-blue-500/20 flex items-center justify-center text-blue-500">
-                                <i class="fas fa-search"></i></div>
-                            Busca: Pizzaria
-                        </td>
-                        <td class="px-6 py-4">Ontem, 09:12</td>
-                        <td class="px-6 py-4 text-red-400 font-bold">-42</td>
-                        <td class="px-6 py-4 text-right">--</td>
-                    </tr>
-                </tbody>
-            </table>
+        <!-- Uso Atual -->
+        <div class="bg-dark-800 border border-dark-700 rounded-2xl p-8 mb-8">
+            <h3 class="font-bold text-lg mb-4">Seu Uso Atual</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-dark-900 rounded-xl p-4 text-center">
+                    <p class="text-gray-500 text-xs uppercase mb-1">Plano Atual</p>
+                    <p id="currentPlan" class="text-xl font-bold text-primary-500">---</p>
+                </div>
+                <div class="bg-dark-900 rounded-xl p-4 text-center">
+                    <p class="text-gray-500 text-xs uppercase mb-1">Créditos Restantes</p>
+                    <p id="creditsRemaining" class="text-xl font-bold text-green-400">---</p>
+                </div>
+                <div class="bg-dark-900 rounded-xl p-4 text-center">
+                    <p class="text-gray-500 text-xs uppercase mb-1">Créditos Usados</p>
+                    <p id="creditsUsed" class="text-xl font-bold text-gray-400">---</p>
+                </div>
+            </div>
+            <!-- Barra de Progresso -->
+            <div class="mt-6">
+                <div class="flex justify-between text-xs text-gray-500 mb-2">
+                    <span>Uso do mês</span>
+                    <span id="usagePercent">0%</span>
+                </div>
+                <div class="w-full bg-dark-700 rounded-full h-3">
+                    <div id="usageBar" class="bg-primary-500 h-3 rounded-full transition-all duration-500"
+                        style="width: 0%"></div>
+                </div>
+            </div>
         </div>
 
     </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = await LeadAPI?.getUser();
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const credits = await LeadAPI.checkCredits();
+            if (credits) {
+                const used = credits.credits_used || 0;
+                const limit = credits.credits_limit || 500;
+                const remaining = limit - used;
+                const percent = Math.round((used / limit) * 100);
+
+                document.getElementById('creditsDisplay').innerHTML = `${remaining.toLocaleString()} <span class="text-xs font-normal text-gray-400">créditos</span>`;
+                document.getElementById('currentPlan').innerText = (credits.plan || 'starter').toUpperCase();
+                document.getElementById('creditsRemaining').innerText = remaining.toLocaleString();
+                document.getElementById('creditsUsed').innerText = used.toLocaleString();
+                document.getElementById('usagePercent').innerText = `${percent}%`;
+                document.getElementById('usageBar').style.width = `${percent}%`;
+
+                // Cor da barra baseada no uso
+                const bar = document.getElementById('usageBar');
+                if (percent > 80) {
+                    bar.className = 'bg-red-500 h-3 rounded-full transition-all duration-500';
+                } else if (percent > 50) {
+                    bar.className = 'bg-yellow-500 h-3 rounded-full transition-all duration-500';
+                }
+            }
+        });
+    </script>
+
 </body>
 
 </html>
