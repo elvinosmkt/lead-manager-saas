@@ -10,24 +10,38 @@ console.log('✅ Supabase conectado!');
 
 // Funções de API para Leads
 const LeadAPI = {
-    // Listar todos os leads
+    // Listar todos os leads DO USUÁRIO LOGADO
     async getAll() {
+        const user = await this.getUser();
+        if (!user) {
+            console.warn('Usuário não autenticado para buscar leads');
+            return [];
+        }
+
         const { data, error } = await supabaseInstance
             .from('leads')
             .select('*')
-            .order('data_coleta', { ascending: false });
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false });
 
         if (error) {
             console.error('Erro ao buscar leads:', error);
             return [];
         }
-        return data;
+        return data || [];
     },
 
     // Salvar/Atualizar lead
     async save(lead) {
+        const user = await this.getUser();
+        if (!user) {
+            console.error('Usuário não autenticado para salvar lead');
+            return { error: 'Não autenticado' };
+        }
+
         // Remove ID local se existir para deixar o banco gerar
         const { id, ...leadData } = lead;
+        leadData.user_id = user.id; // Garante associação ao usuário
 
         // Se tem ID numérico válido, é update
         if (id && typeof id === 'number') {
@@ -35,6 +49,7 @@ const LeadAPI = {
                 .from('leads')
                 .update(leadData)
                 .eq('id', id)
+                .eq('user_id', user.id) // Garante que só atualiza leads próprios
                 .select();
             return { data, error };
         }
@@ -50,10 +65,16 @@ const LeadAPI = {
 
     // Salvar múltiplos leads (para importação)
     async saveBatch(leads) {
-        // Limpa IDs temporários
+        const user = await this.getUser();
+        if (!user) {
+            console.error('Usuário não autenticado para salvar leads');
+            return { error: 'Não autenticado' };
+        }
+
+        // Limpa IDs temporários e adiciona user_id
         const cleanLeads = leads.map(l => {
             const { id, ...rest } = l;
-            return rest;
+            return { ...rest, user_id: user.id };
         });
 
         const { data, error } = await supabaseInstance
