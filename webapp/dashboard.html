@@ -9,6 +9,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-client.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -58,11 +60,20 @@
                         <span>Script de Venda</span>
                     </button>
 
-                    <!-- Saldo -->
-                    <div class="bg-gray-800 rounded-full px-4 py-1.5 border border-gray-700 flex items-center gap-2">
-                        <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                        <span class="text-xs text-gray-400 uppercase font-bold">Créditos</span>
-                        <span id="creditsDisplay" class="font-mono font-bold text-green-400">---</span>
+                    <!-- Saldo de Créditos com Barra -->
+                    <div id="creditsBox"
+                        class="bg-gray-800 rounded-2xl px-4 py-2 border border-gray-700 flex flex-col gap-1 min-w-[180px]">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <div id="creditsDot" class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                                <span class="text-xs text-gray-400 uppercase font-bold">Créditos</span>
+                            </div>
+                            <span id="creditsDisplay" class="font-mono font-bold text-green-400">---</span>
+                        </div>
+                        <div class="w-full bg-gray-700 rounded-full h-1.5">
+                            <div id="creditsBar" class="bg-green-500 h-1.5 rounded-full transition-all duration-500"
+                                style="width: 100%"></div>
+                        </div>
                     </div>
 
                     <!-- User -->
@@ -254,22 +265,127 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             loadUserInfo();
+            loadLeadsFromDB();
             document.getElementById('msgTemplate').value = msgTemplate;
         });
 
         async function loadUserInfo() {
             try {
-                const res = await fetch('/api/user-info');
-                const data = await res.json();
-                document.getElementById('userName').innerText = data.name;
-                document.getElementById('creditsDisplay').innerText = data.credits;
-            } catch (e) { console.error(e); }
+                // Se LeadAPI estiver disponível (carregado via supabase-client.js)
+                if (window.LeadAPI) {
+                    const user = await LeadAPI.getUser();
+                    const credits = await LeadAPI.checkCredits();
+
+                    if (user) {
+                        const name = user.email.split('@')[0];
+                        document.getElementById('userName').innerText = name;
+                    }
+
+                    if (credits) {
+                        const used = credits.credits_used || 0;
+                        const limit = credits.credits_limit || 500;
+                        const remaining = limit - used;
+                        const percent = Math.max(0, Math.min(100, (remaining / limit) * 100));
+
+                        document.getElementById('creditsDisplay').innerText = `${remaining}/${limit}`;
+                        document.getElementById('creditsBar').style.width = `${percent}%`;
+
+                        // Cores baseadas na porcentagem
+                        const bar = document.getElementById('creditsBar');
+                        const dot = document.getElementById('creditsDot');
+                        const display = document.getElementById('creditsDisplay');
+
+                        if (percent < 10) {
+                            bar.className = 'bg-red-500 h-1.5 rounded-full transition-all duration-500';
+                            dot.className = 'w-2 h-2 rounded-full bg-red-500 animate-pulse';
+                            display.className = 'font-mono font-bold text-red-400';
+                        } else if (percent < 30) {
+                            bar.className = 'bg-yellow-500 h-1.5 rounded-full transition-all duration-500';
+                            dot.className = 'w-2 h-2 rounded-full bg-yellow-500 animate-pulse';
+                            display.className = 'font-mono font-bold text-yellow-400';
+                        } else {
+                            bar.className = 'bg-green-500 h-1.5 rounded-full transition-all duration-500';
+                            dot.className = 'w-2 h-2 rounded-full bg-green-500 animate-pulse';
+                            display.className = 'font-mono font-bold text-green-400';
+                        }
+
+                        // Alerta se créditos muito baixos
+                        if (remaining < 20 && remaining > 0) {
+                            showCreditAlert(remaining);
+                        } else if (remaining <= 0) {
+                            showNoCreditsAlert();
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error('Erro ao carregar info do usuário:', e);
+            }
         }
+
+        function showCreditAlert(remaining) {
+            const existingAlert = document.getElementById('creditAlert');
+            if (existingAlert) return;
+
+            const alert = document.createElement('div');
+            alert.id = 'creditAlert';
+            alert.className = 'fixed top-20 right-4 bg-yellow-500/90 text-black px-4 py-3 rounded-xl shadow-lg z-50 flex items-center gap-3 animate-pulse';
+            alert.innerHTML = `
+                <i class="fas fa-exclamation-triangle text-xl"></i>
+                <div>
+                    <p class="font-bold">Créditos baixos!</p>
+                    <p class="text-sm">Restam apenas ${remaining} créditos.</p>
+                </div>
+                <button onclick="this.parentElement.remove()" class="ml-2 text-black/50 hover:text-black">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            document.body.appendChild(alert);
+        }
+
+        function showNoCreditsAlert() {
+            const existingAlert = document.getElementById('noCreditsAlert');
+            if (existingAlert) return;
+
+            const alert = document.createElement('div');
+            alert.id = 'noCreditsAlert';
+            alert.className = 'fixed top-20 right-4 bg-red-600 text-white px-4 py-3 rounded-xl shadow-lg z-50 flex items-center gap-3';
+            alert.innerHTML = `
+                <i class="fas fa-times-circle text-xl"></i>
+                <div>
+                    <p class="font-bold">Créditos esgotados!</p>
+                    <p class="text-sm">Faça upgrade para continuar.</p>
+                </div>
+                <a href="checkout.html" class="ml-2 bg-white text-red-600 px-3 py-1 rounded-lg font-bold text-sm hover:bg-gray-100">
+                    UPGRADE
+                </a>
+            `;
+            document.body.appendChild(alert);
+        }
+
+        async function loadLeadsFromDB() {
+            try {
+                if (window.LeadAPI) {
+                    leads = await LeadAPI.getAll();
+                    renderLeads();
+                }
+            } catch (e) {
+                console.error('Erro ao carregar leads:', e);
+            }
+        }
+
 
         async function startSearch() {
             const nicho = document.getElementById('nichoInput').value;
             const cidade = document.getElementById('cidadeInput').value;
             if (!nicho || !cidade) return alert('Preencha os campos!');
+
+            // Verifica usuário logado
+            const user = await LeadAPI?.getUser();
+            if (!user) {
+                alert('Você precisa estar logado para fazer buscas.');
+                window.location.href = 'login.html';
+                return;
+            }
 
             toggleSearchUI(true);
             leads = [];
@@ -278,9 +394,25 @@
             const res = await fetch('/api/start-search', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ nicho, cidade, max_leads: document.getElementById('maxLeadsInput').value })
+                body: JSON.stringify({
+                    nicho,
+                    cidade,
+                    max_leads: document.getElementById('maxLeadsInput').value,
+                    user_id: user.id
+                })
             });
-            if (res.ok) startPolling();
+
+            if (res.ok) {
+                startPolling();
+            } else {
+                const error = await res.json();
+                if (error.code === 'no_credits') {
+                    showNoCreditsAlert();
+                } else {
+                    alert(error.error || 'Erro ao iniciar busca');
+                }
+                toggleSearchUI(false);
+            }
         }
 
         function toggleSearchUI(searching) {
@@ -308,6 +440,10 @@
             clearInterval(pollingInterval);
             toggleSearchUI(false);
             fetch('/api/cancel-search', { method: 'POST' });
+
+            // Recarrega créditos e leads após busca
+            loadUserInfo();
+            loadLeadsFromDB();
         }
 
         function updateProgress(data) {
