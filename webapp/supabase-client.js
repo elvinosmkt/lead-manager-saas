@@ -22,7 +22,7 @@ const LeadAPI = {
             .from('leads')
             .select('*')
             .eq('user_id', user.id)
-            .order('created_at', { ascending: false });
+            .order('data_coleta', { ascending: false });
 
         if (error) {
             console.error('Erro ao buscar leads:', error);
