@@ -402,17 +402,26 @@
             }).then(() => console.log('🛑 Sinal de parada enviado.'));
         }
 
+        // --- LÓGICA DE POLLING COM RETRY ---
+        let pollingFailures = 0;
+        const MAX_POLLING_FAILURES = 10;
+
         function startPolling() {
             if (state.pollingInterval) clearInterval(state.pollingInterval);
+            pollingFailures = 0;
 
             state.pollingInterval = setInterval(async () => {
                 try {
                     const res = await fetch(`${API_URL}/search-status?session_id=${state.sessionId}`);
 
                     const contentType = res.headers.get("content-type");
-                    if (!contentType || !contentType.includes("application/json")) return;
+                    if (!contentType || !contentType.includes("application/json")) {
+                        // Se retornar HTML 502/503 (Deploy ou Crash), conta como falha de rede
+                        throw new Error("Bad response from server");
+                    }
 
                     const data = await res.json();
+                    pollingFailures = 0; // Reset falhas se conectar
 
                     updateProgressUI(data);
 
@@ -424,7 +433,6 @@
                                 novos++;
                             }
                         });
-
                         if (novos > 0) renderLeads();
                     }
 
@@ -432,8 +440,13 @@
                         stopSearch();
 
                         if (data.status === 'error') {
-                            alert('A busca parou com erro: ' + data.error);
+                            if (data.error && (data.error.includes("Memória") || data.error.includes("ocupado"))) {
+                                alert("⚠️ O servidor está sobrecarregado no momento.\nAlguns leads foram salvos, mas a busca parou para proteger o sistema.\nTente novamente em 1 minuto.");
+                            } else {
+                                alert('A busca parou: ' + (data.error || "Erro desconhecido"));
+                            }
                         } else {
+                            // showNotification(`✅ Busca finalizada!`);
                             setTimeout(async () => {
                                 state.leads = await LeadAPI.getAll();
                                 renderLeads();
@@ -442,9 +455,14 @@
                     }
 
                 } catch (e) {
-                    console.error("Polling error:", e);
+                    console.warn(`Polling retry (${pollingFailures + 1}/${MAX_POLLING_FAILURES})...`);
+                    pollingFailures++;
+                    if (pollingFailures >= MAX_POLLING_FAILURES) {
+                        stopSearch();
+                        alert("A conexão com o servidor foi perdida (Timeout).\nVerifique sua internet ou tente novamente.");
+                    }
                 }
-            }, 1000);
+            }, 2000);
         }
 
         // --- INTERFACE (RENDERIZAÇÃO) ---
