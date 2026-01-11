@@ -350,6 +350,7 @@
         });
 
         // --- FUNÇÕES DE BUSCA (CORE) ---
+        // --- FUNÇÕES DE BUSCA (CORE) ---
         async function startSearch() {
             const nicho = document.getElementById('nichoInput').value.trim();
             const cidade = document.getElementById('cidadeInput').value.trim();
@@ -360,44 +361,69 @@
 
             toggleSearchUI(true);
 
-            try {
-                console.log('🚀 Iniciando busca:', { nicho, cidade, qtd });
+            // Lógica de Retry para "Acordar" o servidor (Cold Start)
+            let attempts = 0;
+            const maxAttempts = 3;
 
-                const response = await fetch(`${API_URL}/start-search`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        nicho,
-                        cidade,
-                        max_leads: qtd,
-                        user_id: state.sessionId,
-                        filter_site: siteFilter,
-                        filter_whats: 'todos'
-                    })
-                });
+            const tryFetch = async () => {
+                attempts++;
+                try {
+                    console.log(`🚀 Iniciando busca (Tentativa ${attempts}/${maxAttempts}):`, { nicho, cidade });
 
-                // VERIFICAÇÃO DE ERRO JSON (CRÍTICO)
-                const contentType = response.headers.get("content-type");
-                if (!contentType || !contentType.includes("application/json")) {
-                    const textObj = await response.text();
-                    console.error("❌ ERRO API (HTML Retornado):", textObj);
-                    throw new Error("O servidor retornou um erro inesperado (HTML). Verifique o console.");
-                }
+                    const response = await fetch(`${API_URL}/start-search`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            nicho,
+                            cidade,
+                            max_leads: qtd,
+                            user_id: state.sessionId,
+                            filter_site: siteFilter,
+                            filter_whats: 'todos'
+                        })
+                    });
 
-                const data = await response.json();
+                    // Verifica se retornou JSON (não HTML de erro)
+                    const contentType = response.headers.get("content-type");
+                    if (!contentType || !contentType.includes("application/json")) {
+                        if (attempts < maxAttempts) {
+                            console.warn("Resposta inválida, tentando novamente...");
+                            await new Promise(r => setTimeout(r, 2000)); // Espera 2s
+                            return tryFetch(); // Recicla
+                        }
+                        const text = await response.text();
+                        console.error("❌ ERRO CRÍTICO API:", text);
+                        throw new Error("Erro no servidor (Retorno inválido).");
+                    }
 
-                if (response.ok) {
-                    // showNotification('Busca iniciada! Acompanhe o progresso.', 'success');
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        // Se for erro 503 (busy), tenta de novo? Não, melhor avisar.
+                        throw new Error(data.error || 'Falha ao iniciar.');
+                    }
+
+                    // Sucesso!
                     startPolling();
-                } else {
-                    throw new Error(data.error || 'Falha ao iniciar busca.');
-                }
 
-            } catch (error) {
-                console.error(error);
-                alert('Erro: ' + error.message);
-                toggleSearchUI(false);
-            }
+                } catch (error) {
+                    console.error(`Erro tentativa ${attempts}:`, error);
+
+                    // Se for Network Error (Failed to fetch) e ainda tiver tentativas
+                    if (error.message.includes("Failed to fetch") && attempts < maxAttempts) {
+                        console.log("⚠️ Servidor dormindo? Retentando em 3s...");
+                        await new Promise(r => setTimeout(r, 3000));
+                        return tryFetch();
+                    }
+
+                    // Se esgotou tentativas
+                    alert('Não foi possível conectar ao servidor.\nVerifique se o Railway está ativo.\nErro: ' + error.message);
+                    toggleSearchUI(false);
+                }
+            };
+
+            // Dispara
+            tryFetch();
         }
 
         function stopSearch() {
