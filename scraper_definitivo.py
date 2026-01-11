@@ -351,6 +351,46 @@ class GoogleMapsScraperDefinitivo:
                 pass
             data['endereco'] = endereco
             
+            # INSTAGRAM - busca link para instagram.com
+            instagram = ""
+            try:
+                # Método 1: Botão específico de redes sociais
+                social_buttons = self.driver.find_elements(By.CSS_SELECTOR, "a[href*='instagram.com']")
+                for btn in social_buttons:
+                    href = btn.get_attribute('href')
+                    if href and 'instagram.com' in href:
+                        instagram = href
+                        break
+            except:
+                pass
+            
+            if not instagram:
+                try:
+                    # Método 2: Busca no texto da página por @username
+                    ig_match = re.search(r'@([a-zA-Z0-9_\.]+)', page_text)
+                    if ig_match:
+                        username = ig_match.group(1)
+                        # Verifica se parece ser Instagram (não email)
+                        if not '@' in username and len(username) > 2:
+                            instagram = f"https://instagram.com/{username}"
+                except:
+                    pass
+            
+            if not instagram:
+                try:
+                    # Método 3: Links em qualquer lugar da página
+                    all_links = self.driver.find_elements(By.TAG_NAME, "a")
+                    for link in all_links:
+                        href = link.get_attribute('href') or ""
+                        if 'instagram.com' in href and '/p/' not in href:  # Evita posts específicos
+                            instagram = href
+                            break
+                except:
+                    pass
+            
+            data['instagram'] = instagram
+            data['tem_instagram'] = bool(instagram)
+            
             # Metadata
             data['nicho'] = self.nicho
             data['cidade'] = self.cidade

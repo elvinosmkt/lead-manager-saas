@@ -68,6 +68,8 @@ function handleFileUpload(event) {
                 cidade: row.cidade || '',
                 tem_site: row.tem_site === 'Sim' || row.tem_site === true,
                 website: row.website || '',
+                instagram: row.instagram || '',
+                tem_instagram: row.tem_instagram === 'Sim' || row.tem_instagram === true || !!row.instagram,
                 contatado: row.contatado || 'Não',
                 respondeu: row.respondeu || 'Não',
                 observacoes: row.observacoes || '',
@@ -225,6 +227,7 @@ function createCompactCard(lead) {
     if (!lead.tem_site) badges.push('<span class="badge badge-sem-site">🎯 Sem Site</span>');
     if (lead.telefone && !lead.whatsapp) badges.push('<span class="badge badge-telefone">📞 Telefone</span>');
     if (lead.whatsapp) badges.push('<span class="badge badge-com-whatsapp">💬 WhatsApp</span>');
+    if (lead.instagram || lead.tem_instagram) badges.push('<span class="badge badge-instagram">📸 Instagram</span>');
     if (!lead.tem_site && lead.whatsapp) badges.push('<span class="badge badge-qualificado">⭐ Qualificado</span>');
     if (lead.contatado === 'Sim') badges.push('<span class="badge badge-contatado">✅ Contatado</span>');
 
@@ -239,6 +242,10 @@ function createCompactCard(lead) {
                onclick="event.stopPropagation(); updateSelectionCount()"
                style="width: 20px; height: 20px; cursor: pointer; margin-right: 10px;">
     ` : '';
+
+    // Link do Instagram formatado
+    const instagramLink = lead.instagram || '';
+    const instagramUsername = instagramLink ? instagramLink.replace(/https?:\/\/(www\.)?instagram\.com\/?/, '').replace(/\/$/, '') : '';
 
     return `
         <div class="lead-card-compact" onclick="toggleCard(this, ${lead.id})">
@@ -256,6 +263,7 @@ function createCompactCard(lead) {
                 ${lead.telefone ? `<div>📞 <strong>${lead.telefone}</strong></div>` : ''}
                 ${lead.endereco ? `<div>📍 ${lead.endereco.substring(0, 50)}${lead.endereco.length > 50 ? '...' : ''}</div>` : ''}
                 ${lead.avaliacao ? `<div>⭐ <strong>${lead.avaliacao}</strong> ${lead.num_avaliacoes || ''}</div>` : ''}
+                ${instagramUsername ? `<div>📸 <a href="${instagramLink}" target="_blank" onclick="event.stopPropagation()" style="color: #E1306C; text-decoration: none;">@${instagramUsername}</a></div>` : ''}
                 ${lead.segmento ? `<div>🏷️ ${lead.segmento}</div>` : ''}
             </div>
             
@@ -265,6 +273,7 @@ function createCompactCard(lead) {
                     ${lead.cidade ? `<div class="detail-item"><span class="detail-label">Cidade:</span><span>${lead.cidade}</span></div>` : ''}
                     ${lead.segmento ? `<div class="detail-item"><span class="detail-label">Segmento:</span><span>${lead.segmento}</span></div>` : ''}
                     ${lead.website ? `<div class="detail-item"><span class="detail-label">Website:</span><span>${lead.website}</span></div>` : ''}
+                    ${instagramLink ? `<div class="detail-item"><span class="detail-label">Instagram:</span><span><a href="${instagramLink}" target="_blank" style="color: #E1306C;">@${instagramUsername}</a></span></div>` : ''}
                     ${lead.data_coleta ? `<div class="detail-item"><span class="detail-label">Coletado:</span><span>${new Date(lead.data_coleta).toLocaleDateString('pt-BR')}</span></div>` : ''}
                 </div>
                 
@@ -273,6 +282,9 @@ function createCompactCard(lead) {
                 <div class="lead-actions-compact">
                     ${lead.google_maps_link ? `<a href="${lead.google_maps_link}" target="_blank" class="btn-maps-compact" onclick="event.stopPropagation()">
                         🗺️ Ver no Maps
+                    </a>` : ''}
+                    ${instagramLink ? `<a href="${instagramLink}" target="_blank" class="btn-instagram-compact" onclick="event.stopPropagation()" style="background: linear-gradient(45deg, #833AB4, #FD1D1D, #F77737); color: white; padding: 8px 12px; border-radius: 8px; text-decoration: none; font-size: 0.85rem;">
+                        📸 Instagram
                     </a>` : ''}
                     ${whatsappLink ? `<a href="${whatsappLink}" target="_blank" class="btn-whatsapp-compact" onclick="event.stopPropagation(); markAsContacted(${lead.id})">
                         💬 Enviar WhatsApp

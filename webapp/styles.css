@@ -415,6 +415,16 @@ body {
     color: var(--info);
 }
 
+.badge-instagram {
+    background: linear-gradient(45deg, #833AB4, #FD1D1D, #F77737);
+    color: white;
+}
+
+.badge-telefone {
+    background: #f3f4f6;
+    color: #374151;
+}
+
 .lead-info-compact {
     font-size: 13px;
     color: var(--gray);
@@ -656,6 +666,7 @@ body {
 .lead-card-compact {
     animation: fadeIn 0.3s ease;
 }
+
 /* ========== MELHORIAS VISUAIS ========== */
 
 /* Header Melhorado */
@@ -672,7 +683,8 @@ body {
     gap: 10px;
 }
 
-.btn-config, .btn-export {
+.btn-config,
+.btn-export {
     padding: 12px 20px;
     border-radius: var(--radius);
     border: none;
@@ -905,7 +917,8 @@ body {
     box-shadow: var(--shadow-lg);
 }
 
-.btn-search, .btn-import {
+.btn-search,
+.btn-import {
     display: inline-flex;
     align-items: center;
     gap: 10px;
@@ -935,6 +948,7 @@ body {
         opacity: 0;
         max-height: 0;
     }
+
     to {
         opacity: 1;
         max-height: 500px;
@@ -948,12 +962,14 @@ body {
         align-items: flex-start;
         gap: 15px;
     }
-    
+
     .details-grid {
         grid-template-columns: 1fr;
     }
-    
-    .btn-search, .btn-import, .btn-cancel {
+
+    .btn-search,
+    .btn-import,
+    .btn-cancel {
         width: 100%;
         justify-content: center;
     }
@@ -1001,7 +1017,9 @@ body {
     flex-wrap: wrap;
 }
 
-.btn-massa-send, .btn-massa-export, .btn-massa-delete {
+.btn-massa-send,
+.btn-massa-export,
+.btn-massa-delete {
     padding: 12px 24px;
     border-radius: var(--radius);
     border: none;
@@ -1053,16 +1071,18 @@ body {
         flex-direction: column;
         align-items: stretch;
     }
-    
+
     .massa-selection-info {
         justify-content: center;
     }
-    
+
     .massa-actions {
         flex-direction: column;
     }
-    
-    .btn-massa-send, .btn-massa-export, .btn-massa-delete {
+
+    .btn-massa-send,
+    .btn-massa-export,
+    .btn-massa-delete {
         width: 100%;
     }
 }
@@ -1270,7 +1290,7 @@ body {
 
 .tag-pill:hover {
     transform: scale(1.05);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .btn-add-tag {
@@ -1298,7 +1318,7 @@ body {
 
 .tag-option:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .tag-option.active {
@@ -1310,7 +1330,7 @@ body {
     .leads-table {
         font-size: 12px;
     }
-    
+
     .leads-table th,
     .leads-table td {
         padding: 8px 6px;
@@ -1321,7 +1341,7 @@ body {
     .table-container {
         overflow-x: scroll;
     }
-    
+
     .leads-table {
         min-width: 800px;
     }
