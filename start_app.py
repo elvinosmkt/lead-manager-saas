@@ -23,7 +23,14 @@ from db_config import save_lead_to_cloud, check_user_credits, deduct_user_credit
 from payment_service import create_pix_payment
 
 app = Flask(__name__, static_folder='webapp', static_url_path='')
-CORS(app)
+CORS(app, origins=[
+    "https://leads.blendagency.com.br",
+    "https://leadmanager-lp.vercel.app",
+    "http://localhost:3000",
+    "http://localhost:5001",
+    "http://127.0.0.1:3000",
+    "*"  # Fallback para desenvolvimento
+], supports_credentials=True)
 
 # --- CONFIGURAÇÃO DE SEGURANÇA E RECURSOS ---
 MAX_CONCURRENT_SEARCHES = 1  # Segurança máxima para plano Free/Hobby (evita OOM)
