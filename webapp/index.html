@@ -4,744 +4,1134 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LeadScraper - Google Maps Intelligence</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        dark: {
-                            900: '#0B0F19', // Fundo Principal
-                            800: '#151B2B', // Cards/Nav
-                            700: '#1E293B', // Bordas
-                        },
-                        primary: {
-                            500: '#10B981', // Verde Neon Principal
-                            600: '#059669',
-                            glow: 'rgba(16, 185, 129, 0.5)'
-                        }
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    }
-                }
-            }
-        }
-    </script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>LeadManager - Capte Clientes do Google Maps Sem Anunciar</title>
+    <meta name="description"
+        content="Extraia leads qualificados direto do Google Maps. Filtre empresas SEM SITE e aborde via WhatsApp. Ferramenta de guerra para prospecção.">
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23E63946' rx='20' width='100' height='100'/><text x='50' y='65' font-size='50' text-anchor='middle' fill='white' font-family='Arial'>⚡</text></svg>">
+    <link rel="apple-touch-icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23E63946' rx='20' width='100' height='100'/><text x='50' y='65' font-size='50' text-anchor='middle' fill='white' font-family='Arial'>⚡</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
+        :root {
+            --bg-pure: #0A0A0A;
+            --bg-card: #111111;
+            --bg-elevated: #161616;
+            --border-metallic: rgba(255, 255, 255, 0.08);
+            --text-primary: #FFFFFF;
+            --text-secondary: #888888;
+            --accent-red: #E63946;
+            --accent-red-glow: rgba(230, 57, 70, 0.4);
+            --success-neon: #00FF41;
+            --success-glow: rgba(0, 255, 65, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #0B0F19;
-            color: #fff;
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-pure);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
         }
 
-        .glass {
-            background: rgba(21, 27, 43, 0.7);
-            backdrop-filter: blur(10px);
+        /* Anti-Gravity Effect */
+        .float-card {
+            background: var(--bg-card);
+            border: 0.5px solid var(--border-metallic);
+            border-radius: 16px;
+            box-shadow:
+                0 4px 20px rgba(0, 0, 0, 0.4),
+                0 8px 40px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.03);
+            transform: translateZ(0);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .input-dark {
-            background-color: #0B0F19;
-            border-color: #1E293B;
+        .float-card:hover {
+            transform: translateY(-8px) translateZ(20px);
+            box-shadow:
+                0 12px 40px rgba(0, 0, 0, 0.5),
+                0 20px 60px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Glow Effects */
+        .glow-red {
+            box-shadow: 0 0 40px var(--accent-red-glow), 0 0 80px var(--accent-red-glow);
+        }
+
+        .glow-green {
+            box-shadow: 0 0 20px var(--success-glow), 0 0 40px var(--success-glow);
+            text-shadow: 0 0 10px var(--success-neon);
+        }
+
+        /* Typography */
+        .headline-xl {
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            font-weight: 900;
+            line-height: 1.05;
+            letter-spacing: -0.02em;
+        }
+
+        .headline-lg {
+            font-size: clamp(1.8rem, 4vw, 3rem);
+            font-weight: 800;
+            line-height: 1.1;
+        }
+
+        .text-red {
+            color: var(--accent-red);
+        }
+
+        .text-green {
+            color: var(--success-neon);
+        }
+
+        .text-gray {
+            color: var(--text-secondary);
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background: var(--accent-red);
             color: white;
+            font-weight: 700;
+            padding: 18px 40px;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
         }
 
-        .input-dark:focus {
-            border-color: #10B981;
-            outline: 1px solid #10B981;
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px var(--accent-red-glow);
         }
 
-        /* Animação para cards novos */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
+        .btn-ghost {
+            background: transparent;
+            border: 1px solid var(--border-metallic);
+            color: var(--text-primary);
+            padding: 14px 28px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+
+        .btn-ghost:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Navbar */
+        .navbar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            padding: 16px 0;
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 0.5px solid var(--border-metallic);
+        }
+
+        .navbar-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 800;
+            font-size: 1.2rem;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: var(--accent-red);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--text-primary);
+        }
+
+        /* Hero - Two Column */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding: 120px 24px 80px;
+            background:
+                radial-gradient(ellipse at top left, rgba(230, 57, 70, 0.12) 0%, transparent 50%),
+                var(--bg-pure);
+        }
+
+        .hero-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 64px;
+            align-items: center;
+        }
+
+        @media (max-width: 900px) {
+            .hero-container {
+                grid-template-columns: 1fr;
+                text-align: center;
             }
 
-            to {
-                opacity: 1;
-                transform: translateY(0);
+            .hero-mockup {
+                order: -1;
             }
         }
 
-        .card-new {
-            animation: fadeInUp 0.4s ease-out;
+        .hero-text {
+            text-align: left;
         }
 
-        /* Scrollbar */
-        ::-webkit-scrollbar {
+        @media (max-width: 900px) {
+            .hero-text {
+                text-align: center;
+            }
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(230, 57, 70, 0.1);
+            border: 1px solid rgba(230, 57, 70, 0.3);
+            color: var(--accent-red);
+            padding: 8px 16px;
+            border-radius: 100px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+        }
+
+        .badge-dot {
             width: 8px;
             height: 8px;
+            background: var(--accent-red);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
         }
 
-        ::-webkit-scrollbar-track {
-            background: #0B0F19;
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
         }
 
-        ::-webkit-scrollbar-thumb {
-            background: #1E293B;
-            border-radius: 4px;
+        .hero-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin: 24px 0 32px;
+            line-height: 1.7;
         }
 
-        ::-webkit-scrollbar-thumb:hover {
-            background: #374151;
+        .hero-cta {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 32px;
+        }
+
+        @media (max-width: 900px) {
+            .hero-cta {
+                justify-content: center;
+            }
+        }
+
+        .trust-badges {
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 900px) {
+            .trust-badges {
+                justify-content: center;
+            }
+        }
+
+        .trust-badges span {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .trust-badges i {
+            color: var(--success-neon);
+        }
+
+        /* Hero Mockup */
+        .hero-mockup {
+            position: relative;
+        }
+
+        .mockup-container {
+            background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%);
+            border-radius: 20px;
+            padding: 12px;
+            border: 0.5px solid var(--border-metallic);
+            box-shadow:
+                0 30px 80px rgba(0, 0, 0, 0.6),
+                0 0 60px rgba(230, 57, 70, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mockup-container img {
+            width: 100%;
+            border-radius: 12px;
+            display: block;
+        }
+
+        .mockup-badge {
+            position: absolute;
+            bottom: -20px;
+            right: -20px;
+            background: var(--accent-red);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 16px;
+            font-weight: 800;
+            font-size: 1.1rem;
+            box-shadow: 0 10px 40px var(--accent-red-glow);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        /* Section */
+        .section {
+            padding: 100px 24px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-label {
+            color: var(--accent-red);
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 16px;
+        }
+
+        /* Problem Section - Two Column */
+        .problem-section {
+            background: linear-gradient(180deg, var(--bg-pure) 0%, rgba(20, 10, 10, 1) 50%, var(--bg-pure) 100%);
+            padding: 100px 24px;
+        }
+
+        .problem-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 64px;
+            align-items: center;
+        }
+
+        @media (max-width: 900px) {
+            .problem-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .problem-list {
+            list-style: none;
+        }
+
+        .problem-item {
+            display: flex;
+            gap: 16px;
+            padding: 20px 0;
+            border-bottom: 1px solid var(--border-metallic);
+        }
+
+        .problem-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(230, 57, 70, 0.1);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-red);
+            flex-shrink: 0;
+        }
+
+        .problem-item h4 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .problem-item p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* Testimonial Card */
+        .testimonial-card {
+            background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-card) 100%);
+            border: 0.5px solid var(--border-metallic);
+            border-radius: 24px;
+            padding: 40px;
+            position: relative;
+        }
+
+        .quote-icon {
+            font-size: 3rem;
+            color: var(--accent-red);
+            opacity: 0.3;
+            position: absolute;
+            top: 20px;
+            right: 30px;
+        }
+
+        .testimonial-text {
+            font-size: 1.1rem;
+            line-height: 1.7;
+            margin-bottom: 24px;
+            font-style: italic;
+        }
+
+        .testimonial-author {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .testimonial-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--success-neon);
+        }
+
+        /* Mechanism Section - Two Column */
+        .mechanism-section {
+            padding: 100px 24px;
+        }
+
+        .mechanism-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 64px;
+            align-items: center;
+        }
+
+        @media (max-width: 900px) {
+            .mechanism-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .mechanism-steps {
+            list-style: none;
+        }
+
+        .step-item {
+            display: flex;
+            gap: 20px;
+            padding: 24px 0;
+        }
+
+        .step-number {
+            width: 48px;
+            height: 48px;
+            background: var(--accent-red);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 900;
+            flex-shrink: 0;
+            box-shadow: 0 4px 20px var(--accent-red-glow);
+        }
+
+        .step-item h4 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .step-item p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* Filter Highlight */
+        .filter-highlight {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0, 255, 65, 0.1);
+            border: 1px solid var(--success-neon);
+            padding: 10px 20px;
+            border-radius: 10px;
+            color: var(--success-neon);
+            font-weight: 700;
+            font-size: 0.9rem;
+            box-shadow: 0 0 30px var(--success-glow);
+            animation: neon-pulse 2s infinite;
+            margin-top: 12px;
+        }
+
+        @keyframes neon-pulse {
+
+            0%,
+            100% {
+                box-shadow: 0 0 20px var(--success-glow);
+            }
+
+            50% {
+                box-shadow: 0 0 40px var(--success-glow), 0 0 60px var(--success-glow);
+            }
+        }
+
+        /* App Screenshot */
+        .app-screenshot {
+            background: var(--bg-card);
+            border-radius: 20px;
+            overflow: hidden;
+            border: 0.5px solid var(--border-metallic);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .app-screenshot img {
+            width: 100%;
+            display: block;
+        }
+
+        /* Results Section */
+        .results-section {
+            background: linear-gradient(180deg, var(--bg-pure) 0%, rgba(30, 10, 10, 1) 50%, var(--bg-pure) 100%);
+            padding: 100px 24px;
+        }
+
+        .results-card {
+            max-width: 900px;
+            margin: 0 auto;
+            text-align: center;
+            padding: 64px;
+            border: 2px solid var(--accent-red);
+            position: relative;
+            background: var(--bg-card);
+            border-radius: 24px;
+        }
+
+        .results-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--accent-red);
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin: 0 auto 32px;
+            box-shadow: 0 8px 40px var(--accent-red-glow);
+        }
+
+        /* Pricing */
+        .pricing-section {
+            padding: 100px 24px;
+        }
+
+        .pricing-header {
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto 64px;
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 1024px) {
+            .pricing-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .pricing-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .pricing-card {
+            padding: 40px 32px;
+            position: relative;
+        }
+
+        .pricing-card.featured {
+            border: 2px solid var(--accent-red);
+            transform: scale(1.05);
+        }
+
+        .pricing-badge {
+            position: absolute;
+            top: -14px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--accent-red);
+            color: white;
+            padding: 6px 20px;
+            border-radius: 100px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            white-space: nowrap;
+        }
+
+        .pricing-name {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .pricing-desc {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-bottom: 24px;
+        }
+
+        .pricing-price {
+            font-size: 3rem;
+            font-weight: 900;
+            margin-bottom: 8px;
+        }
+
+        .pricing-period {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 32px;
+        }
+
+        .pricing-features {
+            list-style: none;
+            margin-bottom: 32px;
+        }
+
+        .pricing-features li {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .pricing-features li i {
+            color: var(--success-neon);
+            font-size: 0.8rem;
+        }
+
+        .pricing-card .btn-primary {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .pricing-card .btn-ghost {
+            width: 100%;
+            text-align: center;
+            display: block;
+        }
+
+        /* CTA Final */
+        .cta-section {
+            padding: 120px 24px;
+            text-align: center;
+            background:
+                radial-gradient(ellipse at bottom, rgba(230, 57, 70, 0.15) 0%, transparent 60%),
+                var(--bg-pure);
+        }
+
+        /* Footer */
+        .footer {
+            padding: 48px 24px;
+            border-top: 0.5px solid var(--border-metallic);
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 24px;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 32px;
+        }
+
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.85rem;
+            transition: color 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: var(--text-primary);
+        }
+
+        .footer-copy {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+        }
+
+        /* Animations */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
         }
     </style>
 </head>
 
-<body class="min-h-screen pb-20">
+<body>
 
-    <!-- Navbar Premium -->
-    <nav class="border-b border-dark-700 bg-dark-800 sticky top-0 z-40">
-        <div class="max-w-7xl mx-auto px-4">
-            <div class="flex items-center justify-between h-18 py-3">
-                <!-- Logo -->
-                <div class="flex items-center gap-3">
-                    <div
-                        class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-900/50">
-                        <i class="fas fa-rocket text-white"></i>
-                    </div>
-                    <div>
-                        <span class="font-bold text-xl tracking-tight text-white">LeadScraper</span>
-                        <span class="text-[9px] uppercase font-bold text-gray-400 block -mt-1 tracking-widest">Google
-                            Maps Intelligence</span>
-                    </div>
-                </div>
-
-                <!-- Right Actions -->
-                <div class="flex items-center gap-6">
-                    <button onclick="openScriptModal()"
-                        class="hidden md:flex items-center gap-2 text-sm font-medium text-gray-300 hover:text-white transition">
-                        <i class="fas fa-file-alt"></i> Script de Venda
-                    </button>
-
-                    <!-- Credits Badge -->
-                    <a href="credits.html"
-                        class="group flex items-center gap-3 bg-dark-900 border border-dark-700 hover:border-primary-500 rounded-full pl-4 pr-2 py-1.5 transition cursor-pointer">
-                        <div class="flex flex-col items-end leading-none">
-                            <span
-                                class="text-[10px] text-gray-500 font-bold uppercase group-hover:text-primary-500 transition">Créditos</span>
-                            <span id="creditsDisplay" class="font-bold text-white text-sm">PRO</span>
-                        </div>
-                        <div
-                            class="w-7 h-7 bg-blue-600 rounded-full flex items-center justify-center group-hover:bg-primary-500 transition">
-                            <i class="fas fa-plus text-xs"></i>
-                        </div>
-                    </a>
-
-                    <!-- User Profile -->
-                    <div class="flex items-center gap-3 cursor-pointer pl-4 border-l border-dark-700"
-                        onclick="openProfileModal()">
-                        <div class="text-right hidden sm:block">
-                            <h4 id="userName" class="text-sm font-bold text-white leading-none">Admin</h4>
-                            <span
-                                class="text-[10px] text-primary-500 font-bold uppercase bg-primary-500/10 px-1.5 rounded">ONLINE</span>
-                        </div>
-                        <div
-                            class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-sm font-bold border-2 border-dark-800">
-                            AD
-                        </div>
-                    </div>
-                </div>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="navbar-content">
+            <a href="index.html" class="logo" style="text-decoration: none; color: inherit;">
+                <div class="logo-icon"><i class="fas fa-bolt"></i></div>
+                <span>LEADMANAGER</span>
+            </a>
+            <div class="nav-links">
+                <a href="#mecanismo">Como Funciona</a>
+                <a href="#resultados">Resultados</a>
+                <a href="#precos">Preços</a>
+                <a href="login.html" class="btn-ghost" style="padding: 10px 20px; margin-right: 8px;">ENTRAR</a>
+                <a href="checkout.html" class="btn-primary" style="padding: 12px 24px;">QUERO COMEÇAR</a>
             </div>
         </div>
     </nav>
 
-    <main class="max-w-7xl mx-auto px-4 mt-8">
-
-        <!-- Search Area Premium -->
-        <div class="bg-dark-800 rounded-2xl p-6 border border-dark-700 shadow-2xl mb-8">
-
-            <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-                <!-- Nicho -->
-                <div class="md:col-span-3 space-y-1.5">
-                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">Nicho</label>
-                    <div class="relative group">
-                        <i
-                            class="fas fa-tag absolute left-4 top-3.5 text-gray-500 group-focus-within:text-white transition"></i>
-                        <input type="text" id="nichoInput" placeholder="Ex: Pizzaria"
-                            class="w-full bg-dark-900 border border-dark-700 rounded-xl pl-10 pr-4 py-3 text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500 outline-none transition input-dark">
-                    </div>
+    <!-- Hero - Two Columns -->
+    <section class="hero">
+        <div class="hero-container">
+            <div class="hero-text">
+                <div class="badge">
+                    <span class="badge-dot"></span>
+                    Prospecção Automatizada
                 </div>
 
-                <!-- Cidade -->
-                <div class="md:col-span-3 space-y-1.5">
-                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">Cidade</label>
-                    <div class="relative group">
-                        <i
-                            class="fas fa-location-dot absolute left-4 top-3.5 text-gray-500 group-focus-within:text-white transition"></i>
-                        <input type="text" id="cidadeInput" placeholder="Ex: Curitiba"
-                            class="w-full bg-dark-900 border border-dark-700 rounded-xl pl-10 pr-4 py-3 text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500 outline-none transition input-dark">
-                    </div>
+                <h1 class="headline-xl">
+                    VOCÊ <span class="text-red">NÃO PRECISA MAIS ANUNCIAR</span> PARA
+                    <span
+                        style="background: linear-gradient(90deg, #fff 0%, #888 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">CONSEGUIR
+                        CLIENTES.</span>
+                </h1>
+
+                <p class="hero-subtitle">
+                    O LeadManager extrai empresas do <strong>Google Maps</strong> que já estavam lá, mas você não via.
+                    Clientes reais com telefone, WhatsApp e email pronta pra contato.
+                    <strong class="text-red">Pare de queimar dinheiro com tráfego.</strong>
+                </p>
+
+                <div class="hero-cta">
+                    <a href="checkout.html" class="btn-primary glow-red">
+                        QUERO CLIENTES TODOS OS DIAS <i class="fas fa-arrow-right"></i>
+                    </a>
                 </div>
 
-                <!-- Qtd -->
-                <div class="md:col-span-2 space-y-1.5">
-                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">Quantidade</label>
-                    <div class="relative">
-                        <i class="fas fa-hashtag absolute left-4 top-3.5 text-gray-500"></i>
-                        <select id="maxLeadsInput"
-                            class="w-full bg-dark-900 border border-dark-700 rounded-xl pl-10 pr-8 py-3 text-white appearance-none focus:border-primary-500 outline-none cursor-pointer">
-                            <option value="10"># 10 Leads</option>
-                            <option value="50"># 50 Leads</option>
-                            <option value="100"># 100 Leads</option>
-                        </select>
-                        <i
-                            class="fas fa-chevron-down absolute right-4 top-4 text-gray-600 text-xs pointer-events-none"></i>
+                <div class="trust-badges">
+                    <span><i class="fas fa-check-circle"></i> Acesso Imediato</span>
+                    <span><i class="fas fa-check-circle"></i> Garantia 7 dias</span>
+                    <span><i class="fas fa-check-circle"></i> Suporte VIP</span>
+                </div>
+            </div>
+
+            <div class="hero-mockup">
+                <div class="mockup-container">
+                    <img src="img/hero-mockup.png" alt="LeadManager Dashboard">
+                </div>
+                <div class="mockup-badge">
+                    <i class="fas fa-fire"></i> +5.000 leads/mês
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Problem Section -->
+    <section class="problem-section">
+        <div class="problem-container">
+            <div>
+                <p class="section-label">A Cruel Verdade</p>
+                <h2 class="headline-lg">O cemitério das<br><span class="text-red">agências de indicação.</span></h2>
+                <p class="text-gray" style="margin-top: 20px; margin-bottom: 32px;">
+                    Você já cansou de depender de indicação. A verdade é: existem milhares de clientes
+                    procurando você agora no Google. Você só não está vendo.
+                </p>
+
+                <ul class="problem-list">
+                    <li class="problem-item fade-in">
+                        <div class="problem-icon"><i class="fas fa-times"></i></div>
+                        <div>
+                            <h4>Investidores Frustrados</h4>
+                            <p>Gastou R$ 5.000 em anúncios e recebeu 3 leads frios que nunca responderam.</p>
+                        </div>
+                    </li>
+                    <li class="problem-item fade-in">
+                        <div class="problem-icon"><i class="fas fa-hourglass-half"></i></div>
+                        <div>
+                            <h4>Leads = Roleta Russa</h4>
+                            <p>Um mês vem 20 indicações, no outro vem zero. Fluxo de caixa vira montanha-russa.</p>
+                        </div>
+                    </li>
+                    <li class="problem-item fade-in">
+                        <div class="problem-icon"><i class="fas fa-chart-line"></i></div>
+                        <div>
+                            <h4>Faturamento Estagnado</h4>
+                            <p>Você é bom no que faz, mas ninguém sabe que você existe.</p>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="testimonial-card fade-in">
+                <i class="fas fa-quote-right quote-icon"></i>
+                <p class="testimonial-text">
+                    "Eu usava o método de indicação e fechava 5 clientes por mês. Com o LeadManager, fechei
+                    <strong style="color: var(--success-neon);">14 clientes em 30 dias</strong>. É absurdo a quantidade
+                    de empresa sem site que ainda existe."
+                </p>
+                <div class="testimonial-author">
+                    <img src="img/testimonial-ricardo.png" alt="Ricardo Mendes" class="testimonial-avatar">
+                    <div>
+                        <strong>Ricardo Mendes</strong>
+                        <p class="text-gray" style="font-size: 0.85rem;">Dono de Agência Digital</p>
                     </div>
                 </div>
+            </div>
+        </div>
+    </section>
 
-                <!-- Filtro Site -->
-                <div class="md:col-span-2 space-y-1.5">
-                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">Status Site</label>
-                    <div class="relative">
-                        <i class="fas fa-globe absolute left-4 top-3.5 text-gray-500"></i>
-                        <select id="filterSiteInput"
-                            class="w-full bg-dark-900 border border-dark-700 rounded-xl pl-10 pr-8 py-3 text-white appearance-none focus:border-primary-500 outline-none cursor-pointer">
-                            <option value="todos">🌐 Todos</option>
-                            <option value="sem-site" selected>🔥 Sem Site (Hot)</option>
-                            <option value="com-site">✅ Com Site</option>
-                        </select>
-                        <i
-                            class="fas fa-chevron-down absolute right-4 top-4 text-gray-600 text-xs pointer-events-none"></i>
-                    </div>
-                </div>
+    <!-- Mechanism Section -->
+    <section id="mecanismo" class="mechanism-section">
+        <div class="mechanism-container">
+            <div>
+                <p class="section-label">O Mecanismo</p>
+                <h2 class="headline-lg">Prospecção de <span class="text-red">Precisão</span></h2>
+                <p class="text-gray" style="margin: 20px 0 32px;">
+                    Pesquise "Oficina em São Paulo" no Google Maps. Aparecem 500 resultados.
+                    Quantos deles <strong style="color: white;">NÃO TEM SITE</strong>? Esses são seus clientes.
+                </p>
 
-                <!-- Filtro WhatsApp -->
-                <div class="md:col-span-2 space-y-1.5">
-                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">Status
-                        WhatsApp</label>
-                    <div class="relative">
-                        <i class="fab fa-whatsapp absolute left-4 top-3.5 text-gray-500"></i>
-                        <select id="filterWhatsInput"
-                            class="w-full bg-dark-900 border border-dark-700 rounded-xl pl-10 pr-8 py-3 text-white appearance-none focus:border-primary-500 outline-none cursor-pointer">
-                            <option value="todos">📱 Todos</option>
-                            <option value="com-whats" selected>💬 Com WhatsApp (Hot)</option>
-                            <option value="sem-whats">❌ Sem WhatsApp</option>
-                        </select>
-                        <i
-                            class="fas fa-chevron-down absolute right-4 top-4 text-gray-600 text-xs pointer-events-none"></i>
-                    </div>
-                </div>
+                <ul class="mechanism-steps">
+                    <li class="step-item fade-in">
+                        <div class="step-number">1</div>
+                        <div>
+                            <h4>Escolha Nicho + Cidade</h4>
+                            <p>Digite "Pizzaria" + "Curitiba" e deixe a IA trabalhar. Em segundos você tem leads
+                                qualificados.</p>
+                        </div>
+                    </li>
+                    <li class="step-item fade-in">
+                        <div class="step-number">2</div>
+                        <div>
+                            <h4>Ative o Filtro Mágico</h4>
+                            <p>Filtre apenas empresas que precisam de você.</p>
+                            <div class="filter-highlight">
+                                <i class="fas fa-filter"></i> FILTRAR SEM SITE
+                            </div>
+                        </div>
+                    </li>
+                    <li class="step-item fade-in">
+                        <div class="step-number">3</div>
+                        <div>
+                            <h4>Aborde com 1 Clique</h4>
+                            <p>Botão "Enviar WhatsApp" abre conversa com mensagem personalizada pronta. Fechou? Próximo.
+                            </p>
+                        </div>
+                    </li>
+                </ul>
+            </div>
 
-                <!-- Action Button -->
-                <div class="md:col-span-2">
-                    <button id="btnSearch" onclick="startSearch()"
-                        class="w-full bg-primary-500 hover:bg-primary-600 text-white font-bold py-3 rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.3)] transition transform active:scale-95 flex items-center justify-center gap-2">
-                        <i class="fas fa-search"></i>
-                        <span>INICIAR BUSCA</span>
+            <div class="app-screenshot fade-in">
+                <img src="img/filter-demo.png" alt="Filtro SEM SITE">
+            </div>
+        </div>
+    </section>
+
+    <!-- Results Section -->
+    <section id="resultados" class="results-section">
+        <div class="section">
+            <div class="float-card results-card glow-red fade-in">
+                <div class="results-icon"><i class="fas fa-chart-line"></i></div>
+                <h2 class="headline-lg" style="margin-bottom: 24px;">
+                    Domingo, 14h. <span class="text-red">30 abordagens.</span> No<br>
+                    12º contato: R$ 1.000 de setup +<br>
+                    R$ 2.000/mês de gestão. <span class="text-green">Sem<br>
+                        gastar 1 centavo em tráfego.</span>
+                </h2>
+                <p class="text-gray" style="font-size: 1rem; max-width: 700px; margin: 0 auto;">
+                    "O mercado está saturado de 'curvas de tráfego' que não entregam nada. Mas
+                    existem milhares de empresas locais que ainda dependem do telefone na vitrine.
+                    O LeadManager é isso: uma ferramenta de guerra pra quem quer prospectar de verdade."
+                </p>
+                <p style="margin-top: 24px; font-weight: 700;">— André Silva, Freelancer SP</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing -->
+    <section id="precos" class="pricing-section">
+        <div class="pricing-header">
+            <p class="section-label">Investimento</p>
+            <h2 class="headline-lg">Escolha seu <span class="text-red">arsenal</span></h2>
+            <p class="text-gray" style="margin-top: 16px;">
+                Assine mensal ou economize 50% no plano trimestral.
+            </p>
+
+            <!-- Toggle Mensal/Trimestral -->
+            <div style="display: flex; justify-content: center; margin-top: 32px;">
+                <div
+                    style="background: var(--bg-card); border: 1px solid var(--border-metallic); border-radius: 100px; padding: 6px; display: inline-flex;">
+                    <button id="btnMensal" onclick="togglePricing('mensal')"
+                        style="background: var(--accent-red); color: white; border: none; padding: 12px 28px; border-radius: 100px; font-weight: 700; cursor: pointer; transition: all 0.3s;">
+                        Mensal
                     </button>
-                    <button id="btnStop" onclick="stopSearch()"
-                        class="hidden w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3 rounded-xl shadow-lg transition flex items-center justify-center gap-2">
-                        <i class="fas fa-stop"></i> PARAR
+                    <button id="btnTrimestral" onclick="togglePricing('trimestral')"
+                        style="background: transparent; color: var(--text-secondary); border: none; padding: 12px 28px; border-radius: 100px; font-weight: 700; cursor: pointer; transition: all 0.3s;">
+                        Trimestral <span
+                            style="background: var(--success-neon); color: black; padding: 2px 8px; border-radius: 100px; font-size: 0.7rem; margin-left: 8px;">-50%</span>
                     </button>
                 </div>
             </div>
-
-            <!-- Progress Bar Premium -->
-            <div id="progressContainer" class="hidden mt-6 pt-6 border-t border-dark-700">
-                <div class="flex justify-between items-end mb-2">
-                    <div class="flex items-center gap-3">
-                        <div class="w-2 h-2 bg-primary-500 rounded-full animate-pulse"></div>
-                        <span class="text-primary-500 font-bold text-sm tracking-wide" id="currentBusiness">Coletando
-                            dados...</span>
-                    </div>
-                    <span class="text-white font-mono font-bold"><span id="leadsFoundCount"
-                            class="text-primary-500">0</span> leads encontrados</span>
-                </div>
-                <div class="w-full bg-dark-900 rounded-full h-2 overflow-hidden border border-dark-700">
-                    <div id="progressBar"
-                        class="bg-primary-500 h-full rounded-full transition-all duration-300 shadow-[0_0_10px_rgba(16,185,129,0.5)]"
-                        style="width: 0%"></div>
-                </div>
-            </div>
         </div>
 
-        <!-- Toolbar & Filters -->
-        <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
-            <div class="flex bg-dark-800 p-1 rounded-xl border border-dark-700">
-                <button onclick="filterLeads('all')"
-                    class="filter-btn active px-4 py-2 rounded-lg text-sm font-medium text-white bg-dark-700 shadow transition"
-                    data-status="all">
-                    Todos <span id="countAll" class="ml-1 opacity-60 text-xs">0</span>
-                </button>
-                <button onclick="filterLeads('interested')"
-                    class="filter-btn px-4 py-2 rounded-lg text-sm font-medium text-gray-400 hover:text-white transition"
-                    data-status="interested">
-                    Interessados
-                </button>
-                <button onclick="filterLeads('discarded')"
-                    class="filter-btn px-4 py-2 rounded-lg text-sm font-medium text-gray-400 hover:text-white transition"
-                    data-status="discarded">
-                    Descartados
-                </button>
+        <div class="pricing-grid" style="grid-template-columns: repeat(3, 1fr);">
+            <!-- Starter -->
+            <div class="float-card pricing-card fade-in">
+                <p class="pricing-name">Starter</p>
+                <p class="pricing-desc">Para começar a prospectar</p>
+                <p class="pricing-price" id="priceStarter">R$ 199</p>
+                <p class="pricing-period" id="periodStarter">/mês</p>
+                <ul class="pricing-features">
+                    <li><i class="fas fa-check"></i> 500 leads/mês</li>
+                    <li><i class="fas fa-check"></i> Filtro "Sem Site"</li>
+                    <li><i class="fas fa-check"></i> Filtro "Sem WhatsApp"</li>
+                    <li><i class="fas fa-check"></i> Exportar CSV</li>
+                </ul>
+                <a href="checkout.html?plan=starter&billing=mensal" id="linkStarter" class="btn-ghost">Assinar
+                    Starter</a>
             </div>
 
-            <div class="flex gap-3">
-                <!-- Filtro de Nicho -->
-                <div class="relative">
-                    <i class="fas fa-tag absolute left-3 top-3 text-gray-500 text-xs"></i>
-                    <input type="text" id="filterNiche" list="nicheList" oninput="applyFilters()"
-                        placeholder="Filtrar Categoria..."
-                        class="bg-dark-800 border border-dark-700 rounded-lg pl-8 pr-3 py-2 text-sm text-white focus:border-primary-500 outline-none w-40">
-                    <datalist id="nicheList"></datalist>
-                </div>
+            <!-- Profissional (Featured) -->
+            <div class="float-card pricing-card featured fade-in">
+                <div class="pricing-badge">MAIS VENDIDO</div>
+                <p class="pricing-name">Profissional</p>
+                <p class="pricing-desc">Para fechar mais contratos</p>
+                <p class="pricing-price text-red" id="pricePro">R$ 299</p>
+                <p class="pricing-period" id="periodPro">/mês</p>
+                <ul class="pricing-features">
+                    <li><i class="fas fa-check"></i> <strong>1.500 leads/mês</strong></li>
+                    <li><i class="fas fa-check"></i> Todos os filtros</li>
+                    <li><i class="fas fa-check"></i> Exportar Excel + CSV</li>
+                    <li><i class="fas fa-check"></i> CRM Integrado</li>
+                    <li><i class="fas fa-check"></i> Suporte Prioritário</li>
+                </ul>
+                <a href="checkout.html?plan=pro&billing=mensal" id="linkPro" class="btn-primary">QUERO ESSE <i
+                        class="fas fa-arrow-right"></i></a>
+            </div>
 
-                <div class="relative">
-                    <i class="fas fa-filter absolute left-3 top-3 text-gray-500 text-xs"></i>
-                    <input type="text" id="filterCity" list="citiesList" oninput="applyFilters()"
-                        placeholder="Filtrar Cidade..."
-                        class="bg-dark-800 border border-dark-700 rounded-lg pl-8 pr-3 py-2 text-sm text-white focus:border-primary-500 outline-none w-40">
-                    <datalist id="citiesList"></datalist>
-                </div>
-
-                <!-- Filtro WhatsApp Display -->
-                <div class="relative">
-                    <select id="filterWhatsDisplay" onchange="applyFilters()"
-                        class="bg-dark-800 border border-dark-700 rounded-lg px-3 py-2 text-sm text-white focus:border-primary-500 outline-none appearance-none pr-8 cursor-pointer">
-                        <option value="todos">📱 Todos</option>
-                        <option value="com-whats">💬 Com WhatsApp</option>
-                        <option value="sem-whats">❌ Sem WhatsApp</option>
-                    </select>
-                    <i class="fas fa-chevron-down absolute right-3 top-3 text-gray-500 text-xs pointer-events-none"></i>
-                </div>
-
-                <button onclick="exportToExcel()"
-                    class="bg-white text-dark-900 hover:bg-gray-100 font-bold px-4 py-2 rounded-lg text-sm transition flex items-center gap-2">
-                    <i class="fas fa-download"></i> Exportar
-                </button>
+            <!-- Elite -->
+            <div class="float-card pricing-card fade-in">
+                <p class="pricing-name">Elite</p>
+                <p class="pricing-desc">Para times e agências</p>
+                <p class="pricing-price" id="priceElite">R$ 459</p>
+                <p class="pricing-period" id="periodElite">/mês</p>
+                <ul class="pricing-features">
+                    <li><i class="fas fa-check"></i> <strong>5.000 leads/mês</strong></li>
+                    <li><i class="fas fa-check"></i> API Ilimitada</li>
+                    <li><i class="fas fa-check"></i> Multi-usuário (5 seats)</li>
+                    <li><i class="fas fa-check"></i> Treinamento 1:1</li>
+                    <li><i class="fas fa-check"></i> Suporte VIP WhatsApp</li>
+                </ul>
+                <a href="checkout.html?plan=elite&billing=mensal" id="linkElite" class="btn-ghost">Assinar Elite</a>
             </div>
         </div>
+    </section>
 
-        <!-- Grid de Cards Premium -->
-        <div id="leadsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-            <!-- Template JS Render -->
+    <script>
+        function togglePricing(type) {
+            const btnMensal = document.getElementById('btnMensal');
+            const btnTrimestral = document.getElementById('btnTrimestral');
+
+            if (type === 'mensal') {
+                btnMensal.style.background = 'var(--accent-red)';
+                btnMensal.style.color = 'white';
+                btnTrimestral.style.background = 'transparent';
+                btnTrimestral.style.color = 'var(--text-secondary)';
+
+                document.getElementById('priceStarter').textContent = 'R$ 199';
+                document.getElementById('periodStarter').textContent = '/mês';
+                document.getElementById('pricePro').textContent = 'R$ 299';
+                document.getElementById('periodPro').textContent = '/mês';
+                document.getElementById('priceElite').textContent = 'R$ 459';
+                document.getElementById('periodElite').textContent = '/mês';
+
+                document.getElementById('linkStarter').href = 'checkout.html?plan=starter&billing=mensal';
+                document.getElementById('linkPro').href = 'checkout.html?plan=pro&billing=mensal';
+                document.getElementById('linkElite').href = 'checkout.html?plan=elite&billing=mensal';
+            } else {
+                btnTrimestral.style.background = 'var(--accent-red)';
+                btnTrimestral.style.color = 'white';
+                btnMensal.style.background = 'transparent';
+                btnMensal.style.color = 'var(--text-secondary)';
+
+                document.getElementById('priceStarter').textContent = 'R$ 299';
+                document.getElementById('periodStarter').textContent = '/trimestre (~R$100/mês)';
+                document.getElementById('pricePro').textContent = 'R$ 449';
+                document.getElementById('periodPro').textContent = '/trimestre (~R$150/mês)';
+                document.getElementById('priceElite').textContent = 'R$ 689';
+                document.getElementById('periodElite').textContent = '/trimestre (~R$230/mês)';
+
+                document.getElementById('linkStarter').href = 'checkout.html?plan=starter&billing=trimestral';
+                document.getElementById('linkPro').href = 'checkout.html?plan=pro&billing=trimestral';
+                document.getElementById('linkElite').href = 'checkout.html?plan=elite&billing=trimestral';
+            }
+        }
+    </script>
+
+    <!-- CTA Final -->
+    <section class="cta-section">
+        <div class="section" style="text-align: center;">
+            <h2 class="headline-lg fade-in">
+                Pronto para nunca mais<br>
+                <span class="text-red">depender de indicação?</span>
+            </h2>
+            <p class="text-gray fade-in" style="max-width: 500px; margin: 24px auto 40px;">
+                Crie sua conta agora e receba 10 leads de bônus para testar. Sem compromisso.
+            </p>
+            <a href="checkout.html" class="btn-primary glow-red fade-in">
+                QUERO CLIENTES TODOS OS DIAS <i class="fas fa-arrow-right"></i>
+            </a>
         </div>
+    </section>
 
-    </main>
-
-    <!-- Script Modal -->
-    <div id="scriptModal"
-        class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-dark-800 border border-dark-700 rounded-2xl w-full max-w-lg shadow-2xl p-6">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-lg font-bold text-white flex items-center gap-2"><i
-                        class="fas fa-file-alt text-primary-500"></i> Script de Venda</h3>
-                <button onclick="closeScriptModal()" class="text-gray-500 hover:text-white"><i
-                        class="fas fa-times"></i></button>
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="logo">
+                <div class="logo-icon"><i class="fas fa-bolt"></i></div>
+                <span>LEADMANAGER</span>
             </div>
-            <textarea id="msgTemplate" rows="6"
-                class="w-full bg-dark-900 border border-dark-700 rounded-xl p-4 text-gray-300 focus:border-primary-500 outline-none resize-none mb-4 text-sm font-mono"></textarea>
-            <div class="flex justify-end gap-3">
-                <button onclick="saveScript()"
-                    class="bg-primary-500 hover:bg-primary-600 text-white font-bold py-2 px-6 rounded-lg transition">Salvar
-                    Configuração</button>
+            <div class="footer-links">
+                <a href="#">Termos de Uso</a>
+                <a href="#">Privacidade</a>
+                <a href="#">Suporte</a>
+                <a href="login.html">Login</a>
+                <a href="admin/login.html" style="opacity: 0.3; font-size: 0.8em;">Admin</a>
             </div>
+            <p class="footer-copy">© 2024 LeadManager. Todos os direitos reservados.</p>
         </div>
+    </footer>
 
-        <!-- Supabase Client & Logic -->
-        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-        <script src="supabase-client.js"></script>
-        <script src="credits-system.js"></script>
-        <script>
-            // --- CONFIGURAÇÕES GLOBAIS ---
-            const API_URL = 'https://web-production-a818.up.railway.app/api';
-
-            let state = {
-                leads: [],
-                isSearching: false,
-                pollingInterval: null,
-                filterStatus: 'all',
-                sessionId: null,
-                user: null
-            };
-
-            // --- INICIALIZAÇÃO ---
-            document.addEventListener('DOMContentLoaded', async () => {
-                try {
-                    // 1. Verifica Login
-                    const user = await LeadAPI.getUser();
-                    if (!user) {
-                        window.location.href = 'login.html';
-                        return;
-                    }
-
-                    state.user = user;
-                    state.sessionId = user.id;
-
-                    // 2. Atualiza UI do Usuário
-                    const userName = user.email.split('@')[0];
-                    document.getElementById('userName').innerText = userName.charAt(0).toUpperCase() + userName.slice(1);
-
-                    // 3. Carrega Leads do Banco
-                    console.log('🔄 Carregando leads...');
-                    state.leads = await LeadAPI.getAll();
-                    updateFilterOptions();
-                    renderLeads();
-
-                    // 4. Carrega Template de Mensagem
-                    loadMessageTemplate();
-
-                } catch (error) {
-                    console.error("Erro crítico na inicialização:", error);
-                    if (error.message && error.message.includes('token')) {
-                        localStorage.clear();
-                        window.location.href = 'login.html';
-                    }
+    <script>
+        // Fade in on scroll
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
                 }
             });
+        }, { threshold: 0.1 });
 
-            // --- FUNÇÕES DE BUSCA (CORE) ---
-            // --- FUNÇÕES DE BUSCA (CORE) ---
-            async function startSearch() {
-                const nicho = document.getElementById('nichoInput').value.trim();
-                const cidade = document.getElementById('cidadeInput').value.trim();
-                const qtd = document.getElementById('maxLeadsInput').value;
-                const siteFilter = document.getElementById('filterSiteInput').value;
-                const whatsFilter = document.getElementById('filterWhatsInput').value;
+        document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
 
-                if (!nicho || !cidade) return alert('Por favor, preencha Nicho e Cidade.');
+        // Logo already clickable via HTML
+    </script>
 
-                toggleSearchUI(true);
-
-                // Lógica de Retry para "Acordar" o servidor (Cold Start)
-                let attempts = 0;
-                const maxAttempts = 3;
-
-                const tryFetch = async () => {
-                    attempts++;
-                    try {
-                        console.log(`🚀 Iniciando busca (Tentativa ${attempts}/${maxAttempts}):`, { nicho, cidade, whatsFilter });
-
-                        const response = await fetch(`${API_URL}/start-search`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                nicho,
-                                cidade,
-                                max_leads: qtd,
-                                user_id: state.sessionId,
-                                filter_site: siteFilter,
-                                filter_whats: whatsFilter
-                            })
-                        });
-
-                        // Verifica se retornou JSON (não HTML de erro)
-                        const contentType = response.headers.get("content-type");
-                        if (!contentType || !contentType.includes("application/json")) {
-                            if (attempts < maxAttempts) {
-                                console.warn("Resposta inválida, tentando novamente...");
-                                await new Promise(r => setTimeout(r, 2000)); // Espera 2s
-                                return tryFetch(); // Recicla
-                            }
-                            const text = await response.text();
-                            console.error("❌ ERRO CRÍTICO API:", text);
-                            throw new Error("Erro no servidor (Retorno inválido).");
-                        }
-
-                        const data = await response.json();
-
-                        if (!response.ok) {
-                            // Se for erro 503 (busy), tenta de novo? Não, melhor avisar.
-                            throw new Error(data.error || 'Falha ao iniciar.');
-                        }
-
-                        // Sucesso!
-                        startPolling();
-
-                    } catch (error) {
-                        console.error(`Erro tentativa ${attempts}:`, error);
-
-                        // Se for Network Error (Failed to fetch) e ainda tiver tentativas
-                        if (error.message.includes("Failed to fetch") && attempts < maxAttempts) {
-                            console.log("⚠️ Servidor dormindo? Retentando em 3s...");
-                            await new Promise(r => setTimeout(r, 3000));
-                            return tryFetch();
-                        }
-
-                        // Se esgotou tentativas
-                        alert('Não foi possível conectar ao servidor.\nVerifique se o Railway está ativo.\nErro: ' + error.message);
-                        toggleSearchUI(false);
-                    }
-                };
-
-                // Dispara
-                tryFetch();
-            }
-
-            function stopSearch() {
-                if (state.pollingInterval) clearInterval(state.pollingInterval);
-                toggleSearchUI(false);
-
-                // Envia sinal de paragem
-                fetch(`${API_URL}/cancel-search`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: state.sessionId })
-                }).then(() => console.log('🛑 Sinal de parada enviado.'));
-            }
-
-            // --- LÓGICA DE POLLING COM RETRY ---
-            let pollingFailures = 0;
-            const MAX_POLLING_FAILURES = 10;
-
-            function startPolling() {
-                if (state.pollingInterval) clearInterval(state.pollingInterval);
-                pollingFailures = 0;
-
-                state.pollingInterval = setInterval(async () => {
-                    try {
-                        const res = await fetch(`${API_URL}/search-status?session_id=${state.sessionId}`);
-
-                        const contentType = res.headers.get("content-type");
-                        if (!contentType || !contentType.includes("application/json")) {
-                            // Se retornar HTML 502/503 (Deploy ou Crash), conta como falha de rede
-                            throw new Error("Bad response from server");
-                        }
-
-                        const data = await res.json();
-                        pollingFailures = 0; // Reset falhas se conectar
-
-                        updateProgressUI(data);
-
-                        if (data.leads && data.leads.length > 0) {
-                            let novos = 0;
-                            data.leads.forEach(newLead => {
-                                if (!state.leads.some(l => l.nome === newLead.nome)) {
-                                    state.leads.unshift(newLead);
-                                    novos++;
-                                }
-                            });
-                            if (novos > 0) renderLeads();
-                        }
-
-                        if (data.completed || (data.status !== 'running' && data.status !== 'queued' && data.status !== 'initializing')) {
-                            stopSearch();
-
-                            if (data.status === 'error') {
-                                if (data.error && (data.error.includes("Memória") || data.error.includes("ocupado"))) {
-                                    alert("⚠️ O servidor está sobrecarregado no momento.\nAlguns leads foram salvos, mas a busca parou para proteger o sistema.\nTente novamente em 1 minuto.");
-                                } else {
-                                    alert('A busca parou: ' + (data.error || "Erro desconhecido"));
-                                }
-                            } else {
-                                // showNotification(`✅ Busca finalizada!`);
-                                setTimeout(async () => {
-                                    state.leads = await LeadAPI.getAll();
-                                    renderLeads();
-                                }, 1000);
-                            }
-                        }
-
-                    } catch (e) {
-                        console.warn(`Polling retry (${pollingFailures + 1}/${MAX_POLLING_FAILURES})...`);
-                        pollingFailures++;
-                        if (pollingFailures >= MAX_POLLING_FAILURES) {
-                            stopSearch();
-                            alert("A conexão com o servidor foi perdida (Timeout).\nVerifique sua internet ou tente novamente.");
-                        }
-                    }
-                }, 2000);
-            }
-
-            // --- INTERFACE (RENDERIZAÇÃO) ---
-            function renderLeads() {
-                const grid = document.getElementById('leadsGrid');
-                grid.innerHTML = '';
-
-                const cityFilter = document.getElementById('filterCity').value.toLowerCase();
-                const nicheFilter = document.getElementById('filterNiche').value.toLowerCase();
-
-                // Filtro WhatsApp da lista
-                const whatsFilter = document.getElementById('filterWhatsDisplay')?.value || 'todos';
-
-                const filtered = state.leads.filter(l => {
-                    if (state.filterStatus !== 'all' && (l.status || 'new') !== state.filterStatus) return false;
-
-                    // Filtro Cidade (Parcial)
-                    if (cityFilter && !(l.cidade || '').toLowerCase().includes(cityFilter) && !(l.endereco || '').toLowerCase().includes(cityFilter)) return false;
-
-                    // Filtro Nicho (Parcial)
-                    if (nicheFilter && !(l.nicho || '').toLowerCase().includes(nicheFilter)) return false;
-
-                    // Filtro WhatsApp
-                    if (whatsFilter === 'com-whats' && !l.whatsapp) return false;
-                    if (whatsFilter === 'sem-whats' && l.whatsapp) return false;
-
-                    return true;
-                });
-
-                document.getElementById('countAll').innerText = state.leads.length;
-
-                if (filtered.length === 0) {
-                    grid.innerHTML = `
-                    <div class="col-span-full py-16 text-center border-2 border-dashed border-dark-700 rounded-2xl bg-dark-800/30">
-                        <i class="fas fa-search text-3xl text-gray-600 mb-3"></i>
-                        <p class="text-gray-400">Nenhum resultado encontrado.</p>
-                    </div>`;
-                    return;
-                }
-
-                filtered.forEach(l => {
-                    const hasSite = l.website && l.website.length > 5;
-                    const hasWhats = l.whatsapp && l.whatsapp.length > 5;
-                    const card = document.createElement('div');
-
-                    card.className = "bg-dark-800 border border-dark-700 rounded-xl p-5 shadow-lg relative group transition hover:border-dark-600 card-new";
-
-                    card.innerHTML = `
-                   <div class="flex justify-between items-start mb-3">
-                        <div class="flex gap-2">
-                            ${!hasSite ?
-                            `<span class="bg-red-500/10 text-red-500 text-[9px] font-bold px-1.5 py-0.5 rounded border border-red-500/20 flex items-center gap-1">SEM SITE</span>` :
-                            `<span class="bg-blue-500/10 text-blue-400 text-[9px] font-bold px-1.5 py-0.5 rounded border border-blue-500/20 flex items-center gap-1">COM SITE</span>`
-                        }
-                            ${hasWhats ?
-                            `<span class="bg-green-500/10 text-green-500 text-[9px] font-bold px-1.5 py-0.5 rounded border border-green-500/20 flex items-center gap-1">WHATSAPP</span>` : ''
-                        }
-                        </div>
-                        <span class="text-[10px] font-bold text-yellow-500 flex items-center gap-1 bg-yellow-500/10 px-1.5 rounded">
-                            <i class="fas fa-star"></i> ${l.avaliacao || '0.0'}
-                        </span>
-                    </div>
-
-                    <h3 class="font-bold text-white text-base mb-0.5 line-clamp-1" title="${l.nome}">${l.nome}</h3>
-                    <p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-3">${l.nicho || 'Geral'}</p>
-
-                    <div class="space-y-2 mb-4">
-                        <p class="text-xs text-gray-400 flex items-start gap-2">
-                             <i class="fas fa-map-marker-alt text-gray-600 mt-0.5"></i> 
-                             <span class="line-clamp-2 leading-relaxed">${l.endereco || 'Endereço não disponível'}</span>
-                        </p>
-                        <div class="flex items-center gap-2">
-                             <div class="bg-dark-900 border border-dark-700 px-2 py-1.5 rounded text-xs font-mono text-gray-300 flex-1 truncate">
-                                ${l.telefone || 'Sem Telefone'}
-                             </div>
-                             <a href="${l.google_maps_link}" target="_blank" class="bg-dark-900 border border-dark-700 px-2 py-1.5 rounded text-blue-400 hover:text-white hover:bg-blue-600 transition">
-                                <i class="fas fa-external-link-alt"></i>
-                             </a>
-                        </div>
-                    </div>
-
-                    <div class="flex gap-2 pt-3 border-t border-dark-700">
-                        <button onclick="sendWhatsapp('${l.whatsapp}', '${l.nome}', '${l.cidade}', '${l.nicho}')" 
-                             class="flex-1 ${hasWhats ? 'bg-primary-600 hover:bg-primary-500 text-white' : 'bg-dark-700 text-gray-500 cursor-not-allowed'} font-bold py-2 rounded-lg text-xs flex items-center justify-center gap-2 transition">
-                             <i class="fab fa-whatsapp text-sm"></i> ABORDAR
-                        </button>
-                    </div>
-                `;
-                    grid.appendChild(card);
-                });
-            }
-
-            function toggleSearchUI(searching) {
-                state.isSearching = searching;
-                const btnSearch = document.getElementById('btnSearch');
-                const btnStop = document.getElementById('btnStop');
-                const progress = document.getElementById('progressContainer');
-
-                if (searching) {
-                    btnSearch.classList.add('hidden');
-                    btnStop.classList.remove('hidden');
-                    progress.classList.remove('hidden');
-                } else {
-                    btnSearch.classList.remove('hidden');
-                    btnStop.classList.add('hidden');
-                    progress.classList.add('hidden');
-                }
-            }
-
-            function updateProgressUI(data) {
-                if (data.status === 'running' || data.status === 'initializing' || data.status === 'queued') {
-                    document.getElementById('currentBusiness').innerText = data.current || "Aguardando início...";
-                    document.getElementById('leadsFoundCount').innerText = data.leads_found || 0;
-
-                    // Usa progress do backend (mais preciso)
-                    const pct = data.progress || 0;
-                    document.getElementById('progressBar').style.width = `${pct}%`;
-                }
-            }
-
-            function filterLeads(status) {
-                state.filterStatus = status;
-                document.querySelectorAll('.filter-btn').forEach(btn => {
-                    if (btn.dataset.status === status) {
-                        btn.classList.add('bg-dark-700', 'text-white', 'shadow');
-                        btn.classList.remove('text-gray-400', 'bg-transparent');
-                    } else {
-                        btn.classList.remove('bg-dark-700', 'text-white', 'shadow');
-                        btn.classList.add('text-gray-400', 'bg-transparent');
-                    }
-                });
-                renderLeads();
-            }
-
-            function applyFilters() { renderLeads(); }
-
-            function updateFilterOptions() {
-                // Extrai Nichos Únicos
-                const nichos = [...new Set(state.leads.map(l => l.nicho).filter(Boolean))].sort();
-                const nicheList = document.getElementById('nicheList');
-                nicheList.innerHTML = nichos.map(n => `<option value="${n}">`).join('');
-
-                // Extrai Cidades Únicas
-                const cidades = [...new Set(state.leads.map(l => l.cidade).filter(Boolean))].sort();
-                const citiesList = document.getElementById('citiesList');
-                citiesList.innerHTML = cidades.map(c => `<option value="${c}">`).join('');
-            }
-
-            function sendWhatsapp(num, nome, cidade, nicho) {
-                if (!num || num.length < 5) return alert('Sem número de WhatsApp válido.');
-
-                let msg = getMessageTemplate();
-                msg = msg.replace(/{nome}/g, nome)
-                    .replace(/{cidade}/g, cidade || '')
-                    .replace(/{nicho}/g, nicho || '');
-
-                const cleanNum = num.replace(/\D/g, '');
-                window.open(`https://wa.me/${cleanNum}?text=${encodeURIComponent(msg)}`, '_blank');
-            }
-
-            function loadMessageTemplate() {
-                try {
-                    const saved = localStorage.getItem('leadManager_msg');
-                    if (saved) document.getElementById('msgTemplate').value = saved;
-                    else document.getElementById('msgTemplate').value = "Olá! Vi a {nome} no Google...";
-                } catch (e) { console.error(e); }
-            }
-
-            function saveScript() {
-                const val = document.getElementById('msgTemplate').value;
-                localStorage.setItem('leadManager_msg', val);
-                alert('Script de venda salvo!');
-                closeScriptModal();
-            }
-
-            function getMessageTemplate() {
-                return document.getElementById('msgTemplate').value || "Olá {nome}!";
-            }
-
-            function openScriptModal() { document.getElementById('scriptModal').classList.remove('hidden'); }
-            function closeScriptModal() { document.getElementById('scriptModal').classList.add('hidden'); }
-            function openProfileModal() { window.location.href = 'profile.html'; }
-
-            function exportToExcel() {
-                if (state.leads.length === 0) return alert("Nada para exportar.");
-                const wb = XLSX.utils.book_new();
-                const ws = XLSX.utils.json_to_sheet(state.leads);
-                XLSX.utils.book_append_sheet(wb, ws, "Leads");
-                XLSX.writeFile(wb, "LeadScraper_Export.xlsx");
-            }
-
-            async function logout() {
-                await LeadAPI.logout();
-                window.location.href = 'login.html';
-            }
-        </script>
 </body>
 
 </html>

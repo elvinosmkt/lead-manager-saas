@@ -397,12 +397,15 @@
         © 2024 VIBE CODING. TODOS OS DIREITOS RESERVADOS. AMBIENTE 100% SEGURO.
     </footer>
 
-    <script type="module">
-        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-        import { SUPABASE_URL, SUPABASE_KEY } from './supabase-client.js';
+    <!-- Supabase CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-        // const API_URL = 'http://localhost:5001/api'; 
+    <script>
+        // Configuração Supabase
+        const SUPABASE_URL = 'https://wpgrollhyfoszmlotfyg.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndwZ3JvbGxoeWZvc3ptbG90ZnlnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc2NDcwNjksImV4cCI6MjA4MzIyMzA2OX0.NQNWmwHxSMtcAUfMee3848r8OccACXhuuZjhvNnw3bM';
+
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         const API_URL = 'https://web-production-8968f.up.railway.app/api';
 
         const plans = {
@@ -416,9 +419,22 @@
             copyPaste: null
         };
 
+        // Função de copiar código exposta globalmente
+        function copyCode() {
+            if (currentState.copyPaste) {
+                navigator.clipboard.writeText(currentState.copyPaste).then(() => {
+                    const btn = document.querySelector('.copy-btn');
+                    btn.innerHTML = '<i class="fas fa-check"></i> Copiado!';
+                    setTimeout(() => { btn.innerHTML = '<i class="fas fa-copy"></i> Copiar Código'; }, 2000);
+                });
+            } else {
+                alert("Aguarde gerar o código.");
+            }
+        }
+
         async function init() {
-            // Check Auth (Se não tiver, login)
-            const { data: { user } } = await supabase.auth.getUser();
+            // Check Auth
+            const { data: { user } } = await supabaseClient.auth.getUser();
             document.querySelector('.nav-email').textContent = user ? user.email : 'Visitante';
 
             const params = new URLSearchParams(window.location.search);
@@ -434,7 +450,20 @@
             // Só gera PIX se tiver logado
             if (!user) {
                 document.querySelector('.status-bar span').textContent = 'FAÇA LOGIN PARA GERAR O PIX';
-                // Opcional: Redirecionar
+                // Redireciona para checkout após 2s
+                setTimeout(() => {
+                    window.location.href = 'checkout.html?plan=' + plan + '&billing=' + billing;
+                }, 2000);
+                return;
+            }
+
+            // Verifica se o CPF está presente no metadata
+            const cpf = user.user_metadata?.cpf;
+            if (!cpf) {
+                document.querySelector('.status-bar span').textContent = 'CPF não encontrado. Retornando...';
+                setTimeout(() => {
+                    window.location.href = 'checkout.html?plan=' + plan + '&billing=' + billing;
+                }, 2000);
                 return;
             }
 
@@ -448,7 +477,7 @@
                         user_id: user.id,
                         email: user.email,
                         name: user.user_metadata?.name || user.email.split('@')[0],
-                        cpf: user.user_metadata?.cpf || '00000000000',
+                        cpf: cpf,
                         plan: plan,
                         billing_cycle: billing,
                         price: price
@@ -462,7 +491,7 @@
                     currentState.paymentId = pay.payment_id;
                     currentState.copyPaste = pay.copy_paste;
 
-                    // Show QR Code (Inject Image)
+                    // Show QR Code
                     const qrContainer = document.querySelector('.qr-code');
                     qrContainer.innerHTML = `<img src="data:image/png;base64,${pay.qr_code_url}" style="width:100%; height:100%">`;
 
@@ -471,29 +500,45 @@
 
                     document.querySelector('.status-bar span').textContent = 'AGUARDANDO CONFIRMAÇÃO...';
 
+                    // Inicia polling para verificar pagamento
+                    startPaymentPolling(pay.payment_id);
+
                 } else {
-                    document.querySelector('.status-bar span').textContent = 'ERRO: ' + (data.error || 'Falha ao gerar');
+                    document.querySelector('.status-bar span').textContent = 'ERRO: ' + (data.error || 'Falha ao gerar PIX');
+                    console.error('Erro API:', data);
                 }
 
             } catch (e) {
-                console.error(e);
-                document.querySelector('.status-bar span').textContent = 'ERRO DE CONEXÃO';
+                console.error('Erro de conexão:', e);
+                document.querySelector('.status-bar span').textContent = 'ERRO DE CONEXÃO COM O SERVIDOR';
             }
         }
 
-        window.copyCode = function () {
-            if (currentState.copyPaste) {
-                navigator.clipboard.writeText(currentState.copyPaste).then(() => {
-                    const btn = document.querySelector('.copy-btn');
-                    btn.innerHTML = '<i class="fas fa-check"></i> Copiado!';
-                    setTimeout(() => { btn.innerHTML = '<i class="fas fa-copy"></i> Copiar Código'; }, 2000);
-                });
-            } else {
-                alert("Aguarde gerar o código.");
-            }
-        };
+        function startPaymentPolling(paymentId) {
+            // Polling a cada 5 segundos para verificar se o pagamento foi confirmado
+            const interval = setInterval(async () => {
+                try {
+                    const response = await fetch(`${API_URL}/payment-status?payment_id=${paymentId}`);
+                    const data = await response.json();
 
-        init();
+                    if (data.status === 'RECEIVED' || data.status === 'CONFIRMED') {
+                        clearInterval(interval);
+                        document.querySelector('.status-bar span').textContent = '✅ PAGAMENTO CONFIRMADO!';
+                        setTimeout(() => {
+                            window.location.href = 'sucesso.html';
+                        }, 2000);
+                    }
+                } catch (e) {
+                    console.error('Erro no polling:', e);
+                }
+            }, 5000);
+
+            // Para o polling após 10 minutos
+            setTimeout(() => clearInterval(interval), 600000);
+        }
+
+        // Inicia quando o DOM estiver pronto
+        document.addEventListener('DOMContentLoaded', init);
     </script>
 
 </body>

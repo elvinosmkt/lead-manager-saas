@@ -11,7 +11,7 @@ import uuid
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from queue import Queue
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # Path Setup
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -305,6 +305,130 @@ def payment_status():
             
     except Exception as e:
         print(f"❌ Erro ao verificar status: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/create-card-subscription', methods=['POST'])
+def api_create_card_subscription():
+    """Cria assinatura recorrente com cartão de crédito no Asaas"""
+    try:
+        data = request.json
+        # data = { user_id, email, name, cpf, plan, price, billing_cycle, card }
+        # card = { holderName, number, expiryMonth, expiryYear, ccv }
+        
+        import requests
+        ASAAS_API_KEY = os.environ.get("ASAAS_API_KEY", "$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjUxN2ViODFiLTU4YWEtNDExYS05OTM3LTJmZWI1YzI1ODVjYTo6JGFhY2hfY2MwMzRiODctZmJiNy00YWFkLTk5NTctZWZkMTk2NGE5N2I2")
+        ASAAS_API_URL = "https://api.asaas.com/v3"
+        
+        headers = {
+            "Content-Type": "application/json",
+            "access_token": ASAAS_API_KEY
+        }
+        
+        # 1. Buscar ou criar cliente
+        cpf = data.get('cpf', '').replace('.', '').replace('-', '')
+        email = data.get('email')
+        
+        cust_res = requests.get(f"{ASAAS_API_URL}/customers?email={email}", headers=headers)
+        cust_data = cust_res.json()
+        
+        customer_id = None
+        if cust_data.get('data') and len(cust_data['data']) > 0:
+            customer_id = cust_data['data'][0]['id']
+        else:
+            new_cust = requests.post(
+                f"{ASAAS_API_URL}/customers",
+                headers=headers,
+                json={
+                    "name": data.get('name'),
+                    "cpfCnpj": cpf,
+                    "email": email
+                }
+            )
+            new_cust_data = new_cust.json()
+            if 'id' in new_cust_data:
+                customer_id = new_cust_data['id']
+            else:
+                return jsonify({'error': f"Erro ao criar cliente: {new_cust_data}"}), 400
+        
+        if not customer_id:
+            return jsonify({'error': 'Não foi possível criar/encontrar cliente'}), 400
+        
+        # 2. Determinar ciclo de cobrança
+        billing_cycle = data.get('billing_cycle', 'mensal')
+        cycle_map = {
+            'mensal': 'MONTHLY',
+            'trimestral': 'QUARTERLY',
+            'anual': 'YEARLY'
+        }
+        asaas_cycle = cycle_map.get(billing_cycle, 'MONTHLY')
+        
+        # 3. Criar assinatura com cartão
+        card_data = data.get('card', {})
+        
+        subscription_payload = {
+            "customer": customer_id,
+            "billingType": "CREDIT_CARD",
+            "value": float(data.get('price', 299)),
+            "nextDueDate": (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d"),
+            "cycle": asaas_cycle,
+            "description": f"Assinatura LeadManager - Plano {data.get('plan')} ({billing_cycle})",
+            "creditCard": {
+                "holderName": card_data.get('holderName'),
+                "number": card_data.get('number', '').replace(' ', ''),
+                "expiryMonth": card_data.get('expiryMonth'),
+                "expiryYear": card_data.get('expiryYear'),
+                "ccv": card_data.get('ccv')
+            },
+            "creditCardHolderInfo": {
+                "name": data.get('name'),
+                "email": email,
+                "cpfCnpj": cpf,
+                "postalCode": data.get('postalCode', '00000000'),
+                "addressNumber": data.get('addressNumber', '0'),
+                "phone": data.get('phone', '').replace('(', '').replace(')', '').replace('-', '').replace(' ', '')
+            }
+        }
+        
+        print(f"📧 Criando assinatura para: {email}")
+        
+        sub_res = requests.post(
+            f"{ASAAS_API_URL}/subscriptions",
+            headers=headers,
+            json=subscription_payload
+        )
+        
+        sub_data = sub_res.json()
+        
+        if 'id' in sub_data:
+            print(f"✅ Assinatura criada: {sub_data['id']}")
+            
+            # Salva no Supabase
+            try:
+                supabase.table("subscriptions").insert({
+                    "user_id": data.get('user_id'),
+                    "plan": data.get('plan'),
+                    "billing_cycle": billing_cycle,
+                    "price": data.get('price'),
+                    "status": "active",
+                    "provider": "asaas",
+                    "provider_subscription_id": sub_data['id']
+                }).execute()
+            except Exception as dberr:
+                print(f"⚠️ Erro ao salvar subscription: {dberr}")
+            
+            return jsonify({
+                'success': True,
+                'subscription_id': sub_data['id'],
+                'status': sub_data.get('status'),
+                'next_due_date': sub_data.get('nextDueDate')
+            })
+        else:
+            print(f"❌ Erro Asaas: {sub_data}")
+            error_msg = sub_data.get('errors', [{}])[0].get('description', 'Erro ao criar assinatura')
+            return jsonify({'error': error_msg, 'details': sub_data}), 400
+            
+    except Exception as e:
+        print(f"❌ Erro create-card-subscription: {e}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/webhook/asaas', methods=['POST'])
