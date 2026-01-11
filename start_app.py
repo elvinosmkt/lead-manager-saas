@@ -268,6 +268,40 @@ def api_create_pix():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/payment-status', methods=['GET'])
+def payment_status():
+    """Verifica o status de um pagamento no Asaas"""
+    try:
+        payment_id = request.args.get('payment_id')
+        if not payment_id:
+            return jsonify({'error': 'payment_id obrigatório'}), 400
+        
+        # Consulta no Asaas
+        import requests
+        ASAAS_API_KEY = os.environ.get("ASAAS_API_KEY", "$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjUxN2ViODFiLTU4YWEtNDExYS05OTM3LTJmZWI1YzI1ODVjYTo6JGFhY2hfY2MwMzRiODctZmJiNy00YWFkLTk5NTctZWZkMTk2NGE5N2I2")
+        
+        response = requests.get(
+            f"https://api.asaas.com/v3/payments/{payment_id}",
+            headers={
+                "Content-Type": "application/json",
+                "access_token": ASAAS_API_KEY
+            }
+        )
+        
+        if response.status_code == 200:
+            data = response.json()
+            return jsonify({
+                'status': data.get('status'),
+                'value': data.get('value'),
+                'paymentDate': data.get('paymentDate')
+            })
+        else:
+            return jsonify({'error': 'Pagamento não encontrado'}), 404
+            
+    except Exception as e:
+        print(f"❌ Erro ao verificar status: {e}")
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/webhook/asaas', methods=['POST'])
 def webhook_asaas():
     try:
