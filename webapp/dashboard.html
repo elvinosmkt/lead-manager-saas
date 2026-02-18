@@ -4,105 +4,169 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CRM - Lead Manager Pro</title>
+    <title>Lead Manager Pro | Dashboard</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Excel Export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-client.js"></script>
+
     <style>
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Outfit', sans-serif;
+            background-color: #0B0F19;
+            color: #E2E8F0;
         }
 
-        .glass {
-            background: rgba(31, 41, 55, 0.7);
-            backdrop-filter: blur(10px);
+        /* Glassmorphism & Effects */
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
         }
 
-        .card-hover:hover {
+        .glass-card {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+            border-color: rgba(99, 102, 241, 0.4);
+            box-shadow: 0 10px 40px -10px rgba(99, 102, 241, 0.2);
         }
 
-        .scrollbar-hide::-webkit-scrollbar {
+        /* Gradientes */
+        .gradient-text {
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+            transform: scale(1.02);
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
             display: none;
         }
     </style>
 </head>
 
-<body class="bg-gray-950 text-white min-h-screen pb-20">
+<body class="selection:bg-indigo-500/30">
 
-    <!-- Navbar Fixa -->
-    <nav class="border-b border-gray-800 bg-gray-900/90 backdrop-blur sticky top-0 z-40 shadow-lg">
-        <div class="max-w-7xl mx-auto px-4">
+    <!-- Navbar -->
+    <nav class="fixed top-0 w-full z-50 glass-panel border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
                 <!-- Logo -->
                 <div class="flex items-center gap-3">
                     <div
-                        class="w-9 h-9 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-900/50">
-                        <i class="fas fa-rocket text-white text-sm"></i>
+                        class="w-10 h-10 rounded-xl btn-primary flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                        <i class="fas fa-bolt text-white text-lg"></i>
                     </div>
                     <div>
-                        <span class="font-bold text-lg tracking-tight">LeadManager</span>
-                        <span class="text-[10px] uppercase font-bold text-gray-400 block -mt-1 tracking-widest">CRM &
-                            Scraper</span>
+                        <h1 class="text-xl font-bold tracking-tight text-white leading-none">Lead<span
+                                class="text-indigo-400">Manager</span></h1>
+                        <span class="text-[10px] font-bold tracking-widest text-gray-400 uppercase">SaaS Edition</span>
                     </div>
                 </div>
 
-                <!-- Status Bar -->
+                <!-- Right Side -->
                 <div class="flex items-center gap-6">
-                    <!-- Configurar Mensagem -->
-                    <button onclick="openScriptModal()"
-                        class="hidden md:flex items-center gap-2 text-sm text-gray-300 hover:text-white bg-gray-800/50 hover:bg-gray-800 px-3 py-1.5 rounded-full border border-gray-700 transition">
-                        <i class="fas fa-comment-dots text-green-400"></i>
-                        <span>Script de Venda</span>
-                    </button>
-
-                    <!-- Saldo de Créditos com Barra (Clicável) -->
-                    <a href="credits.html" id="creditsBox"
-                        class="bg-gray-800 rounded-2xl px-4 py-2 border border-gray-700 flex flex-col gap-1 min-w-[180px] hover:border-gray-500 transition cursor-pointer">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <div id="creditsDot" class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                                <span class="text-xs text-gray-400 uppercase font-bold">Créditos</span>
-                            </div>
-                            <span id="creditsDisplay" class="font-mono font-bold text-green-400">---</span>
+                    <!-- Credits Balance -->
+                    <div
+                        class="hidden md:flex items-center gap-3 bg-gray-900/50 px-4 py-2 rounded-full border border-gray-800">
+                        <div class="flex flex-col items-end leading-none">
+                            <span class="text-[10px] uppercase font-bold text-gray-500">Saldo Disponível</span>
+                            <span id="creditsDisplay" class="font-mono font-bold text-emerald-400 text-sm">...</span>
                         </div>
-                        <div class="w-full bg-gray-700 rounded-full h-1.5">
-                            <div id="creditsBar" class="bg-green-500 h-1.5 rounded-full transition-all duration-500"
-                                style="width: 100%"></div>
+                        <div
+                            class="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+                            <i class="fas fa-coins text-emerald-500 text-xs"></i>
                         </div>
-                    </a>
+                    </div>
 
-                    <!-- User com Dropdown -->
-                    <div class="relative group">
-                        <div class="flex items-center gap-3 cursor-pointer">
+                    <!-- User Menu -->
+                    <div class="relative group h-full flex items-center">
+                        <div class="flex items-center gap-3 cursor-pointer py-2">
                             <div class="text-right hidden sm:block">
-                                <h4 id="userName" class="text-sm font-bold leading-none">Admin</h4>
-                                <span id="userPlan" class="text-xs text-blue-400">Plano Pro</span>
+                                <p id="userName" class="text-sm font-bold text-white leading-none">Carregando...</p>
+                                <span
+                                    class="text-[10px] text-indigo-400 font-medium bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-500/20">PRO
+                                    PLAN</span>
                             </div>
                             <div
-                                class="w-9 h-9 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 border-2 border-gray-800 shadow-xl overflow-hidden flex items-center justify-center">
-                                <span id="userInitials" class="text-white text-xs font-bold">AD</span>
+                                class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 p-[1px] shadow-lg shadow-indigo-500/20">
+                                <div
+                                    class="w-full h-full rounded-full bg-gray-900 flex items-center justify-center overflow-hidden">
+                                    <img src="https://ui-avatars.com/api/?name=User&background=0F172A&color=fff"
+                                        alt="User" class="w-full h-full opacity-90">
+                                </div>
                             </div>
+                            <i class="fas fa-chevron-down text-gray-500 text-xs transition group-hover:rotate-180"></i>
                         </div>
-                        <!-- Dropdown -->
+
+                        <!-- Dropdown Menu Improved -->
                         <div
-                            class="absolute right-0 top-full mt-2 w-48 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl hidden group-hover:block z-50">
-                            <a href="profile.html"
-                                class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-t-xl transition">
-                                <i class="fas fa-user w-4"></i> Meu Perfil
-                            </a>
-                            <a href="credits.html"
-                                class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 transition">
-                                <i class="fas fa-wallet w-4"></i> Créditos
-                            </a>
-                            <button onclick="logout()"
-                                class="flex items-center gap-3 px-4 py-3 text-red-400 hover:text-red-300 hover:bg-gray-800 rounded-b-xl transition w-full text-left">
-                                <i class="fas fa-sign-out-alt w-4"></i> Sair
-                            </button>
+                            class="absolute right-0 top-full pt-2 w-56 hidden group-hover:block hover:block z-50 origin-top-right transition-all">
+                            <div
+                                class="glass-panel bg-[#161b28] rounded-2xl shadow-2xl overflow-hidden ring-1 ring-white/5">
+                                <div class="p-4 border-b border-gray-800 bg-gray-900/50">
+                                    <p class="text-xs text-gray-400">Logado como</p>
+                                    <p class="text-sm font-bold text-white truncate w-full" id="userEmailDisplay">...
+                                    </p>
+                                </div>
+                                <div class="p-2">
+                                    <a href="#"
+                                        class="flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition">
+                                        <i class="fas fa-user-cog w-5 text-indigo-400"></i> Minha Conta
+                                    </a>
+                                    <a href="#"
+                                        class="flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition">
+                                        <i class="fas fa-credit-card w-5 text-emerald-400"></i> Financeiro
+                                    </a>
+                                </div>
+                                <div class="p-2 border-t border-gray-800 bg-gray-900/30">
+                                    <button onclick="logout()"
+                                        class="w-full flex items-center gap-3 px-3 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition">
+                                        <i class="fas fa-sign-out-alt w-5"></i> Sair do Sistema
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -110,348 +174,275 @@
         </div>
     </nav>
 
-    <main class="max-w-7xl mx-auto px-4 mt-8">
+    <!-- Main Content -->
+    <main class="pt-24 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
 
-        <!-- Área de Busca (Compacta) -->
-        <div
-            class="bg-gradient-to-r from-gray-900 to-gray-800 rounded-2xl p-1 shadow-2xl border border-gray-800 mb-10 overflow-hidden relative group">
-            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition">
-                <i class="fas fa-search text-6xl"></i>
+        <!-- Search Hero Section -->
+        <div class="relative rounded-3xl overflow-hidden glass-panel p-1 mb-10 group">
+            <div
+                class="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 opacity-50 group-hover:opacity-70 transition duration-500">
             </div>
 
-            <div class="bg-gray-900/90 p-6 rounded-xl backdrop-blur-sm">
-                <div class="flex flex-col md:flex-row gap-4 items-end">
-                    <div class="flex-1 w-full space-y-1">
-                        <label class="text-xs font-bold text-gray-400 uppercase ml-1">Nicho</label>
+            <div class="relative bg-[#0f172a]/80 backdrop-blur-xl rounded-[20px] p-6 sm:p-8">
+                <div class="flex flex-col gap-6">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                            <i class="fas fa-search-location text-indigo-500"></i> Nova Prospecção
+                        </h2>
+                        <button onclick="openScriptModal()"
+                            class="text-sm text-gray-400 hover:text-white flex items-center gap-2 transition px-3 py-1.5 rounded-lg hover:bg-white/5">
+                            <i class="fas fa-comment-dots text-emerald-400"></i> Configurar Script
+                        </button>
+                    </div>
+
+                    <!-- Search Form -->
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                        <div class="md:col-span-5 relative group/input">
+                            <label
+                                class="text-[10px] uppercase font-bold text-gray-500 mb-1 ml-1 block group-focus-within/input:text-indigo-400 transition">Nicho
+                                de Mercado</label>
+                            <div class="relative">
+                                <i
+                                    class="fas fa-briefcase absolute left-4 top-3.5 text-gray-500 group-focus-within/input:text-indigo-400 transition"></i>
+                                <input type="text" id="nichoInput" placeholder="Ex: Dentista, Pizzaria, Academia..."
+                                    class="w-full bg-[#1e293b] border border-gray-700 rounded-xl pl-11 pr-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none transition shadow-inner">
+                            </div>
+                        </div>
+
+                        <div class="md:col-span-5 relative group/input">
+                            <label
+                                class="text-[10px] uppercase font-bold text-gray-500 mb-1 ml-1 block group-focus-within/input:text-indigo-400 transition">Cidade
+                                Alvo</label>
+                            <div class="relative">
+                                <i
+                                    class="fas fa-map-marker-alt absolute left-4 top-3.5 text-gray-500 group-focus-within/input:text-indigo-400 transition"></i>
+                                <input type="text" id="cidadeInput" placeholder="Ex: Centro, São Paulo..."
+                                    class="w-full bg-[#1e293b] border border-gray-700 rounded-xl pl-11 pr-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none transition shadow-inner">
+                            </div>
+                        </div>
+
+                        <div class="md:col-span-2 flex items-end">
+                            <button id="btnSearch" onclick="startSearch()"
+                                class="w-full btn-primary h-[50px] rounded-xl font-bold text-white shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2 border border-white/10 text-sm tracking-wide">
+                                <i class="fas fa-rocket"></i> BUSCAR
+                            </button>
+                            <button id="btnStop" onclick="stopSearch()"
+                                class="hidden w-full bg-red-500 hover:bg-red-600 h-[50px] rounded-xl font-bold text-white shadow-lg shadow-red-500/25 flex items-center justify-center gap-2 border border-white/10 transition text-sm tracking-wide">
+                                <i class="fas fa-stop-circle"></i> PARAR
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div id="progressContainer"
+                        class="hidden mt-2 bg-gray-900/50 rounded-xl p-4 border border-gray-700/50 flex items-center gap-4">
                         <div class="relative">
-                            <i class="fas fa-tag absolute left-4 top-3.5 text-gray-500"></i>
-                            <input type="text" id="nichoInput" placeholder="Ex: Pizzaria, Dentista..."
-                                class="w-full bg-gray-950 border border-gray-700 rounded-xl pl-10 pr-4 py-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition shadow-inner">
+                            <div
+                                class="w-12 h-12 rounded-full border-4 border-gray-700 flex items-center justify-center">
+                                <span class="text-[10px] font-bold text-gray-500" id="progressPct">0%</span>
+                            </div>
+                            <svg class="absolute top-0 left-0 w-12 h-12 transform -rotate-90 pointer-events-none">
+                                <circle cx="24" cy="24" r="20" stroke="currentColor" stroke-width="4" fill="transparent"
+                                    class="text-indigo-500 transition-all duration-300" stroke-dasharray="125"
+                                    stroke-dashoffset="125" id="circleProgress" />
+                            </svg>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-0.5">Processando em
+                                Tempo Real</p>
+                            <p class="text-sm text-white truncate" id="currentBusiness">Iniciando motor...</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-2xl font-bold text-white leading-none" id="leadsFoundCount">0</p>
+                            <p class="text-[10px] text-gray-500 uppercase font-bold">Leads Encontrados</p>
                         </div>
                     </div>
 
-                    <div class="flex-1 w-full space-y-1">
-                        <label class="text-xs font-bold text-gray-400 uppercase ml-1">Cidade</label>
-                        <div class="relative">
-                            <i class="fas fa-location-dot absolute left-4 top-3.5 text-gray-500"></i>
-                            <input type="text" id="cidadeInput" placeholder="Ex: Centro, São Paulo..."
-                                class="w-full bg-gray-950 border border-gray-700 rounded-xl pl-10 pr-4 py-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition shadow-inner">
-                        </div>
-                    </div>
-
-                    <div class="w-32 space-y-1">
-                        <label class="text-xs font-bold text-gray-400 uppercase ml-1">Qtd</label>
-                        <select id="maxLeadsInput"
-                            class="w-full bg-gray-950 border border-gray-700 rounded-xl px-3 py-3 text-white outline-none">
-                            <option value="10">10 Leads</option>
-                            <option value="50">50 Leads</option>
-                            <option value="100">100 Leads</option>
-                        </select>
-                    </div>
-
-                    <button id="btnSearch" onclick="startSearch()"
-                        class="w-full md:w-auto bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-blue-900/30 transition transform active:scale-95 flex items-center justify-center gap-2 border border-blue-500/50">
-                        <i class="fas fa-search"></i>
-                        <span>BUSCAR</span>
-                    </button>
-
-                    <button id="btnStop" onclick="stopSearch()"
-                        class="hidden w-full md:w-auto bg-red-600 hover:bg-red-500 text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-red-900/30 transition transform active:scale-95 flex items-center justify-center gap-2 border border-red-500/50">
-                        <i class="fas fa-stop"></i>
-                        <span>PARAR</span>
-                    </button>
-                </div>
-
-                <!-- Barra de Progresso Integrada -->
-                <div id="progressContainer"
-                    class="hidden mt-6 bg-gray-800 rounded-lg p-3 flex items-center gap-4 border border-gray-700">
-                    <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
-                        <i class="fas fa-spinner fa-spin text-blue-400"></i>
-                    </div>
-                    <div class="flex-1">
-                        <div class="flex justify-between text-xs mb-1">
-                            <span class="text-blue-300 font-bold" id="currentBusiness">Iniciando motor de
-                                busca...</span>
-                            <span class="text-gray-400 font-mono"><span id="leadsFoundCount">0</span> leads</span>
-                        </div>
-                        <div class="w-full bg-gray-700 rounded-full h-1.5">
-                            <div id="progressBar" class="bg-blue-500 h-1.5 rounded-full transition-all duration-300"
-                                style="width: 0%"></div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Filtros de Funil e Busca Avançada -->
-        <div class="flex flex-col md:flex-row gap-4 mb-6">
-            <!-- Filtros de Status (Abas) -->
-            <div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide flex-1">
+        <!-- Filters & Tools -->
+        <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-6">
+            <!-- Filter Tabs -->
+            <div class="flex p-1 bg-gray-900/50 rounded-xl border border-gray-800">
                 <button onclick="filterLeads('all')"
-                    class="filter-btn active bg-white text-gray-900 px-4 py-3 rounded-full text-sm font-bold shadow-lg transition"
+                    class="filter-btn active px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2"
                     data-status="all">
                     Todos <span id="countAll"
-                        class="bg-gray-200 text-gray-800 px-1.5 py-0.5 rounded-full text-[10px] ml-1">0</span>
+                        class="bg-gray-800 px-1.5 py-0.5 rounded text-[10px] text-gray-400">0</span>
                 </button>
                 <button onclick="filterLeads('contacted')"
-                    class="filter-btn bg-gray-800 border border-gray-700 text-green-400 px-4 py-3 rounded-full text-sm font-medium hover:bg-gray-700 transition"
+                    class="filter-btn px-4 py-2 rounded-lg text-xs font-bold text-gray-400 hover:text-white transition flex items-center gap-2"
                     data-status="contacted">
                     Contactados
                 </button>
+                <button onclick="filterLeads('interested')"
+                    class="filter-btn px-4 py-2 rounded-lg text-xs font-bold text-gray-400 hover:text-white transition flex items-center gap-2"
+                    data-status="interested">
+                    Interessados
+                </button>
             </div>
 
-            <!-- Filtros de Texto (Cidade/Area) -->
-            <div class="flex gap-2">
-                <div class="relative flex-1 md:flex-none">
-                    <i class="fas fa-filter absolute left-3 top-3 text-gray-500 text-xs"></i>
+            <!-- Advanced Filters -->
+            <div class="flex flex-wrap gap-2 w-full lg:w-auto">
+                <div class="relative flex-1 lg:flex-none">
+                    <i class="fas fa-filter absolute left-3 top-2.5 text-gray-500 text-xs"></i>
                     <input type="text" id="filterCity" onkeyup="applyFilters()" placeholder="Filtrar Cidade/Bairro"
-                        class="bg-gray-900 border border-gray-700 rounded-xl pl-8 pr-3 py-2.5 text-sm text-white focus:border-blue-500 outline-none w-full md:w-48 transition shadow-inner">
+                        class="bg-[#1e293b] border border-gray-700 rounded-lg pl-8 pr-3 py-2 text-xs text-white focus:border-indigo-500 outline-none w-full lg:w-48 transition shadow-sm">
                 </div>
-                <div class="relative flex-1 md:flex-none">
-                    <i class="fas fa-briefcase absolute left-3 top-3 text-gray-500 text-xs"></i>
-                    <input type="text" id="filterNiche" onkeyup="applyFilters()" placeholder="Filtrar Nicho"
-                        class="bg-gray-900 border border-gray-700 rounded-xl pl-8 pr-3 py-2.5 text-sm text-white focus:border-blue-500 outline-none w-full md:w-44 transition shadow-inner">
-                </div>
+                <button onclick="exportToExcel()"
+                    class="bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700 rounded-lg px-4 py-2 text-xs font-bold transition flex items-center gap-2">
+                    <i class="fas fa-file-excel text-emerald-500"></i> Exportar
+                </button>
             </div>
-
-            <button onclick="exportToExcel()"
-                class="bg-gray-800 hover:bg-gray-700 text-gray-100 border border-gray-600 rounded-xl px-4 py-2 text-sm font-medium transition flex items-center gap-2">
-                <i class="fas fa-download"></i> Exportar
-            </button>
         </div>
 
-        <!-- Grid de Cards (CRM) -->
-        <div id="leadsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <!-- Leads Grid -->
+        <div id="leadsGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             <!-- Empty State -->
-            <div id="emptyState"
-                class="col-span-full py-20 text-center border-2 border-dashed border-gray-800 rounded-3xl bg-gray-900/30">
-                <div class="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i class="fas fa-ghost text-3xl text-gray-600"></i>
+            <div id="emptyState" class="col-span-full py-24 text-center">
+                <div
+                    class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gray-800/50 mb-4 ring-1 ring-gray-700">
+                    <i class="fas fa-search text-3xl text-gray-600"></i>
                 </div>
-                <h3 class="text-xl font-bold text-gray-300">Nenhum lead por aqui</h3>
-                <p class="text-gray-500 mt-2 max-w-sm mx-auto">Faça uma busca acima para encontrar empresas sem site e
-                    começar a vender.</p>
+                <h3 class="text-xl font-bold text-white">Nenhum lead encontrado</h3>
+                <p class="text-gray-500 text-sm mt-2">Comece uma nova busca para encher seu pipeline.</p>
             </div>
         </div>
 
     </main>
 
-    <!-- Modal: Script de Venda -->
+    <!-- Script Modal -->
     <div id="scriptModal"
-        class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4 transition-opacity duration-300">
         <div
-            class="bg-gray-900 border border-gray-800 rounded-2xl w-full max-w-lg shadow-2xl transform transition-all p-6">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-xl font-bold flex items-center gap-2">
-                    <i class="fab fa-whatsapp text-green-500"></i> Configurar Abordagem
+            class="glass-panel bg-[#161b28] rounded-2xl w-full max-w-lg shadow-2xl p-0 overflow-hidden ring-1 ring-white/10 transform scale-100 transition-transform">
+            <div class="p-6 border-b border-gray-800 flex justify-between items-center bg-gray-900/50">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i class="fab fa-whatsapp text-emerald-500"></i> Script de Venda
                 </h3>
-                <button onclick="closeScriptModal()" class="text-gray-500 hover:text-white"><i
+                <button onclick="closeScriptModal()" class="text-gray-500 hover:text-white transition"><i
                         class="fas fa-times"></i></button>
             </div>
-
-            <div class="space-y-4">
-                <div class="bg-blue-500/10 border border-blue-500/20 p-4 rounded-lg text-sm text-blue-200">
-                    <p class="font-bold mb-1"><i class="fas fa-info-circle"></i> Variáveis:</p>
-                    <code class="bg-black/30 px-1 rounded text-blue-300">{nome}</code>, <code
-                        class="bg-black/30 px-1 rounded text-blue-300">{nicho}</code>, <code
-                        class="bg-black/30 px-1 rounded text-blue-300">{cidade}</code>
+            <div class="p-6 space-y-4">
+                <div
+                    class="bg-indigo-500/10 border border-indigo-500/20 p-4 rounded-xl text-xs text-indigo-200 leading-relaxed">
+                    <strong class="block mb-2 text-indigo-400">✨ Variáveis Mágicas:</strong>
+                    Use <code class="bg-indigo-900/50 px-1.5 py-0.5 rounded text-white font-mono">{nome}</code>,
+                    <code class="bg-indigo-900/50 px-1.5 py-0.5 rounded text-white font-mono">{nicho}</code> e
+                    <code class="bg-indigo-900/50 px-1.5 py-0.5 rounded text-white font-mono">{cidade}</code>
+                    para personalizar sua mensagem automaticamente.
                 </div>
-
                 <textarea id="msgTemplate" rows="6"
-                    class="w-full bg-gray-950 border border-gray-700 rounded-xl p-4 text-gray-300 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none resize-none"
-                    placeholder="Olá, vi a {nome} no Google..."></textarea>
+                    class="w-full bg-[#0f172a] border border-gray-700 rounded-xl p-4 text-sm text-gray-300 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none resize-none leading-relaxed shadow-inner"
+                    placeholder="Olá..."></textarea>
             </div>
-
-            <div class="mt-6 flex justify-end gap-3">
-                <button onclick="resetScript()" class="px-4 py-2 text-gray-400 hover:text-white text-sm">Padrão</button>
+            <div class="p-4 border-t border-gray-800 bg-gray-900/30 flex justify-end gap-3">
+                <button onclick="resetScript()"
+                    class="px-4 py-2 text-xs text-gray-400 hover:text-white font-medium">Restaurar Padrão</button>
                 <button onclick="saveScript()"
-                    class="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-6 rounded-lg shadow-lg shadow-green-900/30 transition">
-                    Salvar
+                    class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-6 rounded-lg shadow-lg shadow-emerald-900/20 transition text-xs tracking-wide">
+                    SALVAR SCRIPT
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Scripts -->
+    <!-- Application Logic -->
     <script>
+        // --- State Management ---
         let leads = [];
         let isSearching = false;
         let pollingInterval = null;
         let currentStatusFilter = 'all';
         let msgTemplate = localStorage.getItem('leadManager_msg') ||
-            "Olá! Encontrei a *{nome}* no Google Maps aqui de {cidade} e vi que a empresa ainda não tem um Site Profissional.\n\nSou especialista em criar sites para {nicho} que atraem mais clientes. Gostaria de ver uma proposta?";
+            "Olá! Encontrei a *{nome}* no Google Maps aqui de {cidade} e notei que vocês ainda não têm um Site Oficial.\n\nSou especialista em criar sites para {nicho} que passam profissionalismo e atraem clientes. Posso te mandar uma ideia sem compromisso?";
 
+        // --- Core Functions ---
         document.addEventListener('DOMContentLoaded', () => {
             loadUserInfo();
-            loadLeadsFromDB();
             document.getElementById('msgTemplate').value = msgTemplate;
         });
 
         async function loadUserInfo() {
             try {
-                // Se LeadAPI estiver disponível (carregado via supabase-client.js)
-                if (window.LeadAPI) {
-                    const user = await LeadAPI.getUser();
-                    const credits = await LeadAPI.checkCredits();
-
-                    if (user) {
-                        const name = user.email.split('@')[0];
-                        document.getElementById('userName').innerText = name;
-                        document.getElementById('userInitials').innerText = name.substring(0, 2).toUpperCase();
-                    }
-
-                    if (credits) {
-                        const used = credits.credits_used || 0;
-                        const limit = credits.credits_limit || 500;
-                        const remaining = limit - used;
-                        const percent = Math.max(0, Math.min(100, (remaining / limit) * 100));
-
-                        document.getElementById('creditsDisplay').innerText = `${remaining}/${limit}`;
-                        document.getElementById('creditsBar').style.width = `${percent}%`;
-                        document.getElementById('userPlan').innerText = `Plano ${(credits.plan || 'starter').charAt(0).toUpperCase() + (credits.plan || 'starter').slice(1)}`;
-
-                        // Cores baseadas na porcentagem
-                        const bar = document.getElementById('creditsBar');
-                        const dot = document.getElementById('creditsDot');
-                        const display = document.getElementById('creditsDisplay');
-
-                        if (percent < 10) {
-                            bar.className = 'bg-red-500 h-1.5 rounded-full transition-all duration-500';
-                            dot.className = 'w-2 h-2 rounded-full bg-red-500 animate-pulse';
-                            display.className = 'font-mono font-bold text-red-400';
-                        } else if (percent < 30) {
-                            bar.className = 'bg-yellow-500 h-1.5 rounded-full transition-all duration-500';
-                            dot.className = 'w-2 h-2 rounded-full bg-yellow-500 animate-pulse';
-                            display.className = 'font-mono font-bold text-yellow-400';
-                        } else {
-                            bar.className = 'bg-green-500 h-1.5 rounded-full transition-all duration-500';
-                            dot.className = 'w-2 h-2 rounded-full bg-green-500 animate-pulse';
-                            display.className = 'font-mono font-bold text-green-400';
-                        }
-
-                        // Alerta se créditos muito baixos
-                        if (remaining < 20 && remaining > 0) {
-                            showCreditAlert(remaining);
-                        } else if (remaining <= 0) {
-                            showNoCreditsAlert();
-                        }
-                    }
-                }
-            } catch (e) {
-                console.error('Erro ao carregar info do usuário:', e);
-            }
+                const res = await fetch('/api/user-info');
+                if (res.status === 401) window.location.href = '/login';
+                const data = await res.json();
+                document.getElementById('userName').innerText = data.name;
+                if (data.email) document.getElementById('userEmailDisplay').innerText = data.email;
+                document.getElementById('creditsDisplay').innerText = data.credits;
+            } catch (e) { console.error(e); }
         }
-
-        function showCreditAlert(remaining) {
-            const existingAlert = document.getElementById('creditAlert');
-            if (existingAlert) return;
-
-            const alert = document.createElement('div');
-            alert.id = 'creditAlert';
-            alert.className = 'fixed top-20 right-4 bg-yellow-500/90 text-black px-4 py-3 rounded-xl shadow-lg z-50 flex items-center gap-3 animate-pulse';
-            alert.innerHTML = `
-                <i class="fas fa-exclamation-triangle text-xl"></i>
-                <div>
-                    <p class="font-bold">Créditos baixos!</p>
-                    <p class="text-sm">Restam apenas ${remaining} créditos.</p>
-                </div>
-                <button onclick="this.parentElement.remove()" class="ml-2 text-black/50 hover:text-black">
-                    <i class="fas fa-times"></i>
-                </button>
-            `;
-            document.body.appendChild(alert);
-        }
-
-        function showNoCreditsAlert() {
-            const existingAlert = document.getElementById('noCreditsAlert');
-            if (existingAlert) return;
-
-            const alert = document.createElement('div');
-            alert.id = 'noCreditsAlert';
-            alert.className = 'fixed top-20 right-4 bg-red-600 text-white px-4 py-3 rounded-xl shadow-lg z-50 flex items-center gap-3';
-            alert.innerHTML = `
-                <i class="fas fa-times-circle text-xl"></i>
-                <div>
-                    <p class="font-bold">Créditos esgotados!</p>
-                    <p class="text-sm">Faça upgrade para continuar.</p>
-                </div>
-                <a href="checkout.html" class="ml-2 bg-white text-red-600 px-3 py-1 rounded-lg font-bold text-sm hover:bg-gray-100">
-                    UPGRADE
-                </a>
-            `;
-            document.body.appendChild(alert);
-        }
-
-        async function loadLeadsFromDB() {
-            try {
-                if (window.LeadAPI) {
-                    leads = await LeadAPI.getAll();
-                    renderLeads();
-                }
-            } catch (e) {
-                console.error('Erro ao carregar leads:', e);
-            }
-        }
-
 
         async function startSearch() {
             const nicho = document.getElementById('nichoInput').value;
             const cidade = document.getElementById('cidadeInput').value;
-            if (!nicho || !cidade) return alert('Preencha os campos!');
 
-            // Verifica usuário logado
-            const user = await LeadAPI?.getUser();
-            if (!user) {
-                alert('Você precisa estar logado para fazer buscas.');
-                window.location.href = 'login.html';
-                return;
-            }
+            if (!nicho || !cidade) return alert('Por favor, preencha o Nicho e a Cidade.');
 
             toggleSearchUI(true);
-            leads = [];
-            renderLeads();
+            leads = []; // Reset local
+            renderLeads(); // Clear UI
 
-            const res = await fetch('/api/start-search', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    nicho,
-                    cidade,
-                    max_leads: document.getElementById('maxLeadsInput').value,
-                    user_id: user.id
-                })
-            });
+            try {
+                const res = await fetch('/api/start-search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nicho, cidade, max_leads: 50 }) // Default 50 for simplicity
+                });
 
-            if (res.ok) {
-                startPolling();
-            } else {
-                const error = await res.json();
-                if (error.code === 'no_credits') {
-                    showNoCreditsAlert();
+                if (res.ok) {
+                    startPolling();
                 } else {
-                    alert(error.error || 'Erro ao iniciar busca');
+                    alert('Erro ao iniciar busca.');
+                    toggleSearchUI(false);
                 }
+            } catch (e) {
+                console.error(e);
                 toggleSearchUI(false);
             }
         }
 
         function toggleSearchUI(searching) {
             isSearching = searching;
-            document.getElementById('btnSearch').classList.toggle('hidden', searching);
-            document.getElementById('btnStop').classList.toggle('hidden', !searching);
-            document.getElementById('progressContainer').classList.toggle('hidden', !searching);
+            const btnSearch = document.getElementById('btnSearch');
+            const btnStop = document.getElementById('btnStop');
+            const progress = document.getElementById('progressContainer');
+
+            if (searching) {
+                btnSearch.classList.add('hidden');
+                btnStop.classList.remove('hidden');
+                progress.classList.remove('hidden');
+            } else {
+                btnSearch.classList.remove('hidden');
+                btnStop.classList.add('hidden');
+            }
         }
 
         function startPolling() {
+            if (pollingInterval) clearInterval(pollingInterval);
             pollingInterval = setInterval(async () => {
-                const res = await fetch('/api/search-status');
-                const data = await res.json();
-                updateProgress(data);
-                if (data.leads && data.leads.length > leads.length) {
-                    leads = data.leads.map(l => ({ ...l, status: l.status || 'new' }));
-                    renderLeads();
-                }
-                if (!data.running && data.completed) stopSearch();
+                if (!isSearching) return;
+
+                try {
+                    const res = await fetch('/api/search-status');
+                    const data = await res.json();
+
+                    updateProgress(data);
+
+                    if (data.leads && data.leads.length > leads.length) {
+                        leads = data.leads.map(l => ({ ...l, status: l.status || 'new' }));
+                        renderLeads();
+                    }
+
+                    if (!data.running && data.completed) {
+                        stopSearch();
+                        loadUserInfo();
+                        // alert('Busca Finalizada!'); // Less intrusive
+                    }
+                } catch (e) { console.error(e); }
             }, 1000);
         }
 
@@ -460,117 +451,163 @@
             clearInterval(pollingInterval);
             toggleSearchUI(false);
             fetch('/api/cancel-search', { method: 'POST' });
-
-            // Recarrega créditos e leads após busca
-            loadUserInfo();
-            loadLeadsFromDB();
         }
 
         function updateProgress(data) {
-            const pct = Math.round((data.processados / (data.total || 1)) * 100);
-            document.getElementById('progressBar').style.width = `${pct}%`;
-            document.getElementById('currentBusiness').innerText = data.current || 'Processando...';
+            const total = data.total || 1;
+            const current = data.processados || 0;
+            const pct = Math.min(100, Math.round((current / total) * 100));
+
+            // Update Circle
+            const offset = 125 - (125 * pct / 100);
+            document.getElementById('circleProgress').style.strokeDashoffset = offset;
+            document.getElementById('progressPct').innerText = `${pct}%`;
+
+            document.getElementById('currentBusiness').innerText = data.current || 'Finalizando...';
             document.getElementById('leadsFoundCount').innerText = data.leads_found || 0;
         }
 
+        // --- Rendering ---
+
         function filterLeads(status) {
             currentStatusFilter = status;
+
+            // Update UI Tabs
             document.querySelectorAll('.filter-btn').forEach(btn => {
                 const isActive = btn.dataset.status === status;
-                btn.className = isActive ? 'filter-btn bg-white text-gray-900 px-4 py-3 rounded-full text-sm font-bold shadow-lg transition' : 'filter-btn bg-gray-800 border border-gray-700 text-gray-300 px-4 py-3 rounded-full text-sm font-medium hover:bg-gray-700 transition';
+                if (isActive) {
+                    btn.classList.add('active', 'bg-white', 'text-gray-900', 'shadow-lg');
+                    btn.classList.remove('text-gray-400');
+                } else {
+                    btn.classList.remove('active', 'bg-white', 'text-gray-900', 'shadow-lg');
+                    btn.classList.add('text-gray-400');
+                }
             });
-            applyFilters();
+            renderLeads();
         }
 
         function applyFilters() { renderLeads(); }
 
         function renderLeads() {
             const grid = document.getElementById('leadsGrid');
+            const empty = document.getElementById('emptyState');
             grid.innerHTML = '';
+
             const cityFilter = document.getElementById('filterCity').value.toLowerCase();
-            const nicheFilter = document.getElementById('filterNiche').value.toLowerCase();
 
             const filtered = leads.filter(l => {
                 if (currentStatusFilter !== 'all' && (l.status || 'new') !== currentStatusFilter) return false;
                 if (cityFilter && !(l.cidade || '').toLowerCase().includes(cityFilter) && !(l.endereco || '').toLowerCase().includes(cityFilter)) return false;
-                if (nicheFilter && !(l.nicho || '').toLowerCase().includes(nicheFilter)) return false;
                 return true;
             });
 
             if (filtered.length === 0) {
-                grid.innerHTML = `<div class="col-span-full py-10 text-center text-gray-500">Nenhum lead nos filtros atuais</div>`;
+                if (leads.length === 0) {
+                    if (empty) grid.appendChild(empty);
+                } else {
+                    grid.innerHTML = `<div class="col-span-full py-10 text-center text-gray-500">Nenhum resultado para os filtros.</div>`;
+                }
                 return;
             }
 
+            // Render Cards
             filtered.slice().reverse().forEach(l => {
-                const card = document.createElement('div');
-                card.className = "bg-gray-900 border border-gray-800 rounded-2xl p-5 shadow-lg card-hover relative flex flex-col h-full transition-all";
-
-                // Cores de status
-                if (l.status === 'contacted') card.classList.add('border-green-800/50');
-                if (l.status === 'interested') card.classList.add('border-blue-800/50', 'bg-blue-900/5');
-                if (l.status === 'discarded') card.classList.add('opacity-40', 'grayscale');
-
-                card.innerHTML = `
-                    <div class="flex justify-between items-start mb-4">
-                        <div class="flex items-center gap-1 bg-yellow-500/10 px-2 py-1 rounded-lg">
-                            <i class="fas fa-star text-yellow-500 text-xs"></i>
-                            <span class="text-xs font-bold text-yellow-500">${l.avaliacao || '0.0'}</span>
-                        </div>
-                        <span class="text-[10px] text-gray-400 font-bold uppercase truncate max-w-[100px]">${l.cidade || ''}</span>
-                    </div>
-                    <div class="mb-auto">
-                        <h3 class="font-bold text-lg text-white mb-1 line-clamp-1">${l.nome}</h3>
-                        <p class="text-xs text-gray-400 flex items-start gap-2 mb-4">
-                            <i class="fas fa-location-dot mt-0.5"></i> <span class="line-clamp-2">${l.endereco || ''}</span>
-                        </p>
-                    </div>
-                    <div class="grid grid-cols-2 gap-2 mb-4">
-                        <div class="bg-gray-950 p-2 rounded-lg text-center border border-gray-800">
-                            <p class="text-[10px] text-gray-500 uppercase font-bold">Tel</p>
-                            <p class="text-xs font-mono text-gray-300 truncate">${l.telefone || '--'}</p>
-                        </div>
-                        <div class="bg-gray-950 p-2 rounded-lg text-center border border-gray-800 cursor-pointer" onclick="window.open('${l.google_maps_link}', '_blank')">
-                            <p class="text-[10px] text-gray-500 uppercase font-bold">Maps</p>
-                            <p class="text-xs text-blue-400 font-bold">Ver <i class="fas fa-external-link-alt"></i></p>
-                        </div>
-                    </div>
-                    <div class="flex gap-2 border-t border-gray-800 pt-3">
-                        <button onclick="sendWhatsapp('${l.whatsapp}', '${l.nome}', '${l.cidade}', '${l.nicho}', this)" 
-                            class="flex-1 ${l.whatsapp ? 'bg-green-600 hover:bg-green-500' : 'bg-gray-700'} text-white font-bold py-2 rounded-xl text-sm flex items-center justify-center gap-2 transition">
-                            <i class="fab fa-whatsapp"></i> <span>${l.status === 'contacted' ? 'Enviado' : 'Abordar'}</span>
-                        </button>
-                        
-                        <div class="relative group">
-                            <button class="w-10 h-10 bg-gray-800 rounded-xl flex items-center justify-center text-gray-400 hover:text-white transition">
-                                <i class="fas fa-ellipsis-v"></i>
-                            </button>
-                            <div class="absolute bottom-full right-0 mb-2 w-40 bg-gray-800 border border-gray-700 rounded-xl shadow-2xl hidden group-hover:block p-1 z-50">
-                                <button onclick="changeStatus('${l.nome}', 'interested')" class="w-full text-left px-3 py-2 text-xs text-blue-400 hover:bg-gray-700 rounded flex items-center gap-2">
-                                    <i class="fas fa-heart"></i> Interessado
-                                </button>
-                                <button onclick="changeStatus('${l.nome}', 'new')" class="w-full text-left px-3 py-2 text-xs text-gray-400 hover:bg-gray-700 rounded flex items-center gap-2">
-                                    <i class="fas fa-undo"></i> Resetar
-                                </button>
-                                <button onclick="changeStatus('${l.nome}', 'discarded')" class="w-full text-left px-3 py-2 text-xs text-red-500 hover:bg-gray-700 rounded flex items-center gap-2">
-                                    <i class="fas fa-times-circle"></i> Descartar
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `;
+                const card = createCard(l);
                 grid.appendChild(card);
             });
+
             document.getElementById('countAll').innerText = leads.length;
         }
 
+        function createCard(l) {
+            const el = document.createElement('div');
+            // Base classes
+            let classes = "glass-card rounded-2xl p-5 relative flex flex-col h-full";
+
+            // Status styling visualization
+            if (l.status === 'contacted') classes += " border-emerald-500/30 bg-emerald-500/5";
+            if (l.status === 'interested') classes += " border-blue-500/30 bg-blue-500/5";
+            if (l.status === 'discarded') classes += " opacity-50 grayscale";
+
+            el.className = classes;
+
+            el.innerHTML = `
+                <div class="flex justify-between items-start mb-4">
+                    <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-1 bg-yellow-500/10 px-2 py-1 rounded-lg border border-yellow-500/20">
+                            <i class="fas fa-star text-yellow-500 text-[10px]"></i>
+                            <span class="text-xs font-bold text-yellow-500">${l.avaliacao || '0.0'}</span>
+                        </div>
+                        ${l.cidade ? `<span class="text-[10px] bg-gray-800 px-2 py-1 rounded-lg text-gray-400 font-bold uppercase tracking-wider">${l.cidade}</span>` : ''}
+                    </div>
+                     <span class="text-[10px] text-red-400 font-bold bg-red-500/10 px-2 py-1 rounded border border-red-500/20 uppercase">Sem Site</span>
+                </div>
+                
+                <div class="mb-auto">
+                    <h3 class="font-bold text-lg text-white mb-1 leading-tight group-hover:text-indigo-400 transition">${l.nome}</h3>
+                    <p class="text-xs text-gray-400 flex items-start gap-2 mb-4">
+                        <i class="fas fa-map-pin mt-0.5 text-gray-600"></i> ${l.endereco || 'Endereço não disponível'}
+                    </p>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                    <div class="bg-gray-900/50 p-2 rounded-lg text-center border border-gray-800">
+                        <p class="text-[10px] text-gray-500 uppercase font-bold">Contato</p>
+                        <p class="text-xs font-mono text-gray-300 truncate">${l.telefone || '---'}</p>
+                    </div>
+                    <a href="${l.google_maps_link}" target="_blank" class="bg-gray-900/50 p-2 rounded-lg text-center border border-gray-800 hover:border-blue-500/50 transition cursor-pointer group/map">
+                        <p class="text-[10px] text-gray-500 uppercase font-bold">Google Maps</p>
+                        <p class="text-xs text-blue-400 font-bold group-hover/map:underline">Abrir Perfil</p>
+                    </a>
+                </div>
+                
+                <div class="flex gap-2 pt-3 border-t border-gray-800/50">
+                    <button onclick="sendWhatsapp('${l.whatsapp}', '${l.nome}', '${l.cidade}', '${l.nicho}', this)" 
+                        class="flex-1 ${l.whatsapp ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-gray-700 cursor-not-allowed'} text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 transition shadow-lg">
+                        <i class="fab fa-whatsapp text-sm"></i> 
+                        <span>${l.status === 'contacted' ? 'ENVIADO' : (l.whatsapp ? 'ABORDAR' : 'S/ WHATS')}</span>
+                    </button>
+                    
+                    <div class="relative group/menu">
+                        <button class="w-10 h-10 bg-gray-800 hover:bg-gray-700 rounded-xl flex items-center justify-center text-gray-400 hover:text-white transition border border-gray-700">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        <div class="absolute bottom-full right-0 mb-2 w-44 bg-gray-800 border border-gray-700 rounded-xl shadow-2xl hidden group-hover/menu:block p-1 z-20">
+                            <button onclick="changeStatus('${l.nome}', 'interested')" class="w-full text-left px-3 py-2 text-xs text-blue-400 hover:bg-gray-700 rounded flex items-center gap-2">
+                                <i class="fas fa-heart"></i> Potencial Cliente
+                            </button>
+                            <button onclick="changeStatus('${l.nome}', 'new')" class="w-full text-left px-3 py-2 text-xs text-gray-400 hover:bg-gray-700 rounded flex items-center gap-2">
+                                <i class="fas fa-undo"></i> Resetar Status
+                            </button>
+                            <button onclick="changeStatus('${l.nome}', 'discarded')" class="w-full text-left px-3 py-2 text-xs text-red-400 hover:bg-gray-700 rounded flex items-center gap-2">
+                                <i class="fas fa-trash"></i> Descartar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            return el;
+        }
+
+        // --- Actions ---
+
         function sendWhatsapp(phone, name, city, niche, btn) {
-            if (!phone) return alert('Telefone não disponível');
+            if (!phone) return alert('Telefone indisponível para este lead.');
+
             const msg = (localStorage.getItem('leadManager_msg') || msgTemplate)
-                .replace(/{nome}/g, name).replace(/{nicho}/g, niche).replace(/{cidade}/g, city);
-            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+                .replace(/{nome}/g, name)
+                .replace(/{nicho}/g, niche || 'sua área')
+                .replace(/{cidade}/g, city || 'sua cidade');
+
+            const url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+            window.open(url, '_blank');
+
+            // Auto update status
             const lead = leads.find(l => l.nome === name);
-            if (lead) { lead.status = 'contacted'; renderLeads(); }
+            if (lead && lead.status !== 'contacted') {
+                lead.status = 'contacted';
+                renderLeads();
+            }
         }
 
         function changeStatus(name, status) {
@@ -581,16 +618,32 @@
             }
         }
 
+        // --- Utilities ---
         function openScriptModal() { document.getElementById('scriptModal').classList.remove('hidden'); }
         function closeScriptModal() { document.getElementById('scriptModal').classList.add('hidden'); }
-        function saveScript() { localStorage.setItem('leadManager_msg', document.getElementById('msgTemplate').value); closeScriptModal(); }
-        function resetScript() { document.getElementById('msgTemplate').value = "Olá! Encontrei a *{nome}* no Google Maps aqui de {cidade}..."; }
-        function logout() { fetch('/api/logout', { method: 'POST' }).then(() => window.location.href = '/login'); }
+
+        async function logout() {
+            await fetch('/api/logout', { method: 'POST' });
+            window.location.href = '/login';
+        }
+
         function exportToExcel() {
+            if (leads.length === 0) return alert('Realize uma busca primeiro.');
             const ws = XLSX.utils.json_to_sheet(leads);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Leads");
-            XLSX.writeFile(wb, "prospects.xlsx");
+            XLSX.writeFile(wb, "Leads_Manager.xlsx");
+        }
+
+        function saveScript() {
+            msgTemplate = document.getElementById('msgTemplate').value;
+            localStorage.setItem('leadManager_msg', msgTemplate);
+            closeScriptModal();
+            alert('Script atualizado!');
+        }
+
+        function resetScript() {
+            document.getElementById('msgTemplate').value = "Olá! Encontrei a *{nome}* no Google Maps aqui de {cidade} e notei que vocês ainda não têm um Site Oficial.\n\nSou especialista em criar sites para {nicho} que passam profissionalismo e atraem clientes. Posso te mandar uma ideia sem compromisso?";
         }
     </script>
 </body>
