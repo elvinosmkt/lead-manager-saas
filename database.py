@@ -54,6 +54,10 @@ def init_db():
             nicho TEXT,
             cidade TEXT,
             timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            address TEXT,
+            rating REAL,
+            reviews_count INTEGER,
+            google_maps_link TEXT,
             FOREIGN KEY(user_id) REFERENCES users(id)
         )
     ''')

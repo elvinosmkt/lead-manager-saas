@@ -136,6 +136,9 @@ def process_search(user_id, nicho, cidade, max_leads):
         # Finalização
         leads_encontrados = len(scraper.businesses)
         if leads_encontrados > 0:
+            # Salva leads encontrados
+            save_leads_to_db(user_id, scraper.businesses)
+
             # Desconta créditos do banco
             conn = get_db()
             
@@ -232,8 +235,16 @@ def search_status():
 
 @app.route('/')
 def index():
+    # Check if user is logged in
     if 'user_id' in session:
-        return send_from_directory('webapp', 'dashboard.html')
+        return redirect('/dashboard')
+    # Serve Landing Page
+    return send_from_directory('webapp', 'index.html')
+
+@app.route('/login')
+def login_page():
+    if 'user_id' in session:
+        return redirect('/dashboard')
     return send_from_directory('webapp', 'login.html')
 
 @app.route('/<path:path>')
@@ -242,10 +253,77 @@ def serve_static(path):
         return send_from_directory('webapp', path)
     
     # Fallbacks
-    if path == 'dashboard': return send_from_directory('webapp', 'dashboard.html')
+    if path == 'dashboard': return send_from_directory('webapp', 'app.html')
     if path == 'login': return send_from_directory('webapp', 'login.html')
     
     return send_from_directory('webapp', 'index.html')
+
+
+def save_leads_to_db(user_id, leads):
+    if not leads: return
+    conn = get_db()
+    for l in leads:
+        try:
+            # Verifica duplicidade
+            exists = conn.execute(
+                'SELECT id FROM saved_leads WHERE user_id = ? AND name = ?', 
+                (user_id, l.get('nome'))
+            ).fetchone()
+            
+            if not exists:
+                conn.execute('''
+                    INSERT INTO saved_leads 
+                    (user_id, name, phone, whatsapp, website, nicho, cidade, address, rating, reviews_count, google_maps_link)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ''', (
+                    user_id, 
+                    l.get('nome'), 
+                    l.get('telefone'), 
+                    l.get('whatsapp'), 
+                    l.get('website'), 
+                    l.get('nicho'), 
+                    l.get('cidade'),
+                    l.get('endereco'),
+                    l.get('avaliacao'),
+                    l.get('num_avaliacoes'),
+                    l.get('google_maps_link')
+                ))
+        except Exception as e:
+            print(f"Erro ao salvar lead {l.get('nome')}: {e}")
+    conn.commit()
+    conn.close()
+
+@app.route('/api/leads', methods=['GET'])
+@login_required
+def get_leads():
+    user_id = session['user_id']
+    conn = get_db()
+    leads = conn.execute('''
+        SELECT 
+            name as nome, 
+            phone as telefone, 
+            whatsapp, 
+            website, 
+            nicho, 
+            cidade, 
+            address as endereco, 
+            rating as avaliacao, 
+            reviews_count as num_avaliacoes, 
+            google_maps_link 
+        FROM saved_leads WHERE user_id = ? ORDER BY timestamp DESC
+    ''', (user_id,)).fetchall()
+    conn.close()
+    return jsonify([dict(l) for l in leads])
+
+@app.route('/api/save-leads', methods=['POST'])
+@login_required
+def api_save_leads():
+    try:
+        leads = request.json.get('leads', [])
+        save_leads_to_db(session['user_id'], leads)
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     # Cria os arquivos HTML se não existirem

@@ -32,6 +32,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Leaflet Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -264,20 +269,13 @@
         <!-- Toolbar & Filters -->
         <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
             <div class="flex bg-dark-800 p-1 rounded-xl border border-dark-700">
-                <button onclick="filterLeads('all')"
-                    class="filter-btn active px-4 py-2 rounded-lg text-sm font-medium text-white bg-dark-700 shadow transition"
-                    data-status="all">
-                    Todos <span id="countAll" class="ml-1 opacity-60 text-xs">0</span>
+                <button onclick="setViewMode('list')" id="btnViewList"
+                    class="view-btn active px-4 py-2 rounded-lg text-sm font-medium text-white bg-dark-700 shadow transition flex items-center gap-2">
+                    <i class="fas fa-list"></i> Lista
                 </button>
-                <button onclick="filterLeads('interested')"
-                    class="filter-btn px-4 py-2 rounded-lg text-sm font-medium text-gray-400 hover:text-white transition"
-                    data-status="interested">
-                    Interessados
-                </button>
-                <button onclick="filterLeads('discarded')"
-                    class="filter-btn px-4 py-2 rounded-lg text-sm font-medium text-gray-400 hover:text-white transition"
-                    data-status="discarded">
-                    Descartados
+                <button onclick="setViewMode('map')" id="btnViewMap"
+                    class="view-btn px-4 py-2 rounded-lg text-sm font-medium text-gray-400 hover:text-white transition flex items-center gap-2">
+                    <i class="fas fa-map-marked-alt"></i> Mapa
                 </button>
             </div>
 
@@ -299,11 +297,22 @@
                     <datalist id="citiesList"></datalist>
                 </div>
 
+                <!-- Filtro Site Display -->
+                <div class="relative">
+                    <select id="filterSiteDisplay" onchange="applyFilters()"
+                        class="bg-dark-800 border border-dark-700 rounded-lg px-3 py-2 text-sm text-white focus:border-primary-500 outline-none appearance-none pr-8 cursor-pointer w-32">
+                        <option value="todos">🌐 Site: Todos</option>
+                        <option value="com-site">✅ Com Site</option>
+                        <option value="sem-site">🔥 Sem Site</option>
+                    </select>
+                    <i class="fas fa-chevron-down absolute right-3 top-3 text-gray-500 text-xs pointer-events-none"></i>
+                </div>
+
                 <!-- Filtro WhatsApp Display -->
                 <div class="relative">
                     <select id="filterWhatsDisplay" onchange="applyFilters()"
-                        class="bg-dark-800 border border-dark-700 rounded-lg px-3 py-2 text-sm text-white focus:border-primary-500 outline-none appearance-none pr-8 cursor-pointer">
-                        <option value="todos">📱 Todos</option>
+                        class="bg-dark-800 border border-dark-700 rounded-lg px-3 py-2 text-sm text-white focus:border-primary-500 outline-none appearance-none pr-8 cursor-pointer w-36">
+                        <option value="todos">📱 Whats: Todos</option>
                         <option value="com-whats">💬 Com WhatsApp</option>
                         <option value="sem-whats">❌ Sem WhatsApp</option>
                     </select>
@@ -320,6 +329,12 @@
         <!-- Grid de Cards Premium -->
         <div id="leadsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             <!-- Template JS Render -->
+        </div>
+
+        <!-- Mapa Container -->
+        <div id="leadsMapContainer"
+            class="hidden h-[600px] w-full rounded-2xl overflow-hidden border border-dark-700 shadow-2xl relative z-0">
+            <div id="map" class="h-full w-full bg-dark-800"></div>
         </div>
 
     </main>
@@ -349,13 +364,17 @@
         <script src="credits-system.js"></script>
         <script>
             // --- CONFIGURAÇÕES GLOBAIS ---
-            const API_URL = 'https://web-production-a818.up.railway.app/api';
+            const API_URL = '/api';
 
             let state = {
                 leads: [],
                 isSearching: false,
                 pollingInterval: null,
+                pollingInterval: null,
                 filterStatus: 'all',
+                currentView: 'list',
+                map: null,
+                markers: [],
                 sessionId: null,
                 user: null
             };
@@ -559,39 +578,163 @@
             }
 
             // --- INTERFACE (RENDERIZAÇÃO) ---
+
+            function setViewMode(mode) {
+                state.currentView = mode;
+                const btnList = document.getElementById('btnViewList');
+                const btnMap = document.getElementById('btnViewMap');
+                const grid = document.getElementById('leadsGrid');
+                const mapContainer = document.getElementById('leadsMapContainer');
+
+                if (mode === 'list') {
+                    btnList.classList.add('bg-dark-700', 'text-white', 'shadow');
+                    btnList.classList.remove('text-gray-400');
+                    btnMap.classList.remove('bg-dark-700', 'text-white', 'shadow');
+                    btnMap.classList.add('text-gray-400');
+
+                    grid.classList.remove('hidden');
+                    mapContainer.classList.add('hidden');
+                } else {
+                    btnMap.classList.add('bg-dark-700', 'text-white', 'shadow');
+                    btnMap.classList.remove('text-gray-400');
+                    btnList.classList.remove('bg-dark-700', 'text-white', 'shadow');
+                    btnList.classList.add('text-gray-400');
+
+                    grid.classList.add('hidden');
+                    mapContainer.classList.remove('hidden');
+
+                    setTimeout(() => {
+                        initMap();
+                        renderMapPoints();
+                    }, 100);
+                }
+            }
+
+            function initMap() {
+                if (state.map) {
+                    state.map.invalidateSize();
+                    return;
+                }
+
+                state.map = L.map('map').setView([-23.55052, -46.633309], 10); // Default SP
+
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                    attribution: '© OpenStreetMap contributors © CARTO',
+                    subdomains: 'abcd',
+                    maxZoom: 19
+                }).addTo(state.map);
+            }
+
+            function extractCoords(url) {
+                if (!url) return null;
+                // Tenta extrair de !3d-23.xxx!4d-46.xxx
+                const regex = /!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/;
+                const match = url.match(regex);
+                if (match) return [parseFloat(match[1]), parseFloat(match[2])];
+
+                // Tenta extrair de @-23.xxx,-46.xxx
+                const regex2 = /@(-?\d+\.\d+),(-?\d+\.\d+)/;
+                const match2 = url.match(regex2);
+                if (match2) return [parseFloat(match2[1]), parseFloat(match2[2])];
+
+                return null;
+            }
+
+            function renderMapPoints() {
+                if (!state.map) return;
+
+                // Limpa marcadores
+                state.markers.forEach(m => state.map.removeLayer(m));
+                state.markers = [];
+
+                const filtered = getFilteredLeads();
+                const bounds = [];
+
+                filtered.forEach(l => {
+                    const coords = extractCoords(l.google_maps_link);
+                    if (coords) {
+                        const hasSite = l.website && l.website.length > 5;
+                        const color = !hasSite ? '#ef4444' : '#3b82f6'; // Vermelho se sem site
+
+                        const markerHtml = `
+                            <div style="background-color: ${color}; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px ${color};"></div>
+                        `;
+
+                        const icon = L.divIcon({
+                            className: 'custom-div-icon',
+                            html: markerHtml,
+                            iconSize: [12, 12],
+                            iconAnchor: [6, 6]
+                        });
+
+                        const marker = L.marker(coords, { icon }).addTo(state.map);
+
+                        marker.bindPopup(`
+                            <div class="font-sans text-sm p-1 min-w-[200px]">
+                                <strong class="block text-gray-800 text-base mb-1">${l.nome}</strong>
+                                <span class="text-xs text-gray-500 uppercase font-bold">${l.nicho || 'Geral'}</span>
+                                <div class="mt-2 flex gap-2">
+                                     ${!hasSite ? '<span class="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded font-bold">Sem Site</span>' : '<span class="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded font-bold">Com Site</span>'}
+                                </div>
+                                <div class="mt-3">
+                                   <button onclick="sendWhatsapp('${l.whatsapp}', '${l.nome}', '${l.cidade}', '${l.nicho}')" class="w-full bg-green-500 text-white py-1.5 rounded text-xs font-bold hover:bg-green-600 transition">
+                                      <i class="fab fa-whatsapp"></i> Chamar no Whats
+                                   </button>
+                                </div>
+                            </div>
+                        `);
+
+                        state.markers.push(marker);
+                        bounds.push(coords);
+                    }
+                });
+
+                if (bounds.length > 0) {
+                    state.map.fitBounds(bounds, { padding: [50, 50] });
+                }
+            }
+
+            function getFilteredLeads() {
+                const cityFilter = document.getElementById('filterCity').value.toLowerCase();
+                const nicheFilter = document.getElementById('filterNiche').value.toLowerCase();
+                const whatsFilter = document.getElementById('filterWhatsDisplay')?.value || 'todos';
+                const siteFilter = document.getElementById('filterSiteDisplay')?.value || 'todos';
+
+                return state.leads.filter(l => {
+                    if (state.filterStatus !== 'all' && (l.status || 'new') !== state.filterStatus) return false;
+                    if (cityFilter && !(l.cidade || '').toLowerCase().includes(cityFilter) && !(l.endereco || '').toLowerCase().includes(cityFilter)) return false;
+                    if (nicheFilter && !(l.nicho || '').toLowerCase().includes(nicheFilter)) return false;
+
+                    if (whatsFilter === 'com-whats' && !l.whatsapp) return false;
+                    if (whatsFilter === 'sem-whats' && l.whatsapp) return false;
+
+                    const hasSite = l.website && l.website.length > 5;
+                    if (siteFilter === 'com-site' && !hasSite) return false;
+                    if (siteFilter === 'sem-site' && hasSite) return false;
+
+                    return true;
+                });
+            }
+
             function renderLeads() {
                 const grid = document.getElementById('leadsGrid');
                 grid.innerHTML = '';
 
-                const cityFilter = document.getElementById('filterCity').value.toLowerCase();
-                const nicheFilter = document.getElementById('filterNiche').value.toLowerCase();
+                const filtered = getFilteredLeads();
 
-                // Filtro WhatsApp da lista
-                const whatsFilter = document.getElementById('filterWhatsDisplay')?.value || 'todos';
+                // Se estiver no modo mapa, atualiza os pontos também
+                if (state.currentView === 'map') {
+                    renderMapPoints();
+                }
 
-                const filtered = state.leads.filter(l => {
-                    if (state.filterStatus !== 'all' && (l.status || 'new') !== state.filterStatus) return false;
-
-                    // Filtro Cidade (Parcial)
-                    if (cityFilter && !(l.cidade || '').toLowerCase().includes(cityFilter) && !(l.endereco || '').toLowerCase().includes(cityFilter)) return false;
-
-                    // Filtro Nicho (Parcial)
-                    if (nicheFilter && !(l.nicho || '').toLowerCase().includes(nicheFilter)) return false;
-
-                    // Filtro WhatsApp
-                    if (whatsFilter === 'com-whats' && !l.whatsapp) return false;
-                    if (whatsFilter === 'sem-whats' && l.whatsapp) return false;
-
-                    return true;
-                });
-
-                document.getElementById('countAll').innerText = state.leads.length;
+                // ... resto da renderização da grid original ...
+                document.getElementById('countAll').innerText = state.leads.length; // Total bruto ou filtrado? Melhor bruto para estatística, mas aqui é contagem da aba "Todos"
 
                 if (filtered.length === 0) {
                     grid.innerHTML = `
                     <div class="col-span-full py-16 text-center border-2 border-dashed border-dark-700 rounded-2xl bg-dark-800/30">
                         <i class="fas fa-search text-3xl text-gray-600 mb-3"></i>
-                        <p class="text-gray-400">Nenhum resultado encontrado.</p>
+                        <p class="text-gray-400">Nenhum resultado para os filtros.</p>
                     </div>`;
                     return;
                 }

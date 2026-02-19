@@ -7,6 +7,8 @@
     <title>Login - Lead Manager Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="theme.css">
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -14,92 +16,223 @@
     </style>
 </head>
 
-<body class="bg-gray-900 text-white h-screen flex items-center justify-center">
-
-    <div class="bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-700">
-        <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
-                LeadManager Pro
-            </h1>
-            <p class="text-gray-400 mt-2">Acesse sua conta para começar</p>
+<body class="bg-gray-900 text-white h-screen flex items-center justify-center relative overflow-hidden">
+    <!-- Fundo Premium -->
+    <div class="absolute inset-0 z-0">
+        <div class="absolute top-0 left-0 w-full h-full bg-grid opacity-20"></div>
+        <div
+            class="absolute top-[-20%] left-[-20%] w-[500px] h-[500px] bg-red-600 rounded-full mix-blend-screen filter blur-[150px] opacity-10 animate-blob">
         </div>
-
-        <form id="loginForm" class="space-y-6">
-            <div>
-                <label class="block text-sm font-medium text-gray-400 mb-1">Email</label>
-                <input type="email" id="email" required
-                    class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium text-gray-400 mb-1">Senha</label>
-                <input type="password" id="password" required
-                    class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
-            </div>
-
-            <button type="submit"
-                class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-3 rounded-lg transition transform hover:scale-105 shadow-lg">
-                Entrar no Sistema
-            </button>
-        </form>
-
-        <div id="errorMessage"
-            class="hidden mt-4 bg-red-500/10 border border-red-500 text-red-500 px-4 py-2 rounded text-center text-sm">
-        </div>
-
-        <div class="mt-6 text-center text-sm text-gray-500">
-            Ainda não tem conta? <span class="text-blue-400 cursor-not-allowed" title="Contate o administrador">Fale com
-                o suporte</span>
+        <div
+            class="absolute bottom-[-20%] right-[-20%] w-[500px] h-[500px] bg-blue-600 rounded-full mix-blend-screen filter blur-[150px] opacity-10 animate-blob animation-delay-2000">
         </div>
     </div>
 
+    <div class="relative z-10 w-full max-w-md p-8">
+        <!-- Logo -->
+        <div class="text-center mb-8 fade-in">
+            <a href="/" class="inline-flex items-center gap-3 group text-decoration-none">
+                <div
+                    class="w-10 h-10 bg-gradient-to-br from-red-600 to-red-800 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-red-500/50 transition-all duration-300">
+                    <i class="fas fa-bolt text-white text-lg"></i>
+                </div>
+                <span class="text-2xl font-black tracking-tight text-white group-hover:text-gray-200 transition">
+                    LeadManager <span class="text-red-500">Pro</span>
+                </span>
+            </a>
+            <p class="text-gray-400 mt-3 text-sm font-medium">Acesse sua conta para começar a prospectar.</p>
+        </div>
+
+        <!-- Card de Login -->
+        <div class="glass-card p-8 rounded-2xl fade-in delay-100">
+            <form id="loginForm" class="space-y-5">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Email
+                        Corporativo</label>
+                    <div class="relative group">
+                        <i
+                            class="fas fa-envelope absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 group-focus-within:text-red-500 transition-colors"></i>
+                        <input type="email" id="email" required placeholder="seunome@empresa.com"
+                            class="input-premium pl-12 w-full bg-white/5 border border-white/10 rounded-xl py-3 text-white placeholder-gray-600 focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Senha de
+                        Acesso</label>
+                    <div class="relative group">
+                        <i
+                            class="fas fa-lock absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 group-focus-within:text-red-500 transition-colors"></i>
+                        <input type="password" id="password" required placeholder="••••••••"
+                            class="input-premium pl-12 w-full bg-white/5 border border-white/10 rounded-xl py-3 text-white placeholder-gray-600 focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all outline-none">
+                    </div>
+                </div>
+
+                <button type="submit" id="submitBtn"
+                    class="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-red-900/20 transform hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-center gap-2 group">
+                    <span>Entrar na Plataforma</span>
+                    <i class="fas fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                </button>
+            </form>
+
+            <div id="errorMessage"
+                class="hidden mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg flex items-start gap-3 fade-in">
+                <i class="fas fa-exclamation-circle text-red-500 mt-0.5"></i>
+                <span class="text-sm text-red-400 font-medium leading-tight"></span>
+            </div>
+        </div>
+
+        <div class="mt-8 text-center space-y-4 fade-in delay-200">
+            <p class="text-sm text-gray-500">
+                Esqueceu sua senha? <a href="#"
+                    class="text-gray-400 hover:text-white transition underline decoration-gray-700 hover:decoration-white">Recuperar
+                    acesso</a>
+            </p>
+            <div class="text-xs text-gray-600 pt-4 border-t border-white/5">
+                Protegido por criptografia bancária SSL. Seus dados estão seguros.
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
     <script>
+        // Animação de entrada
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputs = document.querySelectorAll('input');
+            inputs.forEach(input => {
+                input.addEventListener('focus', () => {
+                    input.parentElement.classList.add('ring-2', 'ring-red-500/20');
+                });
+                input.addEventListener('blur', () => {
+                    input.parentElement.classList.remove('ring-2', 'ring-red-500/20');
+                });
+            });
+        });
+
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            const errorMsg = document.getElementById('errorMessage');
-            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const errorMsgContainer = document.getElementById('errorMessage');
+            const errorText = errorMsgContainer.querySelector('span');
+            const submitBtn = document.getElementById('submitBtn');
+            const btnText = submitBtn.querySelector('span');
+            const btnIcon = submitBtn.querySelector('i');
 
             if (password.length < 1) {
-                errorMsg.textContent = 'Digite sua senha.';
-                errorMsg.classList.remove('hidden');
+                showError('Por favor, digite sua senha.');
                 return;
             }
 
+            // Loading State
             submitBtn.disabled = true;
-            submitBtn.textContent = 'Verificando...';
-            errorMsg.classList.add('hidden');
+            btnText.textContent = 'Autenticando...';
+            btnIcon.className = 'fas fa-spinner fa-spin';
+            submitBtn.classList.add('opacity-75', 'cursor-not-allowed');
+            errorMsgContainer.classList.add('hidden');
 
             try {
+                // Simulação de delay para UX (parecer que está processando segurança)
+                await new Promise(r => setTimeout(r, 800));
+
                 const response = await fetch('/api/login', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })
                 });
 
                 const data = await response.json();
 
                 if (response.ok) {
-                    // Login com sucesso, redirecionar
-                    window.location.href = '/dashboard';
+                    btnText.textContent = 'Sucesso! Redirecionando...';
+                    btnIcon.className = 'fas fa-check';
+                    btnIcon.classList.add('text-green-400');
+                    setTimeout(() => window.location.href = '/dashboard', 500);
                 } else {
-                    // Erro no login
-                    errorMsg.textContent = data.error || 'Erro ao fazer login. Verifique suas credenciais.';
-                    errorMsg.classList.remove('hidden');
+                    showError(data.error || 'Credenciais inválidas. Tente novamente.');
                 }
             } catch (err) {
                 console.error(err);
-                errorMsg.textContent = 'Erro de conexão com o servidor. Tente novamente.';
-                errorMsg.classList.remove('hidden');
+                showError('Erro de conexão segura. Verifique sua internet.');
             } finally {
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Entrar no Sistema';
+                if (btnText.textContent !== 'Sucesso! Redirecionando...') {
+                    submitBtn.disabled = false;
+                    btnText.textContent = 'Entrar na Plataforma';
+                    btnIcon.className = 'fas fa-arrow-right group-hover:translate-x-1 transition-transform';
+                    submitBtn.classList.remove('opacity-75', 'cursor-not-allowed');
+                }
+            }
+
+            function showError(msg) {
+                errorText.textContent = msg;
+                errorMsgContainer.classList.remove('hidden');
+                // Shake effect on card
+                const card = document.querySelector('.glass-card');
+                card.classList.add('animate-shake');
+                setTimeout(() => card.classList.remove('animate-shake'), 500);
             }
         });
     </script>
+    <style>
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            10%,
+            30%,
+            50%,
+            70%,
+            90% {
+                transform: translateX(-4px);
+            }
+
+            20%,
+            40%,
+            60%,
+            80% {
+                transform: translateX(4px);
+            }
+        }
+
+        .animate-shake {
+            animation: shake 0.4s cubic-bezier(.36, .07, .19, .97) both;
+        }
+
+        @keyframes blob {
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            33% {
+                transform: translate(30px, -50px) scale(1.1);
+            }
+
+            66% {
+                transform: translate(-20px, 20px) scale(0.9);
+            }
+
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+        }
+
+        .animate-blob {
+            animation: blob 7s infinite;
+        }
+
+        .animation-delay-2000 {
+            animation-delay: 2s;
+        }
+
+        .bg-grid {
+            background-size: 40px 40px;
+            background-image: linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+        }
+    </style>
 </body>
 
 </html>
