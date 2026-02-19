@@ -5,7 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Lead Manager Pro</title>
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23E63946' rx='20' width='100' height='100'/><text x='50' y='65' font-size='50' text-anchor='middle' fill='white' font-family='Arial'>⚡</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="theme.css">
@@ -94,6 +97,9 @@
         </div>
     </div>
 
+    <!-- Supabase Client -->
+    <script src="supabase-client.js"></script>
+
     <!-- Scripts -->
     <script>
         // Animação de entrada
@@ -132,28 +138,36 @@
             errorMsgContainer.classList.add('hidden');
 
             try {
-                // Simulação de delay para UX (parecer que está processando segurança)
-                await new Promise(r => setTimeout(r, 800));
+                // Usa Supabase Auth diretamente
+                const { data, error } = await LeadAPI.login(email, password);
 
-                const response = await fetch('/api/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
-                });
+                if (error) {
+                    let msg = 'Credenciais inválidas. Verifique seu email e senha.';
+                    if (error.message) {
+                        if (error.message.includes('Invalid login')) {
+                            msg = 'Email ou senha incorretos. Tente novamente.';
+                        } else if (error.message.includes('Email not confirmed')) {
+                            msg = 'Email não confirmado. Verifique sua caixa de entrada.';
+                        } else {
+                            msg = error.message;
+                        }
+                    }
+                    showError(msg);
+                    return;
+                }
 
-                const data = await response.json();
-
-                if (response.ok) {
+                if (data && data.user) {
                     btnText.textContent = 'Sucesso! Redirecionando...';
                     btnIcon.className = 'fas fa-check';
                     btnIcon.classList.add('text-green-400');
-                    setTimeout(() => window.location.href = '/dashboard', 500);
+                    // Redireciona para o dashboard
+                    setTimeout(() => window.location.href = '/app.html', 500);
                 } else {
-                    showError(data.error || 'Credenciais inválidas. Tente novamente.');
+                    showError('Erro inesperado. Tente novamente.');
                 }
             } catch (err) {
                 console.error(err);
-                showError('Erro de conexão segura. Verifique sua internet.');
+                showError('Erro de conexão. Verifique sua internet e tente novamente.');
             } finally {
                 if (btnText.textContent !== 'Sucesso! Redirecionando...') {
                     submitBtn.disabled = false;

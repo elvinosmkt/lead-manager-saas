@@ -364,7 +364,10 @@
         <script src="credits-system.js"></script>
         <script>
             // --- CONFIGURAÇÕES GLOBAIS ---
-            const API_URL = '/api';
+            // Detecta se está rodando no Vercel (frontend estático) ou Railway (backend)
+            const RAILWAY_URL = 'https://web-production-8968f.up.railway.app';
+            const isVercel = window.location.hostname.includes('blendagency') || window.location.hostname.includes('vercel.app');
+            const API_URL = isVercel ? `${RAILWAY_URL}/api` : '/api';
 
             let state = {
                 leads: [],
