@@ -13,3 +13,4 @@ realtime==1.0.0
 storage3==0.7.0
 psutil==5.9.8
 requests==2.31.0
+
