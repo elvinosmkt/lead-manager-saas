@@ -4,839 +4,700 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LeadManager - Capte Clientes do Google Maps Sem Anunciar</title>
+    <title>LeadManager Pro | Máquina de Prospecção no Google Maps</title>
     <meta name="description"
-        content="Plataforma de inteligência comercial para identificar e captar clientes qualificados no Google Maps. Filtros avançados de 'Sem Site' e integração com WhatsApp.">
+        content="Descubra empresas ocultas que precisam do seu serviço agora. Extraia leads do Google Maps, filtre os sem site e feche contratos via WhatsApp em 1 clique.">
+
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml"
         href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23E63946' rx='20' width='100' height='100'/><text x='50' y='65' font-size='50' text-anchor='middle' fill='white' font-family='Arial'>⚡</text></svg>">
-    <link rel="apple-touch-icon"
-        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23E63946' rx='20' width='100' height='100'/><text x='50' y='65' font-size='50' text-anchor='middle' fill='white' font-family='Arial'>⚡</text></svg>">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+
+    <!-- Fonts & Icons -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@400;500;600&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <style>
         :root {
-            --bg-pure: #0A0A0A;
-            --bg-card: #111111;
-            --bg-elevated: #161616;
-            --border-metallic: rgba(255, 255, 255, 0.08);
-            --text-primary: #FFFFFF;
-            --text-secondary: #888888;
-            --accent-red: #E63946;
-            --accent-red-glow: rgba(230, 57, 70, 0.4);
-            --success-neon: #00FF41;
-            --success-glow: rgba(0, 255, 65, 0.3);
+            --bg-dark: #050505;
+            --bg-card: #0c0c0c;
+            --bg-elevated: #141414;
+            --border-subtle: rgba(255, 255, 255, 0.06);
+            --border-glow: rgba(230, 57, 70, 0.2);
+            --text-main: #FFFFFF;
+            --text-muted: #A1A1AA;
+            --brand-red: #E63946;
+            --brand-red-hover: #F24B58;
+            --brand-red-glow: rgba(230, 57, 70, 0.5);
+            --success: #10B981;
+            --success-glow: rgba(16, 185, 129, 0.2);
+            --font-display: 'Outfit', sans-serif;
+            --font-body: 'Inter', sans-serif;
         }
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            cursor: none;
-        }
-
-        /* Cursor personalizado */
-        .cursor {
-            width: 20px;
-            height: 20px;
-            border: 2px solid var(--accent-red);
-            border-radius: 50%;
-            position: fixed;
-            pointer-events: none;
-            z-index: 99999;
-            transition: transform 0.15s ease-out;
-            transform: translate(-50%, -50%);
-        }
-
-        .cursor-dot {
-            width: 6px;
-            height: 6px;
-            background: var(--accent-red);
-            border-radius: 50%;
-            position: fixed;
-            pointer-events: none;
-            z-index: 99999;
-            transform: translate(-50%, -50%);
-        }
-
-        .cursor.hover {
-            width: 40px;
-            height: 40px;
-            border-color: var(--success-neon);
-            background: rgba(230, 57, 70, 0.1);
-        }
-
-        /* Animação de texto - Reveal suave */
-        .text-reveal {
-            animation: textReveal 1s ease-out;
-        }
-
-        .text-reveal-delay-1 {
-            animation-delay: 0.1s;
-        }
-
-        .text-reveal-delay-2 {
-            animation-delay: 0.2s;
-        }
-
-        .text-reveal-delay-3 {
-            animation-delay: 0.3s;
-        }
-
-        .text-reveal-delay-4 {
-            animation-delay: 0.4s;
-        }
-
-        @keyframes textReveal {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Animação de letras surgindo */
-        .letter-animate {
-            display: inline-block;
-            opacity: 0;
-            transform: translateY(20px) rotateX(-90deg);
-            animation: letterIn 0.5s ease forwards;
-        }
-
-        @keyframes letterIn {
-            to {
-                opacity: 1;
-                transform: translateY(0) rotateX(0);
-            }
-        }
-
-        /* Glow pulse no headline */
-        .headline-glow {
-            animation: glowPulse 3s ease-in-out infinite;
-        }
-
-        @keyframes glowPulse {
-
-            0%,
-            100% {
-                text-shadow: 0 0 20px var(--accent-red-glow);
-            }
-
-            50% {
-                text-shadow: 0 0 40px var(--accent-red-glow), 0 0 60px var(--accent-red-glow);
-            }
+            scroll-behavior: smooth;
         }
 
         body {
-            font-family: 'Inter', -apple-system, sans-serif;
-            background: var(--bg-pure);
-            color: var(--text-primary);
+            font-family: var(--font-body);
+            background-color: var(--bg-dark);
+            color: var(--text-main);
             line-height: 1.6;
             overflow-x: hidden;
-            background-image: radial-gradient(circle at 50% 0%, #1a1a1a 0%, var(--bg-pure) 70%);
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* Anti-Gravity Effect */
-        .float-card {
-            background: var(--bg-card);
-            border: 0.5px solid var(--border-metallic);
-            border-radius: 16px;
-            box-shadow:
-                0 4px 20px rgba(0, 0, 0, 0.4),
-                0 8px 40px rgba(0, 0, 0, 0.3),
-                inset 0 1px 0 rgba(255, 255, 255, 0.03);
-            transform: translateZ(0);
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        /* Abstract Grid & Glow Backgrounds */
+        .bg-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-image:
+                linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 50px 50px;
+            z-index: -2;
+            pointer-events: none;
         }
 
-        .float-card:hover {
-            transform: translateY(-8px) translateZ(20px);
-            box-shadow:
-                0 12px 40px rgba(0, 0, 0, 0.5),
-                0 20px 60px rgba(0, 0, 0, 0.4);
-        }
-
-        /* Glow Effects */
-        .glow-red {
-            box-shadow: 0 0 40px var(--accent-red-glow), 0 0 80px var(--accent-red-glow);
-        }
-
-        .glow-green {
-            box-shadow: 0 0 20px var(--success-glow), 0 0 40px var(--success-glow);
-            text-shadow: 0 0 10px var(--success-neon);
+        .ambient-glow {
+            position: fixed;
+            width: 800px;
+            height: 800px;
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--brand-red-glow) 0%, transparent 60%);
+            top: -400px;
+            left: 50%;
+            transform: translateX(-50%);
+            filter: blur(100px);
+            opacity: 0.3;
+            z-index: -1;
+            pointer-events: none;
         }
 
         /* Typography */
-        .headline-xl {
-            font-size: clamp(2.5rem, 6vw, 4.5rem);
-            font-weight: 900;
-            line-height: 1.05;
-            letter-spacing: -0.02em;
+        h1,
+        h2,
+        h3,
+        h4,
+        .font-display {
+            font-family: var(--font-display);
         }
 
-        .headline-lg {
-            font-size: clamp(1.8rem, 4vw, 3rem);
-            font-weight: 800;
-            line-height: 1.1;
+        .text-gradient {
+            background: linear-gradient(135deg, #FFFFFF 0%, #A1A1AA 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
-        .text-red {
-            color: var(--accent-red);
+        .text-gradient-red {
+            background: linear-gradient(135deg, #FF6B76 0%, var(--brand-red) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
-        .text-green {
-            color: var(--success-neon);
+        /* Components */
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 24px;
         }
 
-        .text-gray {
-            color: var(--text-secondary);
-        }
-
-        /* Buttons */
-        .btn-primary {
-            background: var(--accent-red);
-            color: white;
-            font-weight: 700;
-            padding: 18px 40px;
-            border-radius: 12px;
-            border: none;
-            cursor: pointer;
-            font-size: 1rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            transition: all 0.3s;
+        .btn {
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 12px;
+            padding: 16px 36px;
+            border-radius: 12px;
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 1.05rem;
             text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: var(--brand-red);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 20px rgba(230, 57, 70, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
         }
 
         .btn-primary:hover {
+            background: var(--brand-red-hover);
             transform: translateY(-2px);
-            box-shadow: 0 10px 40px var(--accent-red-glow);
+            box-shadow: 0 8px 30px rgba(230, 57, 70, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
         }
 
         .btn-ghost {
-            background: transparent;
-            border: 1px solid var(--border-metallic);
-            color: var(--text-primary);
-            padding: 14px 28px;
-            border-radius: 10px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-decoration: none;
+            background: rgba(255, 255, 255, 0.03);
+            color: white;
+            border: 1px solid var(--border-subtle);
+            backdrop-filter: blur(10px);
         }
 
         .btn-ghost:hover {
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.08);
             border-color: rgba(255, 255, 255, 0.2);
         }
 
-        /* Navbar */
-        .navbar {
-            position: fixed;
-            top: 0;
-            width: 100%;
-            z-index: 1000;
-            padding: 16px 0;
-            background: rgba(10, 10, 10, 0.95);
+        .glass-card {
+            background: rgba(12, 12, 12, 0.6);
             backdrop-filter: blur(20px);
-            border-bottom: 0.5px solid var(--border-metallic);
+            border: 1px solid var(--border-subtle);
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            transition: transform 0.4s, border-color 0.4s;
         }
 
-        .navbar-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 24px;
+        .glass-card:hover {
+            border-color: var(--border-glow);
+            transform: translateY(-5px);
+        }
+
+        /* Navbar */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 100;
+            padding: 20px 0;
+            transition: all 0.3s;
+        }
+
+        nav.scrolled {
+            background: rgba(5, 5, 5, 0.85);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 16px 0;
+        }
+
+        .nav-content {
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
-        .logo {
+        .nav-brand {
             display: flex;
             align-items: center;
-            gap: 10px;
-            font-weight: 800;
-            font-size: 1.2rem;
+            gap: 12px;
+            font-family: var(--font-display);
+            font-weight: 900;
+            font-size: 1.4rem;
+            color: white;
+            text-decoration: none;
+            letter-spacing: -0.5px;
         }
 
-        .logo-icon {
+        .nav-brand-icon {
             width: 36px;
             height: 36px;
-            background: var(--accent-red);
+            background: linear-gradient(135deg, var(--brand-red) 0%, #9b1c26 100%);
             border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
+            box-shadow: 0 4px 15px rgba(230, 57, 70, 0.4);
         }
 
-        .nav-links {
+        .nav-menu {
             display: flex;
             gap: 32px;
             align-items: center;
         }
 
-        .nav-links a {
-            color: var(--text-secondary);
+        .nav-menu a {
+            color: var(--text-muted);
             text-decoration: none;
-            font-size: 0.9rem;
             font-weight: 500;
-            transition: color 0.3s;
+            font-size: 0.95rem;
+            transition: color 0.2s;
         }
 
-        .nav-links a:hover {
-            color: var(--text-primary);
+        .nav-menu a:hover {
+            color: white;
         }
 
-        /* Hero - Two Column */
+        /* Hero Section */
         .hero {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            padding: 160px 24px 80px;
-            background:
-                radial-gradient(ellipse at top left, rgba(230, 57, 70, 0.08) 0%, transparent 60%),
-                radial-gradient(ellipse at bottom right, rgba(59, 130, 246, 0.05) 0%, transparent 60%);
+            padding: 180px 0 100px;
+            text-align: center;
+            position: relative;
         }
 
-        .hero-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 64px;
-            align-items: center;
-        }
-
-        @media (max-width: 900px) {
-            .hero-container {
-                grid-template-columns: 1fr;
-                text-align: center;
-            }
-
-            .hero-mockup {
-                order: -1;
-            }
-        }
-
-        .hero-text {
-            text-align: left;
-        }
-
-        @media (max-width: 900px) {
-            .hero-text {
-                text-align: center;
-            }
-        }
-
-        .badge {
+        .hero-badge {
             display: inline-flex;
             align-items: center;
             gap: 8px;
+            padding: 8px 20px;
             background: rgba(230, 57, 70, 0.1);
-            border: 1px solid rgba(230, 57, 70, 0.3);
-            color: var(--accent-red);
-            padding: 8px 16px;
+            border: 1px solid rgba(230, 57, 70, 0.2);
             border-radius: 100px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            text-transform: uppercase;
+            color: var(--brand-red);
+            font-weight: 600;
+            font-size: 0.85rem;
             letter-spacing: 1px;
-            margin-bottom: 24px;
+            margin-bottom: 32px;
+            box-shadow: 0 0 20px rgba(230, 57, 70, 0.1);
         }
 
-        .badge-dot {
-            width: 8px;
-            height: 8px;
-            background: var(--accent-red);
-            border-radius: 50%;
+        .hero-badge i {
             animation: pulse 2s infinite;
         }
 
-        @keyframes pulse {
-
-            0%,
-            100% {
-                opacity: 1;
-            }
-
-            50% {
-                opacity: 0.5;
-            }
+        .hero h1 {
+            font-size: clamp(3rem, 7vw, 5.5rem);
+            line-height: 1.05;
+            letter-spacing: -0.03em;
+            margin-bottom: 32px;
+            max-width: 1000px;
+            margin-inline: auto;
         }
 
-        .hero-subtitle {
-            font-size: 1.1rem;
-            color: var(--text-secondary);
-            margin: 24px 0 32px;
+        .hero p {
+            font-size: clamp(1.1rem, 2vw, 1.35rem);
+            color: var(--text-muted);
+            max-width: 760px;
+            margin: 0 auto 48px;
             line-height: 1.7;
+            font-weight: 400;
         }
 
         .hero-cta {
             display: flex;
-            gap: 16px;
-            flex-wrap: wrap;
-            margin-bottom: 32px;
-        }
-
-        @media (max-width: 900px) {
-            .hero-cta {
-                justify-content: center;
-            }
-        }
-
-        .trust-badges {
-            display: flex;
-            gap: 24px;
-            flex-wrap: wrap;
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-        }
-
-        @media (max-width: 900px) {
-            .trust-badges {
-                justify-content: center;
-            }
-        }
-
-        .trust-badges span {
-            display: flex;
+            gap: 20px;
+            justify-content: center;
             align-items: center;
-            gap: 8px;
+            flex-wrap: wrap;
         }
 
-        .trust-badges i {
-            color: var(--success-neon);
+        /* Social Proof Banner */
+        .social-proof {
+            margin-top: 80px;
+            padding-top: 40px;
+            border-top: 1px solid var(--border-subtle);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 24px;
         }
 
-        /* Hero Mockup */
-        .hero-mockup {
+        .social-proof p {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #666;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .logos-wrap {
+            display: flex;
+            gap: 48px;
+            opacity: 0.4;
+            filter: grayscale(100%);
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .logos-wrap i {
+            font-size: 2rem;
+            color: white;
+        }
+
+        /* App Preview */
+        .app-preview-wrapper {
+            margin-top: -40px;
+            padding: 0 24px;
             position: relative;
+            z-index: 10;
         }
 
-        .mockup-container {
-            background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%);
-            border-radius: 20px;
-            padding: 12px;
-            border: 0.5px solid var(--border-metallic);
-            box-shadow:
-                0 30px 80px rgba(0, 0, 0, 0.6),
-                0 0 60px rgba(230, 57, 70, 0.1);
-            position: relative;
+        .app-window {
+            max-width: 1100px;
+            margin: 0 auto;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: #000;
+            box-shadow: 0 30px 100px rgba(0, 0, 0, 0.8), 0 0 40px rgba(230, 57, 70, 0.15);
             overflow: hidden;
         }
 
-        .mockup-container img {
-            width: 100%;
-            border-radius: 12px;
-            display: block;
+        .app-header {
+            background: #111;
+            padding: 12px 20px;
+            display: flex;
+            gap: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        .mockup-badge {
+        .mac-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .mac-dot:nth-child(1) {
+            background: #FF5F56;
+        }
+
+        .mac-dot:nth-child(2) {
+            background: #FFBD2E;
+        }
+
+        .mac-dot:nth-child(3) {
+            background: #27C93F;
+        }
+
+        .app-body {
+            position: relative;
+            padding-top: 56.25%;
+            /* 16:9 Aspect Ratio */
+            background: url('img/hero-mockup.png') center/cover;
+            background-color: #0c0c0c;
+            /* Fallback */
+        }
+
+        /* Floating Elements over mock */
+        .floating-stat {
             position: absolute;
             bottom: -20px;
             right: -20px;
-            background: var(--accent-red);
-            color: white;
+            background: var(--brand-red);
             padding: 16px 24px;
-            border-radius: 16px;
+            border-radius: 12px;
+            font-family: var(--font-display);
             font-weight: 800;
             font-size: 1.1rem;
-            box-shadow: 0 10px 40px var(--accent-red-glow);
-            animation: float 3s ease-in-out infinite;
+            color: white;
+            box-shadow: 0 10px 30px rgba(230, 57, 70, 0.4);
         }
 
-        @keyframes float {
-
-            0%,
-            100% {
-                transform: translateY(0);
-            }
-
-            50% {
-                transform: translateY(-10px);
-            }
+        /* Problem Section (Agitation) */
+        .section-padding {
+            padding: 140px 0;
         }
 
-        /* Section */
-        .section {
-            padding: 100px 24px;
-            max-width: 1200px;
-            margin: 0 auto;
+        .section-header {
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto 80px;
         }
 
-        .section-label {
-            color: var(--accent-red);
-            font-size: 0.75rem;
+        .pre-title {
+            color: var(--brand-red);
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 2px;
+            font-size: 0.85rem;
             margin-bottom: 16px;
+            display: block;
         }
 
-        /* Problem Section - Two Column */
-        .problem-section {
-            background: linear-gradient(180deg, var(--bg-pure) 0%, rgba(20, 10, 10, 1) 50%, var(--bg-pure) 100%);
-            padding: 100px 24px;
+        .section-header h2 {
+            font-size: clamp(2.5rem, 4vw, 3.5rem);
+            line-height: 1.1;
+            margin-bottom: 24px;
         }
 
-        .problem-container {
-            max-width: 1200px;
-            margin: 0 auto;
+        .pain-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 64px;
-            align-items: center;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
         }
 
-        @media (max-width: 900px) {
-            .problem-container {
-                grid-template-columns: 1fr;
-            }
+        .pain-card {
+            padding: 40px 32px;
+            text-align: left;
         }
 
-        .problem-list {
-            list-style: none;
-        }
-
-        .problem-item {
-            display: flex;
-            gap: 16px;
-            padding: 20px 0;
-            border-bottom: 1px solid var(--border-metallic);
-        }
-
-        .problem-icon {
-            width: 40px;
-            height: 40px;
-            background: rgba(230, 57, 70, 0.1);
-            border-radius: 10px;
+        .pain-icon {
+            width: 56px;
+            height: 56px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--accent-red);
-            flex-shrink: 0;
+            font-size: 1.5rem;
+            color: var(--brand-red);
+            margin-bottom: 24px;
         }
 
-        .problem-item h4 {
-            font-size: 1rem;
-            font-weight: 700;
-            margin-bottom: 4px;
+        .pain-card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 12px;
+            color: white;
         }
 
-        .problem-item p {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
+        .pain-card p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
         }
 
-        /* Testimonial Card */
-        .testimonial-card {
-            background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-card) 100%);
-            border: 0.5px solid var(--border-metallic);
+        /* How it Works / The Solution */
+        .solution-wrapper {
+            position: relative;
+            background: linear-gradient(180deg, transparent 0%, rgba(230, 57, 70, 0.03) 50%, transparent 100%);
+        }
+
+        .step-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+            margin-bottom: 100px;
+        }
+
+        .step-container:nth-child(even) {
+            direction: rtl;
+        }
+
+        .step-container:nth-child(even)>* {
+            direction: ltr;
+        }
+
+        .step-content {
+            padding: 40px;
+        }
+
+        .step-number-badge {
+            font-family: var(--font-display);
+            font-size: 4rem;
+            font-weight: 900;
+            color: transparent;
+            -webkit-text-stroke: 1px rgba(255, 255, 255, 0.1);
+            margin-bottom: -20px;
+            line-height: 1;
+        }
+
+        .step-content h3 {
+            font-size: 2.2rem;
+            margin-bottom: 16px;
+        }
+
+        .step-image {
+            background: #111;
             border-radius: 24px;
+            overflow: hidden;
+            border: 1px solid var(--border-subtle);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            aspect-ratio: 4/3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            color: rgba(255, 255, 255, 0.05);
+            position: relative;
+        }
+
+        .feature-ui-tag {
+            position: absolute;
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid var(--success);
+            color: var(--success);
+            padding: 12px 24px;
+            border-radius: 100px;
+            font-weight: 700;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 0 30px var(--success-glow);
+        }
+
+        /* Testimonials */
+        .testimonial-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 32px;
+        }
+
+        .testimonial {
             padding: 40px;
             position: relative;
         }
 
-        .quote-icon {
-            font-size: 3rem;
-            color: var(--accent-red);
-            opacity: 0.3;
+        .quote-mark {
             position: absolute;
             top: 20px;
             right: 30px;
+            font-size: 4rem;
+            color: rgba(230, 57, 70, 0.1);
+            font-family: serif;
+            line-height: 1;
         }
 
-        .testimonial-text {
-            font-size: 1.1rem;
-            line-height: 1.7;
-            margin-bottom: 24px;
+        .testimonial p {
+            font-size: 1.15rem;
+            color: #ddd;
             font-style: italic;
+            margin-bottom: 24px;
+            position: relative;
+            z-index: 1;
         }
 
-        .testimonial-author {
+        .user-info {
             display: flex;
             align-items: center;
             gap: 16px;
         }
 
-        .testimonial-avatar {
-            width: 56px;
-            height: 56px;
+        .avatar {
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid var(--success-neon);
+            background: #222;
         }
 
-        /* Mechanism Section - Two Column */
-        .mechanism-section {
-            padding: 100px 24px;
+        .user-info h4 {
+            font-size: 1rem;
+            margin-bottom: 4px;
         }
 
-        .mechanism-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 64px;
-            align-items: center;
-        }
-
-        @media (max-width: 900px) {
-            .mechanism-container {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .mechanism-steps {
-            list-style: none;
-        }
-
-        .step-item {
-            display: flex;
-            gap: 20px;
-            padding: 24px 0;
-        }
-
-        .step-number {
-            width: 48px;
-            height: 48px;
-            background: var(--accent-red);
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            font-weight: 900;
-            flex-shrink: 0;
-            box-shadow: 0 4px 20px var(--accent-red-glow);
-        }
-
-        .step-item h4 {
-            font-size: 1.1rem;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-
-        .step-item p {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-
-        /* Filter Highlight */
-        .filter-highlight {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: rgba(0, 255, 65, 0.1);
-            border: 1px solid var(--success-neon);
-            padding: 10px 20px;
-            border-radius: 10px;
-            color: var(--success-neon);
-            font-weight: 700;
-            font-size: 0.9rem;
-            box-shadow: 0 0 30px var(--success-glow);
-            animation: neon-pulse 2s infinite;
-            margin-top: 12px;
-        }
-
-        @keyframes neon-pulse {
-
-            0%,
-            100% {
-                box-shadow: 0 0 20px var(--success-glow);
-            }
-
-            50% {
-                box-shadow: 0 0 40px var(--success-glow), 0 0 60px var(--success-glow);
-            }
-        }
-
-        /* App Screenshot */
-        .app-screenshot {
-            background: var(--bg-card);
-            border-radius: 20px;
-            overflow: hidden;
-            border: 0.5px solid var(--border-metallic);
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-        }
-
-        .app-screenshot img {
-            width: 100%;
-            display: block;
-        }
-
-        /* Results Section */
-        .results-section {
-            background: linear-gradient(180deg, var(--bg-pure) 0%, rgba(30, 10, 10, 1) 50%, var(--bg-pure) 100%);
-            padding: 100px 24px;
-        }
-
-        .results-card {
-            max-width: 900px;
-            margin: 0 auto;
-            text-align: center;
-            padding: 64px;
-            border: 2px solid var(--accent-red);
-            position: relative;
-            background: var(--bg-card);
-            border-radius: 24px;
-        }
-
-        .results-icon {
-            width: 80px;
-            height: 80px;
-            background: var(--accent-red);
-            border-radius: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            margin: 0 auto 32px;
-            box-shadow: 0 8px 40px var(--accent-red-glow);
+        .user-info span {
+            color: var(--success);
+            font-size: 0.85rem;
+            font-weight: 600;
         }
 
         /* Pricing */
-        .pricing-section {
-            padding: 100px 24px;
-        }
-
-        .pricing-header {
-            text-align: center;
-            max-width: 600px;
-            margin: 0 auto 64px;
-        }
-
         .pricing-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(3, 1fr);
             gap: 24px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        @media (max-width: 1024px) {
-            .pricing-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        @media (max-width: 600px) {
-            .pricing-grid {
-                grid-template-columns: 1fr;
-            }
+            align-items: center;
         }
 
         .pricing-card {
-            padding: 40px 32px;
+            padding: 48px 32px;
             position: relative;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
         }
 
-        .pricing-card.featured {
-            border: 2px solid var(--accent-red);
+        .pricing-card.popular {
+            border: 2px solid var(--brand-red);
             transform: scale(1.05);
+            background: linear-gradient(180deg, rgba(230, 57, 70, 0.05) 0%, rgba(12, 12, 12, 0.8) 100%);
+            z-index: 2;
         }
 
-        .pricing-badge {
+        .popular-badge {
             position: absolute;
             top: -14px;
             left: 50%;
             transform: translateX(-50%);
-            background: var(--accent-red);
+            background: var(--brand-red);
             color: white;
-            padding: 6px 20px;
+            padding: 6px 16px;
             border-radius: 100px;
-            font-size: 0.7rem;
-            font-weight: 700;
-            text-transform: uppercase;
+            font-size: 0.75rem;
+            font-weight: 800;
             letter-spacing: 1px;
-            white-space: nowrap;
         }
 
-        .pricing-name {
-            font-size: 1.2rem;
-            font-weight: 700;
+        .plan-name {
+            font-size: 1.5rem;
             margin-bottom: 8px;
         }
 
-        .pricing-desc {
-            color: var(--text-secondary);
-            font-size: 0.85rem;
-            margin-bottom: 24px;
-        }
-
-        .pricing-price {
-            font-size: 3rem;
-            font-weight: 900;
-            margin-bottom: 8px;
-        }
-
-        .pricing-period {
-            color: var(--text-secondary);
+        .plan-desc {
+            color: var(--text-muted);
             font-size: 0.9rem;
             margin-bottom: 32px;
         }
 
-        .pricing-features {
+        .plan-price {
+            font-family: var(--font-display);
+            font-size: 3.5rem;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        .plan-period {
+            color: var(--text-muted);
+            margin-bottom: 32px;
+        }
+
+        .plan-features {
             list-style: none;
-            margin-bottom: 32px;
+            flex-grow: 1;
+            margin-bottom: 40px;
         }
 
-        .pricing-features li {
+        .plan-features li {
             display: flex;
-            align-items: center;
             gap: 12px;
-            padding: 10px 0;
-            font-size: 0.9rem;
-            color: var(--text-secondary);
+            margin-bottom: 16px;
+            color: #ccc;
+            font-size: 0.95rem;
         }
 
-        .pricing-features li i {
-            color: var(--success-neon);
-            font-size: 0.8rem;
+        .plan-features i {
+            color: var(--brand-red);
+            margin-top: 4px;
         }
 
-        .pricing-card .btn-primary {
+        .pricing-card.popular .plan-features i {
+            color: var(--success);
+        }
+
+        .pricing-card .btn {
             width: 100%;
-            justify-content: center;
         }
 
-        .pricing-card .btn-ghost {
-            width: 100%;
+        /* CTA Bottom */
+        .cta-bottom {
+            background: linear-gradient(135deg, #1a0809 0%, #050505 100%);
+            border-top: 1px solid var(--border-glow);
+            border-bottom: 1px solid var(--border-glow);
             text-align: center;
-            display: block;
-        }
-
-        /* CTA Final */
-        .cta-section {
             padding: 120px 24px;
-            text-align: center;
-            background:
-                radial-gradient(ellipse at bottom, rgba(230, 57, 70, 0.15) 0%, transparent 60%),
-                var(--bg-pure);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-bottom::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--brand-red), transparent);
         }
 
         /* Footer */
-        .footer {
-            padding: 48px 24px;
-            border-top: 0.5px solid var(--border-metallic);
+        footer {
+            padding: 60px 0 40px;
+            border-top: 1px solid var(--border-subtle);
         }
 
-        .footer-content {
-            max-width: 1200px;
-            margin: 0 auto;
+        .footer-flex {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
-            gap: 24px;
+            margin-bottom: 40px;
         }
 
         .footer-links {
@@ -845,29 +706,73 @@
         }
 
         .footer-links a {
-            color: var(--text-secondary);
+            color: var(--text-muted);
             text-decoration: none;
-            font-size: 0.85rem;
-            transition: color 0.3s;
+            font-size: 0.9rem;
         }
 
         .footer-links a:hover {
-            color: var(--text-primary);
+            color: white;
         }
 
-        .footer-copy {
-            color: var(--text-secondary);
-            font-size: 0.8rem;
+        .copyright {
+            color: #555;
+            font-size: 0.85rem;
+            text-align: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding-top: 24px;
+        }
+
+        /* Responsive */
+        @media (max-width: 968px) {
+            .hero {
+                padding: 140px 0 60px;
+            }
+
+            .pain-grid,
+            .testimonial-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .step-container {
+                grid-template-columns: 1fr;
+                gap: 40px;
+                text-align: center;
+            }
+
+            .step-container:nth-child(even) {
+                direction: ltr;
+            }
+
+            .pricing-grid {
+                grid-template-columns: 1fr;
+                max-width: 400px;
+                margin: 0 auto;
+            }
+
+            .pricing-card.popular {
+                transform: scale(1);
+            }
+
+            .nav-menu {
+                display: none;
+            }
+
+            .footer-flex {
+                flex-direction: column;
+                gap: 32px;
+                text-align: center;
+            }
         }
 
         /* Animations */
-        .fade-in {
+        .reveal {
             opacity: 0;
             transform: translateY(30px);
-            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.8s cubic-bezier(0.5, 0, 0, 1);
         }
 
-        .fade-in.visible {
+        .reveal.active {
             opacity: 1;
             transform: translateY(0);
         }
@@ -876,426 +781,366 @@
 
 <body>
 
-    <!-- Navbar -->
-    <nav class="navbar">
-        <div class="navbar-content">
-            <a href="index.html" class="logo" style="text-decoration: none; color: inherit;">
-                <div class="logo-icon"><i class="fas fa-bolt"></i></div>
-                <span>LEADMANAGER</span>
+    <div class="bg-grid"></div>
+    <div class="ambient-glow"></div>
+
+    <!-- Navigation -->
+    <nav id="navbar">
+        <div class="container nav-content">
+            <a href="#" class="nav-brand">
+                <div class="nav-brand-icon"><i class="fas fa-bolt text-white"></i></div>
+                LeadManager<span style="color:var(--brand-red)">Pro</span>
             </a>
-            <div class="nav-links">
-                <a href="#mecanismo">Como Funciona</a>
-                <a href="#resultados">Resultados</a>
-                <a href="#precos">Preços</a>
-                <a href="login.html" class="btn-ghost" style="padding: 10px 20px; margin-right: 8px;">ENTRAR</a>
-                <a href="checkout.html" class="btn-primary" style="padding: 12px 24px;">QUERO COMEÇAR</a>
+            <div class="nav-menu">
+                <a href="#como-funciona">O Mecanismo</a>
+                <a href="#depoimentos">Quem Usa</a>
+                <a href="#precos">Planos</a>
+                <a href="login.html" class="btn btn-ghost" style="padding: 10px 24px; font-size: 0.85rem;">Login</a>
+                <a href="checkout.html" class="btn btn-primary" style="padding: 10px 24px; font-size: 0.85rem;">Assinar
+                    Agora</a>
             </div>
         </div>
     </nav>
 
-    <!-- Hero - Two Columns -->
-    <section class="hero">
-        <div class="hero-container">
-            <div class="hero-text">
-                <div class="badge">
-                    <span class="badge-dot"></span>
-                    Prospecção Automatizada
-                </div>
+    <!-- Hero Section -->
+    <header class="hero container reveal active">
+        <div class="hero-badge">
+            <i class="fas fa-circle text-xs"></i> SISTEMA DE PROSPECÇÃO INTELIGENTE
+        </div>
 
-                <h1 class="headline-xl">
-                    IDENTIFIQUE <span class="text-red">OPORTUNIDADES REAIS</span> NO
-                    <span
-                        style="background: linear-gradient(90deg, #fff 0%, #888 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">GOOGLE
-                        MAPS.</span>
-                </h1>
+        <h1 class="font-display">
+            Pare de Depender de Indicações. <br />
+            <span class="text-gradient">Encontre Clientes</span> <span class="text-gradient-red">Ocultos.</span>
+        </h1>
 
-                <p class="hero-subtitle">
-                    A plataforma de inteligência que mapeia o <strong>Google Maps</strong> em tempo real.
-                    Encontre empresas sem site, qualifique leads e inicie conversas com decisores em segundos.
-                    <strong class="text-white block mt-4">Pare de depender da sorte. Tenha previsibilidade.</strong>
-                </p>
+        <p>
+            Milhões de empresas locais estão no Google Maps precisando do seu serviço agora.<br />
+            Nossa IA varre o mapa, identifica empresas <strong>sem site</strong>, e te permite enviar um WhatsApp
+            matador em 1 clique.
+        </p>
 
-                <div class="hero-cta">
-                    <a href="checkout.html" class="btn-primary glow-red">
-                        Começar Teste Grátis <i class="fas fa-arrow-right"></i>
-                    </a>
-                    <a href="#como-funciona" class="btn-ghost">
-                        <i class="fas fa-play"></i> Ver Demonstração
-                    </a>
-                </div>
+        <div class="hero-cta">
+            <a href="checkout.html" class="btn btn-primary">
+                Acessar Plataforma Agora <i class="fas fa-arrow-right"></i>
+            </a>
+            <a href="#como-funciona" class="btn btn-ghost">
+                <i class="fas fa-play"></i> Ver como funciona
+            </a>
+        </div>
 
-                <div class="trust-badges">
-                    <span><i class="fas fa-shield-alt"></i> Dados Verificados</span>
-                    <span><i class="fas fa-bolt"></i> Extração em Tempo Real</span>
-                    <span><i class="fas fa-user-check"></i> Suporte Especializado</span>
-                </div>
-
-                <div style="margin-top: 48px; opacity: 0.6;">
-                    <p class="text-gray text-xs uppercase tracking-widest mb-4">Confiança de +500 empresas</p>
-                    <div class="flex gap-8 grayscale opacity-50 justify-start items-center">
-                        <i class="fab fa-aws text-2xl"></i>
-                        <i class="fab fa-google text-2xl"></i>
-                        <i class="fab fa-stripe text-3xl"></i>
-                        <i class="fas fa-building text-2xl"></i>
-                    </div>
-                </div>
-            </div>
-
-            <div class="hero-mockup">
-                <div class="mockup-container">
-                    <img src="img/hero-mockup.png" alt="LeadManager Dashboard">
-                </div>
-                <div class="mockup-badge">
-                    <i class="fas fa-fire"></i> +5.000 leads/mês
-                </div>
+        <div class="social-proof">
+            <p>CONSTRUÍDO COM TECNOLOGIA DE PONTA</p>
+            <div class="logos-wrap">
+                <i class="fab fa-aws"></i>
+                <i class="fab fa-google"></i>
+                <i class="fab fa-stripe"></i>
+                <i class="fab fa-python"></i>
             </div>
         </div>
-    </section>
+    </header>
 
-    <!-- Problem Section -->
-    <section class="problem-section">
-        <div class="problem-container">
-            <div>
-                <p class="section-label">O Desafio do Mercado</p>
-                <h2 class="headline-lg">Por que agências tradicionais <span class="text-red">estagnam?</span></h2>
-                <p class="text-gray" style="margin-top: 20px; margin-bottom: 32px;">
-                    A dependência exclusiva de indicações ou o alto custo de aquisição (CAC) em anúncios
-                    torna o crescimento imprevisível. O LeadManager Pro elimina essa incerteza.
-                </p>
-
-                <ul class="problem-list">
-                    <li class="problem-item fade-in">
-                        <div class="problem-icon"><i class="fas fa-times"></i></div>
-                        <div>
-                            <h4>Custo de Aquisição Alto</h4>
-                            <p>Campanhas de anúncios estão cada vez mais caras e com menor retorno (ROAS), exigindo
-                                gestão complexa.</p>
-                        </div>
-                    </li>
-                    <li class="problem-item fade-in">
-                        <div class="problem-icon"><i class="fas fa-hourglass-half"></i></div>
-                        <div>
-                            <h4>Fluxo de Caixa Instável</h4>
-                            <p>Em um mês entram 5 clientes, no outro nenhum. A falta de previsibilidade impede
-                                contratações e crescimento.</p>
-                        </div>
-                    </li>
-                    <li class="problem-item fade-in">
-                        <div class="problem-icon"><i class="fas fa-chart-line"></i></div>
-                        <div>
-                            <h4>Baixa Visibilidade</h4>
-                            <p>Excelente qualidade técnica, mas pouca exposição para o mercado que realmente precisa da
-                                sua solução.</p>
-                        </div>
-                    </li>
-                </ul>
+    <!-- App Preview Overview -->
+    <div class="app-preview-wrapper reveal">
+        <div class="app-window">
+            <div class="app-header">
+                <div class="mac-dot"></div>
+                <div class="mac-dot"></div>
+                <div class="mac-dot"></div>
             </div>
-
-            <div class="testimonial-card fade-in">
-                <i class="fas fa-quote-right quote-icon"></i>
-                <p class="testimonial-text">
-                    "Eu usava o método de indicação e fechava 5 clientes por mês. Com o LeadManager, fechei
-                    <strong style="color: var(--success-neon);">14 clientes em 30 dias</strong>. É absurdo a quantidade
-                    de empresa sem site que ainda existe."
-                </p>
-                <div class="testimonial-author">
-                    <img src="img/testimonial-ricardo.png" alt="Ricardo Mendes" class="testimonial-avatar">
-                    <div>
-                        <strong>Ricardo Mendes</strong>
-                        <p class="text-gray" style="font-size: 0.85rem;">Dono de Agência Digital</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Mechanism Section -->
-    <section id="mecanismo" class="mechanism-section">
-        <div class="mechanism-container">
-            <div>
-                <p class="section-label">O Mecanismo</p>
-                <h2 class="headline-lg">Prospecção de <span class="text-red">Precisão</span></h2>
-                <p class="text-gray" style="margin: 20px 0 32px;">
-                    Pesquise "Oficina em São Paulo" no Google Maps. Aparecem 500 resultados.
-                    Quantos deles <strong style="color: white;">NÃO TEM SITE</strong>? Esses são seus clientes.
-                </p>
-
-                <ul class="mechanism-steps">
-                    <li class="step-item fade-in">
-                        <div class="step-number">1</div>
-                        <div>
-                            <h4>Escolha Nicho + Cidade</h4>
-                            <p>Digite "Pizzaria" + "Curitiba" e deixe a IA trabalhar. Em segundos você tem leads
-                                qualificados.</p>
-                        </div>
-                    </li>
-                    <li class="step-item fade-in">
-                        <div class="step-number">2</div>
-                        <div>
-                            <h4>Ative o Filtro Mágico</h4>
-                            <p>Filtre apenas empresas que precisam de você.</p>
-                            <div class="filter-highlight">
-                                <i class="fas fa-filter"></i> FILTRAR SEM SITE
-                            </div>
-                        </div>
-                    </li>
-                    <li class="step-item fade-in">
-                        <div class="step-number">3</div>
-                        <div>
-                            <h4>Aborde com 1 Clique</h4>
-                            <p>Botão "Enviar WhatsApp" abre conversa com mensagem personalizada pronta. Fechou? Próximo.
-                            </p>
-                        </div>
-                    </li>
-                </ul>
-            </div>
-
-            <div class="app-screenshot fade-in">
-                <img src="img/filter-demo.png" alt="Filtro SEM SITE">
-            </div>
-        </div>
-    </section>
-
-    <!-- Results Section -->
-    <section id="resultados" class="results-section">
-        <div class="section">
-            <div class="float-card results-card glow-red fade-in">
-                <div class="results-icon"><i class="fas fa-chart-line"></i></div>
-                <h2 class="headline-lg" style="margin-bottom: 24px;">
-                    Domingo, 14h. <span class="text-red">30 abordagens.</span> No<br>
-                    12º contato: R$ 1.000 de setup +<br>
-                    R$ 2.000/mês de gestão. <span class="text-green">Sem<br>
-                        gastar 1 centavo em tráfego.</span>
-                </h2>
-                <p class="text-gray" style="font-size: 1rem; max-width: 700px; margin: 0 auto;">
-                    "O mercado está saturado de 'curvas de tráfego' que não entregam nada. Mas
-                    existem milhares de empresas locais que ainda dependem do telefone na vitrine.
-                    O LeadManager é isso: uma ferramenta de guerra pra quem quer prospectar de verdade."
-                </p>
-                <p style="margin-top: 24px; font-weight: 700;">— André Silva, Freelancer SP</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- Pricing -->
-    <section id="precos" class="pricing-section">
-        <div class="pricing-header">
-            <p class="section-label">Investimento</p>
-            <h2 class="headline-lg">Escolha seu <span class="text-red">arsenal</span></h2>
-            <p class="text-gray" style="margin-top: 16px;">
-                Assine mensal ou economize 50% no plano trimestral.
-            </p>
-
-            <!-- Toggle Mensal/Trimestral -->
-            <div style="display: flex; justify-content: center; margin-top: 32px;">
+            <div class="app-body">
+                <!-- Fallback content if image fails -->
                 <div
-                    style="background: var(--bg-card); border: 1px solid var(--border-metallic); border-radius: 100px; padding: 6px; display: inline-flex;">
-                    <button id="btnMensal" onclick="togglePricing('mensal')"
-                        style="background: var(--accent-red); color: white; border: none; padding: 12px 28px; border-radius: 100px; font-weight: 700; cursor: pointer; transition: all 0.3s;">
-                        Mensal
-                    </button>
-                    <button id="btnTrimestral" onclick="togglePricing('trimestral')"
-                        style="background: transparent; color: var(--text-secondary); border: none; padding: 12px 28px; border-radius: 100px; font-weight: 700; cursor: pointer; transition: all 0.3s;">
-                        Trimestral <span
-                            style="background: var(--success-neon); color: black; padding: 2px 8px; border-radius: 100px; font-size: 0.7rem; margin-left: 8px;">-50%</span>
-                    </button>
+                    style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; align-items:center; justify-content:center; flex-direction:column; background: linear-gradient(135deg, #111, #050505);">
+                    <img src="img/hero-mockup.png" alt="Dashboard"
+                        style="width:100%; height:100%; object-fit:cover; opacity: 0.8;"
+                        onerror="this.style.display='none'">
+
+                    <div class="floating-stat">
+                        <i class="fas fa-users" style="margin-right:8px;"></i>
+                        +14.500 Leads Extraídos Hoje
+                    </div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <div class="pricing-grid" style="grid-template-columns: repeat(3, 1fr);">
-            <!-- Starter -->
-            <div class="float-card pricing-card fade-in">
-                <p class="pricing-name">Starter</p>
-                <p class="pricing-desc">Para começar a prospectar</p>
-                <p class="pricing-price" id="priceStarter">R$ 199</p>
-                <p class="pricing-period" id="periodStarter">/mês</p>
-                <ul class="pricing-features">
-                    <li><i class="fas fa-check"></i> 500 leads/mês</li>
-                    <li><i class="fas fa-check"></i> Filtro "Sem Site"</li>
-                    <li><i class="fas fa-check"></i> Filtro "Sem WhatsApp"</li>
-                    <li><i class="fas fa-check"></i> Exportar CSV</li>
-                </ul>
-                <a href="checkout.html?plan=starter&billing=mensal" id="linkStarter" class="btn-ghost">Assinar
-                    Starter</a>
+    <!-- Pains Section (Agitation) -->
+    <section class="section-padding container">
+        <div class="section-header reveal">
+            <span class="pre-title">O Fim da Era das Agências Amadoras</span>
+            <h2 class="font-display">Vender serviços está cada vez mais difícil. <span class="text-gradient-red">Por
+                    quê?</span></h2>
+            <p class="text-muted" style="font-size: 1.1rem; max-width: 600px; margin: 0 auto;">
+                O mercado mudou. Anunciar no Meta/Google exige caixas altíssimos. Depender de indicação cria meses de
+                faturamento zero. Você precisa do controle de volta.
+            </p>
+        </div>
+
+        <div class="pain-grid">
+            <div class="glass-card pain-card reveal">
+                <div class="pain-icon"><i class="fas fa-money-bill-wave"></i></div>
+                <h3 class="font-display">CAC nas Alturas</h3>
+                <p>O custo por lead em anúncios está insustentável para prospecção B2B. Você queima o lucro antes mesmo
+                    de fechar o cliente.</p>
+            </div>
+            <div class="glass-card pain-card reveal" style="transition-delay: 0.1s;">
+                <div class="pain-icon"><i class="fas fa-chart-line" style="transform: rotate(180deg) scaleX(-1);"></i>
+                </div>
+                <h3 class="font-display">Faturamento Gangorra</h3>
+                <p>Um mês você lota a agência de clientes por indicação. No mês seguinte, o telefone não toca. Zero
+                    previsibilidade de caixa.</p>
+            </div>
+            <div class="glass-card pain-card reveal" style="transition-delay: 0.2s;">
+                <div class="pain-icon"><i class="fas fa-user-clock"></i></div>
+                <h3 class="font-display">Trabalho Braçal</h3>
+                <p>Passar horas no Google buscando CNPJ, ligando para números frios e lidando com secretárias. Seu tempo
+                    vale mais que isso.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- How it Works (Solution) -->
+    <section id="como-funciona" class="section-padding solution-wrapper">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="pre-title">O Mecanismo</span>
+                <h2 class="font-display">O funil infinito de clientes que a concorrência <span
+                        class="text-gradient-red">vai odiar.</span></h2>
             </div>
 
-            <!-- Profissional (Featured) -->
-            <div class="float-card pricing-card featured fade-in">
-                <div class="pricing-badge">MAIS VENDIDO</div>
-                <p class="pricing-name">Profissional</p>
-                <p class="pricing-desc">Para fechar mais contratos</p>
-                <p class="pricing-price text-red" id="pricePro">R$ 299</p>
-                <p class="pricing-period" id="periodPro">/mês</p>
-                <ul class="pricing-features">
-                    <li><i class="fas fa-check"></i> <strong>1.500 leads/mês</strong></li>
-                    <li><i class="fas fa-check"></i> Todos os filtros</li>
-                    <li><i class="fas fa-check"></i> Exportar Excel + CSV</li>
-                    <li><i class="fas fa-check"></i> CRM Integrado</li>
-                    <li><i class="fas fa-check"></i> Suporte Prioritário</li>
+            <div class="step-container reveal">
+                <div class="step-content">
+                    <div class="step-number-badge">01</div>
+                    <h3 class="font-display">Busque pelo Nicho Dourado</h3>
+                    <p class="text-muted" style="font-size: 1.1rem; margin-bottom: 24px;">
+                        Esqueça buscar clientes no Instagram. O Google Maps é a maior vitrine comercial do planeta.
+                        Digite o nicho (ex: "Clínica de Estética") e a cidade. Nossa engine raspa todos os dados vitais.
+                    </p>
+                    <ul class="plan-features">
+                        <li><i class="fas fa-check-circle"></i> Dados em tempo real (Sem bases velhas)</li>
+                        <li><i class="fas fa-check-circle"></i> Nome, Endereço e Reputação</li>
+                    </ul>
+                </div>
+                <div class="step-image">
+                    <i class="fas fa-search-location"></i>
+                </div>
+            </div>
+
+            <div class="step-container reveal">
+                <div class="step-content">
+                    <div class="step-number-badge">02</div>
+                    <h3 class="font-display">O Filtro Mágico ("Sem Site")</h3>
+                    <p class="text-muted" style="font-size: 1.1rem; margin-bottom: 24px;">
+                        Qual a dor de uma pizzaria que não está no IFood nem tem cardápio digital? Se ela não tem site
+                        no Google, ela <strong>perde vendas todos os dias</strong>. Nosso filtro te entrega esses leads
+                        de bandeja.
+                    </p>
+                    <div class="feature-ui-tag" style="display: inline-flex;">
+                        <i class="fas fa-filter"></i> APENAS SEM SITE
+                    </div>
+                </div>
+                <div class="step-image"
+                    style="background: url('img/filter-demo.png') center/cover; background-color: #111;">
+                    <i class="fas fa-filter text-muted" style="opacity: 0.1;"></i>
+                </div>
+            </div>
+
+            <div class="step-container reveal">
+                <div class="step-content">
+                    <div class="step-number-badge">03</div>
+                    <h3 class="font-display">Fechamento em 1 Clique</h3>
+                    <p class="text-muted" style="font-size: 1.1rem; margin-bottom: 24px;">
+                        Nada de enviar e-mails frios. O botão verde abre diretamente o WhatsApp do dono do negócio com
+                        uma mensagem de quebra de padrão já estruturada para você agendar a call.
+                    </p>
+                    <a href="checkout.html" class="btn btn-primary"
+                        style="background: var(--success); box-shadow: 0 0 20px rgba(16,185,129,0.3); border:none;">
+                        <i class="fab fa-whatsapp"></i> Iniciar Prospecção
+                    </a>
+                </div>
+                <div class="step-image">
+                    <i class="fab fa-whatsapp"
+                        style="color:var(--success); text-shadow: 0 0 40px var(--success-glow);"></i>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section id="depoimentos" class="section-padding container">
+        <div class="section-header reveal">
+            <span class="pre-title">Validado pelo Mercado</span>
+            <h2 class="font-display">As agências que pararam de sofrer com CAC</h2>
+        </div>
+
+        <div class="testimonial-grid">
+            <div class="glass-card testimonial reveal">
+                <span class="quote-mark">"</span>
+                <p>Eu dependia 100% de indicações e passei 3 meses sem fechar nada. Assinei a LeadManager no sábado. No
+                    domingo, em 30 chamadas via Whatsapp, agendei 4 calls. Fechei um contrato de R$ 1.500/mês na terça.
+                    ROI infinito.</p>
+                <div class="user-info">
+                    <img src="img/testimonial-ricardo.png" alt="Ricardo Mendes" class="avatar"
+                        onerror="this.src='data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\'><rect width=\'100%\' height=\'100%\' fill=\'%23333\'/></svg>'">
+                    <div>
+                        <h4 class="font-display">Ricardo Mendes</h4>
+                        <span>Dono de Agência Local</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card testimonial reveal" style="transition-delay: 0.1s;">
+                <span class="quote-mark">"</span>
+                <p>O filtro de 'Sem Site' e 'Notas Baixas' é o verdadeiro pulo do gato. Eu abordo a empresa já com a
+                    solução para a dor exata deles. MInha taxa de conversão saltou de 2% para quase 12%. O sistema
+                    simplesmente se paga.</p>
+                <div class="user-info">
+                    <div class="avatar"
+                        style="display:flex; align-items:center; justify-content:center; background:#E63946; font-weight:bold;">
+                        AM</div>
+                    <div>
+                        <h4 class="font-display">Amanda Moraes</h4>
+                        <span>Gestora de Tráfego / Web Designer</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="precos" class="section-padding container">
+        <div class="section-header reveal">
+            <span class="pre-title">Investimento</span>
+            <h2 class="font-display">A ferramenta mais barata da sua empresa</h2>
+            <p class="text-muted">Assine hoje e transforme seu navegador em uma máquina de fechar contratos.</p>
+        </div>
+
+        <div class="pricing-grid">
+
+            <!-- Starter -->
+            <div class="glass-card pricing-card reveal">
+                <h3 class="plan-name font-display">Starter</h3>
+                <p class="plan-desc">Para copywriters e gestores solo.</p>
+                <div class="plan-price">R$ 199</div>
+                <div class="plan-period">por mês</div>
+
+                <ul class="plan-features">
+                    <li><i class="fas fa-check"></i> 500 buscas mensais</li>
+                    <li><i class="fas fa-check"></i> Filtro "Sem Site"</li>
+                    <li><i class="fas fa-check"></i> 1 Usuário</li>
+                    <li><i class="fas fa-check"></i> Suporte Email</li>
                 </ul>
-                <a href="checkout.html?plan=pro&billing=mensal" id="linkPro" class="btn-primary">QUERO ESSE <i
-                        class="fas fa-arrow-right"></i></a>
+                <a href="checkout.html?plan=starter" class="btn btn-ghost">Assinar Starter</a>
+            </div>
+
+            <!-- Profissional -->
+            <div class="glass-card pricing-card popular reveal" style="transition-delay: 0.1s;">
+                <div class="popular-badge">ESCOLHA DOS CAMPEÕES</div>
+                <h3 class="plan-name font-display">Agência Pro</h3>
+                <p class="plan-desc">A melhor relação custo/benefício para quem vende muito.</p>
+                <div class="plan-price text-gradient-red">R$ 299</div>
+                <div class="plan-period">por mês</div>
+
+                <ul class="plan-features">
+                    <li style="color:white; font-weight:600;"><i class="fas fa-check"></i> 1.500 buscas mensais</li>
+                    <li><i class="fas fa-check"></i> Filtros Ocultos (Notas Baixas)</li>
+                    <li><i class="fas fa-check"></i> Exportação CSV Inteligente</li>
+                    <li><i class="fas fa-check"></i> Disparo Rápido WhatsApp</li>
+                    <li><i class="fas fa-check"></i> Integração com CRM</li>
+                </ul>
+                <a href="checkout.html?plan=pro" class="btn btn-primary">Começar a Lucrar <i
+                        class="fas fa-rocket"></i></a>
             </div>
 
             <!-- Elite -->
-            <div class="float-card pricing-card fade-in">
-                <p class="pricing-name">Elite</p>
-                <p class="pricing-desc">Para times e agências</p>
-                <p class="pricing-price" id="priceElite">R$ 459</p>
-                <p class="pricing-period" id="periodElite">/mês</p>
-                <ul class="pricing-features">
-                    <li><i class="fas fa-check"></i> <strong>5.000 leads/mês</strong></li>
-                    <li><i class="fas fa-check"></i> API Ilimitada</li>
-                    <li><i class="fas fa-check"></i> Multi-usuário (5 seats)</li>
-                    <li><i class="fas fa-check"></i> Treinamento 1:1</li>
-                    <li><i class="fas fa-check"></i> Suporte VIP WhatsApp</li>
+            <div class="glass-card pricing-card reveal" style="transition-delay: 0.2s;">
+                <h3 class="plan-name font-display">Scale Elite</h3>
+                <p class="plan-desc">Para agências consolidadas com times de SDR.</p>
+                <div class="plan-price">R$ 459</div>
+                <div class="plan-period">por mês</div>
+
+                <ul class="plan-features">
+                    <li><i class="fas fa-check"></i> 5.000 buscas mensais</li>
+                    <li><i class="fas fa-check"></i> Múltiplos Usuários</li>
+                    <li><i class="fas fa-check"></i> API de Integração</li>
+                    <li><i class="fas fa-check"></i> Mentoria VIP (1:1)</li>
                 </ul>
-                <a href="checkout.html?plan=elite&billing=mensal" id="linkElite" class="btn-ghost">Assinar Elite</a>
+                <a href="checkout.html?plan=elite" class="btn btn-ghost">Assinar Elite</a>
             </div>
+
         </div>
     </section>
 
-    <script>
-        function togglePricing(type) {
-            const btnMensal = document.getElementById('btnMensal');
-            const btnTrimestral = document.getElementById('btnTrimestral');
-
-            if (type === 'mensal') {
-                btnMensal.style.background = 'var(--accent-red)';
-                btnMensal.style.color = 'white';
-                btnTrimestral.style.background = 'transparent';
-                btnTrimestral.style.color = 'var(--text-secondary)';
-
-                document.getElementById('priceStarter').textContent = 'R$ 199';
-                document.getElementById('periodStarter').textContent = '/mês';
-                document.getElementById('pricePro').textContent = 'R$ 299';
-                document.getElementById('periodPro').textContent = '/mês';
-                document.getElementById('priceElite').textContent = 'R$ 459';
-                document.getElementById('periodElite').textContent = '/mês';
-
-                document.getElementById('linkStarter').href = 'checkout.html?plan=starter&billing=mensal';
-                document.getElementById('linkPro').href = 'checkout.html?plan=pro&billing=mensal';
-                document.getElementById('linkElite').href = 'checkout.html?plan=elite&billing=mensal';
-            } else {
-                btnTrimestral.style.background = 'var(--accent-red)';
-                btnTrimestral.style.color = 'white';
-                btnMensal.style.background = 'transparent';
-                btnMensal.style.color = 'var(--text-secondary)';
-
-                document.getElementById('priceStarter').textContent = 'R$ 299';
-                document.getElementById('periodStarter').textContent = '/trimestre (~R$100/mês)';
-                document.getElementById('pricePro').textContent = 'R$ 449';
-                document.getElementById('periodPro').textContent = '/trimestre (~R$150/mês)';
-                document.getElementById('priceElite').textContent = 'R$ 689';
-                document.getElementById('periodElite').textContent = '/trimestre (~R$230/mês)';
-
-                document.getElementById('linkStarter').href = 'checkout.html?plan=starter&billing=trimestral';
-                document.getElementById('linkPro').href = 'checkout.html?plan=pro&billing=trimestral';
-                document.getElementById('linkElite').href = 'checkout.html?plan=elite&billing=trimestral';
-            }
-        }
-    </script>
-
-    <!-- CTA Final -->
-    <section class="cta-section">
-        <div class="section" style="text-align: center;">
-            <h2 class="headline-lg fade-in">
-                Pronto para nunca mais<br>
-                <span class="text-red">depender de indicação?</span>
-            </h2>
-            <p class="text-gray fade-in" style="max-width: 500px; margin: 24px auto 40px;">
-                Crie sua conta agora e receba 10 leads de bônus para testar. Sem compromisso.
+    <!-- Bottom CTA -->
+    <section class="cta-bottom">
+        <div class="container reveal">
+            <h2 class="font-display" style="font-size: clamp(2rem, 5vw, 3.5rem); margin-bottom: 24px;">Seu Próximo
+                Cliente Está Escondido no Maps.</h2>
+            <p class="text-muted" style="font-size: 1.2rem; max-width: 600px; margin: 0 auto 40px;">
+                Pare de deixar dinheiro na mesa para sua concorrência. Comece a prospectar de forma ativa e qualificada.
             </p>
-            <a href="checkout.html" class="btn-primary glow-red fade-in">
-                QUERO CLIENTES TODOS OS DIAS <i class="fas fa-arrow-right"></i>
+            <a href="checkout.html" class="btn btn-primary" style="padding: 20px 48px; font-size: 1.2rem;">
+                ACESSAR A FERRAMENTA AGORA
             </a>
+            <p style="margin-top: 24px; font-size: 0.85rem; color: #555;"><i class="fas fa-lock text-muted"></i>
+                Pagamento 100% seguro via Stripe. Cancele quando quiser.</p>
         </div>
     </section>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="footer-content">
-            <div class="logo">
-                <div class="logo-icon"><i class="fas fa-bolt"></i></div>
-                <span>LEADMANAGER</span>
+    <footer>
+        <div class="container">
+            <div class="footer-flex">
+                <a href="#" class="nav-brand">
+                    <div class="nav-brand-icon"><i class="fas fa-bolt text-white"></i></div>
+                    LeadManager<span style="color:var(--brand-red)">Pro</span>
+                </a>
+
+                <div class="footer-links">
+                    <a href="checkout.html">Criar Conta</a>
+                    <a href="login.html">Painel de Login</a>
+                    <a href="#">Termos de Serviço</a>
+                    <a href="#">Privacidade</a>
+                </div>
             </div>
-            <div class="footer-links">
-                <a href="#">Termos de Uso</a>
-                <a href="#">Privacidade</a>
-                <a href="#">Suporte</a>
-                <a href="login.html">Login</a>
-                <!-- <a href="admin/login.html" style="opacity: 0.3; font-size: 0.8em;">Admin</a> -->
+            <div class="copyright">
+                &copy; 2024 Blend Agency / LeadManager Pro. Desenvolvido para Vendedores de Elite.
             </div>
-            <p class="footer-copy">© 2024 LeadManager. Todos os direitos reservados.</p>
         </div>
     </footer>
 
-    <!-- Cursor personalizado -->
-    <div class="cursor" id="cursor"></div>
-    <div class="cursor-dot" id="cursor-dot"></div>
-
+    <!-- Scripts -->
     <script>
-        // Cursor Personalizado
-        const cursor = document.getElementById('cursor');
-        const cursorDot = document.getElementById('cursor-dot');
-
-        let mouseX = 0, mouseY = 0;
-        let cursorX = 0, cursorY = 0;
-
-        document.addEventListener('mousemove', (e) => {
-            mouseX = e.clientX;
-            mouseY = e.clientY;
-
-            // Dot segue instantaneamente
-            cursorDot.style.left = mouseX + 'px';
-            cursorDot.style.top = mouseY + 'px';
+        // Navbar scroll effect
+        window.addEventListener('scroll', () => {
+            const nav = document.getElementById('navbar');
+            if (window.scrollY > 50) {
+                nav.classList.add('scrolled');
+            } else {
+                nav.classList.remove('scrolled');
+            }
         });
 
-        // Animação suave do cursor
-        function animateCursor() {
-            cursorX += (mouseX - cursorX) * 0.15;
-            cursorY += (mouseY - cursorY) * 0.15;
+        // Intersection Observer for scroll animations
+        const observerOptions = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.1
+        };
 
-            cursor.style.left = cursorX + 'px';
-            cursor.style.top = cursorY + 'px';
-
-            requestAnimationFrame(animateCursor);
-        }
-        animateCursor();
-
-        // Efeito hover em links e botões
-        const hoverElements = document.querySelectorAll('a, button, .payment-option, .float-card');
-        hoverElements.forEach(el => {
-            el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
-            el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
-        });
-
-        // Fade in on scroll
-        const observer = new IntersectionObserver((entries) => {
+        const observer = new IntersectionObserver((entries, observer) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
+                    entry.target.classList.add('active');
+                    observer.unobserve(entry.target); // Run once
                 }
             });
-        }, { threshold: 0.1 });
+        }, observerOptions);
 
-        document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
-
-        // Animação das letras do headline
-        function animateHeadline() {
-            const headline = document.querySelector('.headline-xl');
-            if (!headline) return;
-
-            headline.classList.add('headline-glow');
-        }
-
-        // Inicializa animações após carregamento
-        window.addEventListener('load', () => {
-            animateHeadline();
+        document.querySelectorAll('.reveal').forEach((el) => {
+            observer.observe(el);
         });
     </script>
-
 </body>
 
 </html>
