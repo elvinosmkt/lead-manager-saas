@@ -3,68 +3,97 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LeadManager - CRM & Scraper</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>LeadManager Pro | Dashboard</title>
+
+    <!-- Fonts & Config -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        dark: {
-                            900: '#0A0A0A', // Fundo Principal
-                            800: '#111111', // Cards/Nav
-                            700: '#1a1a1a', // Bordas
-                        },
-                        primary: {
-                            500: '#E63946', // Vermelho Principal
+                        brand: {
+                            50: '#fff1f2',
+                            100: '#ffe4e6',
+                            500: '#E63946',
                             600: '#d32f3f',
-                            glow: 'rgba(230, 57, 70, 0.5)'
+                            700: '#be123c',
+                            glow: 'rgba(230, 57, 70, 0.4)'
+                        },
+                        dark: {
+                            950: '#050505',
+                            900: '#0c0c0c',
+                            800: '#141414',
+                            700: '#1e1e1e',
+                            600: '#2d2d2d'
                         }
                     },
                     fontFamily: {
+                        display: ['Outfit', 'sans-serif'],
                         sans: ['Inter', 'sans-serif'],
                     }
                 }
             }
         }
     </script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
     <!-- Leaflet Map -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
     <style>
+        :root {
+            --brand-red: #E63946;
+        }
+
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #0A0A0A;
+            background-color: #050505;
             color: #fff;
+            -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
         }
 
-        .glass {
-            background: rgba(21, 27, 43, 0.7);
-            backdrop-filter: blur(10px);
+        .glass-panel {
+            background: rgba(12, 12, 12, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        .input-dark {
-            background-color: #0A0A0A;
-            border-color: #1a1a1a;
-            color: white;
+        .search-area-gradient {
+            background: radial-gradient(circle at top right, rgba(230, 57, 70, 0.05) 0%, transparent 70%);
         }
 
-        .input-dark:focus {
-            border-color: #E63946;
-            outline: 1px solid #E63946;
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
         }
 
-        /* Animação para cards novos */
-        @keyframes fadeInUp {
+        ::-webkit-scrollbar-track {
+            background: #050505;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #1e1e1e;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--brand-red);
+        }
+
+        /* Animation */
+        @keyframes slideUp {
             from {
                 opacity: 0;
-                transform: translateY(20px);
+                transform: translateY(10px);
             }
 
             to {
@@ -73,831 +102,686 @@
             }
         }
 
-        .card-new {
-            animation: fadeInUp 0.4s ease-out;
+        .animate-slide-up {
+            animation: slideUp 0.3s ease-out forwards;
         }
 
-        /* Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
+        /* Mobile Bottom Nav Fix */
+        @media (max-width: 768px) {
+            .bottom-nav {
+                padding-bottom: env(safe-area-inset-bottom);
+            }
+
+            .main-content {
+                padding-bottom: 80px;
+            }
+
+            .search-header {
+                position: sticky;
+                top: 0;
+                z-index: 50;
+            }
         }
 
-        ::-webkit-scrollbar-track {
-            background: #0A0A0A;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #1a1a1a;
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #333;
+        /* Map styling */
+        .leaflet-container {
+            background: #0c0c0c !important;
         }
     </style>
 </head>
 
-<body class="min-h-screen pb-20">
+<body class="font-sans">
 
-    <!-- Navbar Premium -->
-    <nav class="border-b border-dark-700 bg-dark-800 sticky top-0 z-40">
-        <div class="max-w-7xl mx-auto px-4">
-            <div class="flex items-center justify-between h-18 py-3">
-                <!-- Logo -->
-                <div class="flex items-center gap-3">
-                    <div
-                        class="w-10 h-10 bg-primary-500 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/50">
-                        <i class="fas fa-bolt text-white"></i>
-                    </div>
-                    <div>
-                        <span class="font-bold text-xl tracking-tight text-white">LeadManager</span>
-                        <span class="text-[9px] uppercase font-bold text-gray-400 block -mt-1 tracking-widest">CRM &
-                            SCRAPER</span>
+    <!-- Mobile Bottom Navigation -->
+    <div
+        class="fixed bottom-0 left-0 right-0 glass-panel border-t border-white/10 z-[100] md:hidden bottom-nav flex justify-around items-center py-3">
+        <button onclick="window.scrollTo({top:0, behavior:'smooth'})"
+            class="flex flex-col items-center gap-1 text-brand-500">
+            <i class="fas fa-search text-xl"></i>
+            <span class="text-[10px] font-bold uppercase">Busca</span>
+        </button>
+        <button onclick="setViewMode('list')" class="flex flex-col items-center gap-1 text-gray-500 hover:text-white">
+            <i class="fas fa-list-ul text-xl"></i>
+            <span class="text-[10px] font-bold uppercase text-gray-400">Lista</span>
+        </button>
+        <button onclick="setViewMode('map')" class="flex flex-col items-center gap-1 text-gray-500 hover:text-white">
+            <i class="fas fa-map-marked-alt text-xl"></i>
+            <span class="text-[10px] font-bold uppercase text-gray-400">Mapa</span>
+        </button>
+        <button onclick="openScriptModal()" class="flex flex-col items-center gap-1 text-gray-500 hover:text-white">
+            <i class="fas fa-file-signature text-xl"></i>
+            <span class="text-[10px] font-bold uppercase text-gray-400">Script</span>
+        </button>
+    </div>
+
+    <!-- PC & Tablet Navbar -->
+    <nav class="hidden md:block glass-panel border-b border-white/5 sticky top-0 z-[100]">
+        <div class="max-w-[1600px] mx-auto px-6 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <div
+                    class="w-10 h-10 bg-brand-500 rounded-xl flex items-center justify-center shadow-lg shadow-brand-glow">
+                    <i class="fas fa-bolt text-lg text-white"></i>
+                </div>
+                <div>
+                    <h1 class="font-display font-extrabold text-xl tracking-tight text-white">LeadManager <span
+                            class="text-brand-500">Pro</span></h1>
+                    <div class="flex items-center gap-2">
+                        <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                        <span class="text-[10px] uppercase font-bold text-gray-500 tracking-widest">SaaS Intelligence
+                            Console</span>
                     </div>
                 </div>
+            </div>
 
-                <!-- Right Actions -->
-                <div class="flex items-center gap-6">
-                    <button onclick="openScriptModal()"
-                        class="hidden md:flex items-center gap-2 text-sm font-medium text-gray-300 hover:text-white transition">
-                        <i class="fas fa-file-alt"></i> Script de Venda
-                    </button>
+            <div class="flex items-center gap-8">
+                <button onclick="openScriptModal()"
+                    class="text-sm font-semibold text-gray-400 hover:text-white transition flex items-center gap-2">
+                    <i class="fas fa-scroll text-brand-500"></i> Script de Vendas
+                </button>
 
-                    <!-- Credits Badge -->
-                    <a href="credits.html"
-                        class="group flex items-center gap-3 bg-dark-900 border border-dark-700 hover:border-primary-500 rounded-full pl-4 pr-2 py-1.5 transition cursor-pointer">
-                        <div class="flex flex-col items-end leading-none">
-                            <span
-                                class="text-[10px] text-gray-500 font-bold uppercase group-hover:text-primary-500 transition">Créditos</span>
-                            <span id="creditsDisplay" class="font-bold text-white text-sm">PRO</span>
-                        </div>
-                        <div
-                            class="w-7 h-7 bg-primary-500 rounded-full flex items-center justify-center group-hover:bg-primary-600 transition">
-                            <i class="fas fa-plus text-xs"></i>
-                        </div>
-                    </a>
+                <a href="credits.html"
+                    class="flex items-center gap-4 bg-dark-800 border border-white/5 py-1.5 pl-4 pr-1.5 rounded-full hover:border-brand-500/50 transition">
+                    <div class="flex flex-col items-end">
+                        <span class="text-[9px] font-black text-gray-500 uppercase tracking-tighter">Limite
+                            Mensal</span>
+                        <span id="creditsDisplay" class="text-sm font-display font-bold text-white">--- / ---</span>
+                    </div>
+                    <div
+                        class="w-8 h-8 bg-brand-500 rounded-full flex items-center justify-center text-white shadow-md">
+                        <i class="fas fa-plus text-[10px]"></i>
+                    </div>
+                </a>
 
-                    <!-- User Profile -->
-                    <div class="flex items-center gap-3 cursor-pointer pl-4 border-l border-dark-700"
-                        onclick="openProfileModal()">
-                        <div class="text-right hidden sm:block">
-                            <h4 id="userName" class="text-sm font-bold text-white leading-none">Admin</h4>
-                            <span
-                                class="text-[10px] text-primary-500 font-bold uppercase bg-primary-500/10 px-1.5 rounded">ONLINE</span>
-                        </div>
-                        <div class="w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center text-sm font-bold border-2 border-dark-800"
-                            id="userInitials">
-                            AD
-                        </div>
+                <div class="flex items-center gap-3 pl-6 border-l border-white/10 cursor-pointer group"
+                    onclick="openProfileModal()">
+                    <div class="text-right">
+                        <p id="userName" class="text-sm font-bold text-white group-hover:text-brand-500 transition">SDR
+                            Admin</p>
+                        <p class="text-[10px] text-emerald-500 font-bold uppercase tracking-tight">Status: Ativo</p>
+                    </div>
+                    <div id="userInitials"
+                        class="w-11 h-11 rounded-full bg-dark-700 border-2 border-white/10 flex items-center justify-center font-display font-black text-brand-500 text-sm">
+                        AD
                     </div>
                 </div>
             </div>
         </div>
     </nav>
 
-    <main class="max-w-7xl mx-auto px-4 mt-8">
-
-        <!-- Search Area Premium -->
-        <div class="bg-dark-800 rounded-2xl p-6 border border-dark-700 shadow-2xl mb-8">
-
-            <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-                <!-- Nicho -->
-                <div class="md:col-span-3 space-y-1.5">
-                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">Nicho</label>
-                    <div class="relative group">
-                        <i
-                            class="fas fa-tag absolute left-4 top-3.5 text-gray-500 group-focus-within:text-white transition"></i>
-                        <input type="text" id="nichoInput" placeholder="Ex: Pizzaria"
-                            class="w-full bg-dark-900 border border-dark-700 rounded-xl pl-10 pr-4 py-3 text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500 outline-none transition input-dark">
-                    </div>
-                </div>
-
-                <!-- Cidade -->
-                <div class="md:col-span-3 space-y-1.5">
-                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">Cidade</label>
-                    <div class="relative group">
-                        <i
-                            class="fas fa-location-dot absolute left-4 top-3.5 text-gray-500 group-focus-within:text-white transition"></i>
-                        <input type="text" id="cidadeInput" placeholder="Ex: Curitiba"
-                            class="w-full bg-dark-900 border border-dark-700 rounded-xl pl-10 pr-4 py-3 text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500 outline-none transition input-dark">
-                    </div>
-                </div>
-
-                <!-- Qtd -->
-                <div class="md:col-span-2 space-y-1.5">
-                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">Quantidade</label>
-                    <div class="relative">
-                        <i class="fas fa-hashtag absolute left-4 top-3.5 text-gray-500"></i>
-                        <select id="maxLeadsInput"
-                            class="w-full bg-dark-900 border border-dark-700 rounded-xl pl-10 pr-8 py-3 text-white appearance-none focus:border-primary-500 outline-none cursor-pointer">
-                            <option value="10"># 10 Leads</option>
-                            <option value="50"># 50 Leads</option>
-                            <option value="100"># 100 Leads</option>
-                        </select>
-                        <i
-                            class="fas fa-chevron-down absolute right-4 top-4 text-gray-600 text-xs pointer-events-none"></i>
-                    </div>
-                </div>
-
-                <!-- Filtro Site -->
-                <div class="md:col-span-2 space-y-1.5">
-                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">Status Site</label>
-                    <div class="relative">
-                        <i class="fas fa-globe absolute left-4 top-3.5 text-gray-500"></i>
-                        <select id="filterSiteInput"
-                            class="w-full bg-dark-900 border border-dark-700 rounded-xl pl-10 pr-8 py-3 text-white appearance-none focus:border-primary-500 outline-none cursor-pointer">
-                            <option value="todos">🌐 Todos</option>
-                            <option value="sem-site" selected>🔥 Sem Site (Hot)</option>
-                            <option value="com-site">✅ Com Site</option>
-                        </select>
-                        <i
-                            class="fas fa-chevron-down absolute right-4 top-4 text-gray-600 text-xs pointer-events-none"></i>
-                    </div>
-                </div>
-
-                <!-- Filtro WhatsApp -->
-                <div class="md:col-span-2 space-y-1.5">
-                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">Status
-                        WhatsApp</label>
-                    <div class="relative">
-                        <i class="fab fa-whatsapp absolute left-4 top-3.5 text-gray-500"></i>
-                        <select id="filterWhatsInput"
-                            class="w-full bg-dark-900 border border-dark-700 rounded-xl pl-10 pr-8 py-3 text-white appearance-none focus:border-primary-500 outline-none cursor-pointer">
-                            <option value="todos">📱 Todos</option>
-                            <option value="com-whats" selected>💬 Com WhatsApp (Hot)</option>
-                            <option value="sem-whats">❌ Sem WhatsApp</option>
-                        </select>
-                        <i
-                            class="fas fa-chevron-down absolute right-4 top-4 text-gray-600 text-xs pointer-events-none"></i>
-                    </div>
-                </div>
-
-                <!-- Action Button -->
-                <div class="md:col-span-2">
-                    <button id="btnSearch" onclick="startSearch()"
-                        class="w-full bg-primary-500 hover:bg-primary-600 text-white font-bold py-3 rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.3)] transition transform active:scale-95 flex items-center justify-center gap-2">
-                        <i class="fas fa-search"></i>
-                        <span>INICIAR BUSCA</span>
-                    </button>
-                    <button id="btnStop" onclick="stopSearch()"
-                        class="hidden w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3 rounded-xl shadow-lg transition flex items-center justify-center gap-2">
-                        <i class="fas fa-stop"></i> PARAR
-                    </button>
-                </div>
+    <!-- Mobile Header -->
+    <header
+        class="md:hidden glass-panel border-b border-white/5 p-4 flex justify-between items-center sticky top-0 z-[100]">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center shadow-md">
+                <i class="fas fa-bolt text-xs text-white"></i>
             </div>
-
-            <!-- Progress Bar Premium -->
-            <div id="progressContainer" class="hidden mt-6 pt-6 border-t border-dark-700">
-                <div class="flex justify-between items-end mb-2">
-                    <div class="flex items-center gap-3">
-                        <div class="w-2 h-2 bg-primary-500 rounded-full animate-pulse"></div>
-                        <span class="text-primary-500 font-bold text-sm tracking-wide" id="currentBusiness">Coletando
-                            dados...</span>
-                    </div>
-                    <span class="text-white font-mono font-bold"><span id="leadsFoundCount"
-                            class="text-primary-500">0</span> leads encontrados</span>
-                </div>
-                <div class="w-full bg-dark-900 rounded-full h-2 overflow-hidden border border-dark-700">
-                    <div id="progressBar"
-                        class="bg-primary-500 h-full rounded-full transition-all duration-300 shadow-[0_0_10px_rgba(16,185,129,0.5)]"
-                        style="width: 0%"></div>
-                </div>
-            </div>
+            <span class="font-display font-black text-lg">LeadManager <span class="text-brand-500">Pro</span></span>
         </div>
+        <div onclick="openProfileModal()"
+            class="w-9 h-9 bg-dark-700 rounded-full border border-white/10 flex items-center justify-center font-bold text-brand-500 text-xs">
+            <i class="fas fa-user-circle text-lg"></i>
+        </div>
+    </header>
 
-        <!-- Toolbar & Filters -->
-        <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
-            <div class="flex bg-dark-800 p-1 rounded-xl border border-dark-700">
+    <main class="max-w-[1600px] mx-auto px-4 md:px-8 py-6 main-content">
+
+        <!-- Search Console -->
+        <section class="mb-8 search-header">
+            <div
+                class="glass-panel p-5 md:p-8 rounded-[2rem] border-white/10 search-area-gradient shadow-2xl relative overflow-hidden">
+                <!-- Decorative background elements -->
+                <div class="absolute -top-24 -right-24 w-48 h-48 bg-brand-500/10 blur-[80px] rounded-full"></div>
+
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-5 md:gap-6 items-end relative z-10">
+                    <div class="md:col-span-3 space-y-2">
+                        <label class="text-[11px] font-black text-gray-500 uppercase tracking-widest ml-1"><i
+                                class="fas fa-rocket mr-1"></i> Nicho Comercial</label>
+                        <input type="text" id="nichoInput" placeholder="Ex: Oficina Mecânica"
+                            class="w-full bg-dark-950 border border-white/10 rounded-2xl px-5 py-4 text-white focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition font-medium">
+                    </div>
+
+                    <div class="md:col-span-3 space-y-2">
+                        <label class="text-[11px] font-black text-gray-500 uppercase tracking-widest ml-1"><i
+                                class="fas fa-map-marker-alt mr-1"></i> Cidade / Região</label>
+                        <input type="text" id="cidadeInput" placeholder="Ex: Pinheiros, SP"
+                            class="w-full bg-dark-950 border border-white/10 rounded-2xl px-5 py-4 text-white focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition font-medium">
+                    </div>
+
+                    <div class="md:col-span-2 space-y-2">
+                        <label
+                            class="text-[11px] font-black text-gray-500 uppercase tracking-widest ml-1">Volume</label>
+                        <div class="relative">
+                            <select id="maxLeadsInput"
+                                class="w-full bg-dark-950 border border-white/10 rounded-2xl px-5 py-4 text-white appearance-none focus:border-brand-500 outline-none cursor-pointer font-bold">
+                                <option value="10">25 Leads</option>
+                                <option value="50">50 Leads</option>
+                                <option value="100">100 Leads</option>
+                                <option value="250">250 Leads (Elite)</option>
+                            </select>
+                            <i
+                                class="fas fa-chevron-down absolute right-5 top-1/2 -translate-y-1/2 text-gray-600 pointer-events-none"></i>
+                        </div>
+                    </div>
+
+                    <div class="md:col-span-4 grid grid-cols-2 gap-3">
+                        <div class="space-y-2">
+                            <label class="text-[11px] font-black text-gray-500 uppercase tracking-widest ml-1">Filtro
+                                Web</label>
+                            <select id="filterSiteInput"
+                                class="w-full bg-dark-950 border border-white/10 rounded-2xl px-4 py-4 text-white appearance-none focus:border-brand-500 outline-none cursor-pointer text-sm font-semibold">
+                                <option value="todos">Ver Todos</option>
+                                <option value="sem-site" selected>🔥 Sem Site</option>
+                                <option value="com-site">Possui Site</option>
+                            </select>
+                        </div>
+                        <div class="space-y-2">
+                            <label
+                                class="text-[11px] font-black text-gray-500 uppercase tracking-widest ml-1">Vendas</label>
+                            <select id="filterWhatsInput"
+                                class="w-full bg-dark-950 border border-white/10 rounded-2xl px-4 py-4 text-white appearance-none focus:border-brand-500 outline-none cursor-pointer text-sm font-semibold">
+                                <option value="todos">Todos</option>
+                                <option value="com-whats" selected>💬 Tem Whats</option>
+                                <option value="sem-whats">Fixo Only</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="md:col-span-12 mt-2">
+                        <button id="btnSearch" onclick="startSearch()"
+                            class="w-full bg-brand-500 hover:bg-brand-600 text-white font-display font-black py-4 rounded-2xl shadow-xl shadow-brand-glow transition-all active:scale-[0.98] flex items-center justify-center gap-3 tracking-widest text-base">
+                            <i class="fas fa-magnifying-glass-chart text-lg"></i>
+                            INICIAR VARREDURA INTELIGENTE
+                        </button>
+                        <button id="btnStop" onclick="stopSearch()"
+                            class="hidden w-full bg-orange-600 hover:bg-orange-500 text-white font-display font-black py-4 rounded-2xl shadow-xl transition flex items-center justify-center gap-3">
+                            <i class="fas fa-hand-paper text-lg"></i> INTERROMPER BUSCA
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Progress Tracker -->
+                <div id="progressContainer" class="hidden mt-8 pt-8 border-t border-white/5">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                        <div class="flex items-center gap-4">
+                            <div
+                                class="flex items-center justify-center w-10 h-10 rounded-full bg-brand-500/10 border border-brand-500/20">
+                                <i class="fas fa-spinner fa-spin text-brand-500"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs font-black text-gray-500 uppercase tracking-widest">Processando Agora
+                                </p>
+                                <p class="text-white font-bold" id="currentBusiness">Sincronizando com Google Maps...
+                                </p>
+                            </div>
+                        </div>
+                        <div class="bg-dark-950 border border-white/10 rounded-2xl py-2 px-6 flex items-center gap-4">
+                            <div class="text-right">
+                                <p class="text-[9px] font-black text-gray-600 uppercase">Leads Válidos</p>
+                                <p class="text-xl font-display font-black text-brand-500 leading-none"
+                                    id="leadsFoundCount">0</p>
+                            </div>
+                            <div class="w-[1px] h-8 bg-white/5"></div>
+                            <div class="text-right">
+                                <p class="text-[9px] font-black text-gray-600 uppercase">Economia</p>
+                                <p class="text-xl font-display font-black text-emerald-500 leading-none">R$ <span
+                                        id="savingsCount">0</span></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="w-full bg-dark-950 rounded-full h-3.5 overflow-hidden border border-white/5 p-1">
+                        <div id="progressBar"
+                            class="bg-gradient-to-r from-brand-500 to-rose-600 h-full rounded-full transition-all duration-700 shadow-lg shadow-brand-glow"
+                            style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dynamic Controls -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+            <div class="flex items-center gap-2 bg-dark-900 p-1.5 rounded-2xl border border-white/5 w-fit">
                 <button onclick="setViewMode('list')" id="btnViewList"
-                    class="view-btn active px-4 py-2 rounded-lg text-sm font-medium text-white bg-dark-700 shadow transition flex items-center gap-2">
-                    <i class="fas fa-list"></i> Lista
+                    class="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all active-tab-btn">
+                    <i class="fas fa-table-list"></i> Lista <span id="countAll"
+                        class="bg-dark-800 px-2 py-0.5 rounded-md ml-1 text-[10px] opacity-60">0</span>
                 </button>
                 <button onclick="setViewMode('map')" id="btnViewMap"
-                    class="view-btn px-4 py-2 rounded-lg text-sm font-medium text-gray-400 hover:text-white transition flex items-center gap-2">
-                    <i class="fas fa-map-marked-alt"></i> Mapa
+                    class="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold text-gray-500 hover:text-white transition-all">
+                    <i class="fas fa-map-location-dot"></i> Radar
                 </button>
             </div>
 
-            <div class="flex gap-3">
-                <!-- Filtro de Nicho -->
-                <div class="relative">
-                    <i class="fas fa-tag absolute left-3 top-3 text-gray-500 text-xs"></i>
-                    <input type="text" id="filterNiche" list="nicheList" oninput="applyFilters()"
-                        placeholder="Filtrar Categoria..."
-                        class="bg-dark-800 border border-dark-700 rounded-lg pl-8 pr-3 py-2 text-sm text-white focus:border-primary-500 outline-none w-40">
-                    <datalist id="nicheList"></datalist>
+            <div class="flex flex-wrap items-center gap-3">
+                <div class="flex items-center gap-2">
+                    <div class="relative group">
+                        <i
+                            class="fas fa-filter absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-brand-500 transition"></i>
+                        <input type="text" id="filterNiche" placeholder="Filtrar Nicho..." oninput="applyFilters()"
+                            class="bg-dark-900 border border-white/5 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:border-brand-500 outline-none w-40 md:w-56 transition placeholder:text-gray-600">
+                    </div>
                 </div>
 
-                <div class="relative">
-                    <i class="fas fa-filter absolute left-3 top-3 text-gray-500 text-xs"></i>
-                    <input type="text" id="filterCity" list="citiesList" oninput="applyFilters()"
-                        placeholder="Filtrar Cidade..."
-                        class="bg-dark-800 border border-dark-700 rounded-lg pl-8 pr-3 py-2 text-sm text-white focus:border-primary-500 outline-none w-40">
-                    <datalist id="citiesList"></datalist>
-                </div>
-
-                <!-- Filtro Site Display -->
-                <div class="relative">
-                    <select id="filterSiteDisplay" onchange="applyFilters()"
-                        class="bg-dark-800 border border-dark-700 rounded-lg px-3 py-2 text-sm text-white focus:border-primary-500 outline-none appearance-none pr-8 cursor-pointer w-32">
-                        <option value="todos">🌐 Site: Todos</option>
-                        <option value="com-site">✅ Com Site</option>
-                        <option value="sem-site">🔥 Sem Site</option>
-                    </select>
-                    <i class="fas fa-chevron-down absolute right-3 top-3 text-gray-500 text-xs pointer-events-none"></i>
-                </div>
-
-                <!-- Filtro WhatsApp Display -->
-                <div class="relative">
-                    <select id="filterWhatsDisplay" onchange="applyFilters()"
-                        class="bg-dark-800 border border-dark-700 rounded-lg px-3 py-2 text-sm text-white focus:border-primary-500 outline-none appearance-none pr-8 cursor-pointer w-36">
-                        <option value="todos">📱 Whats: Todos</option>
-                        <option value="com-whats">💬 Com WhatsApp</option>
-                        <option value="sem-whats">❌ Sem WhatsApp</option>
-                    </select>
-                    <i class="fas fa-chevron-down absolute right-3 top-3 text-gray-500 text-xs pointer-events-none"></i>
-                </div>
+                <div class="h-10 w-[1px] bg-white/5 hidden md:block"></div>
 
                 <button onclick="exportToExcel()"
-                    class="bg-white text-dark-900 hover:bg-gray-100 font-bold px-4 py-2 rounded-lg text-sm transition flex items-center gap-2">
-                    <i class="fas fa-download"></i> Exportar
+                    class="bg-white text-dark-950 hover:bg-gray-100 font-display font-black px-6 py-2.5 rounded-xl text-sm transition flex items-center gap-3 shadow-lg hover:scale-[1.02] active:scale-95">
+                    <i class="fas fa-file-excel text-green-600"></i> EXPORTAR PLANILHA
                 </button>
             </div>
         </div>
 
-        <!-- Grid de Cards Premium -->
-        <div id="leadsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-            <!-- Template JS Render -->
+        <!-- Content Render Areas -->
+        <div id="leadsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6 min-h-[400px]">
+            <!-- JS Injection -->
+            <div
+                class="col-span-full flex flex-col items-center justify-center py-20 bg-dark-900/50 rounded-[3rem] border border-dashed border-white/10 opacity-50">
+                <i class="fas fa-magnifying-glass text-4xl text-gray-700 mb-6"></i>
+                <p class="font-display font-bold text-xl text-gray-600 uppercase tracking-widest">Inicie uma nova busca
+                    para ver os resultados</p>
+                <p class="text-sm text-gray-700 mt-2">Dica: Nichos como 'Escritório de Advocacia' em grandes capitais
+                    geram mais ROI.</p>
+            </div>
         </div>
 
-        <!-- Mapa Container -->
         <div id="leadsMapContainer"
-            class="hidden h-[600px] w-full rounded-2xl overflow-hidden border border-dark-700 shadow-2xl relative z-0">
-            <div id="map" class="h-full w-full bg-dark-800"></div>
+            class="hidden h-[70vh] w-full rounded-[2.5rem] overflow-hidden border border-white/10 shadow-3xl animate-slide-up bg-dark-900">
+            <div id="map" class="h-full w-full"></div>
         </div>
 
     </main>
 
-    <!-- Script Modal -->
+    <!-- Script Modal (Glass) -->
     <div id="scriptModal"
-        class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-dark-800 border border-dark-700 rounded-2xl w-full max-w-lg shadow-2xl p-6">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-lg font-bold text-white flex items-center gap-2"><i
-                        class="fas fa-file-alt text-primary-500"></i> Script de Venda</h3>
-                <button onclick="closeScriptModal()" class="text-gray-500 hover:text-white"><i
+        class="hidden fixed inset-0 bg-black/90 backdrop-blur-xl z-[200] flex items-center justify-center p-4">
+        <div
+            class="bg-dark-900 border border-white/10 rounded-[2.5rem] w-full max-w-2xl shadow-3xl overflow-hidden animate-slide-up">
+            <div class="bg-gradient-to-r from-brand-500 to-rose-600 p-8 flex justify-between items-center">
+                <div class="flex items-center gap-4 text-white">
+                    <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md">
+                        <i class="fas fa-file-signature text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-display font-black text-2xl tracking-tight">Script de Alta Conversão</h3>
+                        <p class="text-white/70 text-sm font-medium">Personalize sua abordagem via WhatsApp</p>
+                    </div>
+                </div>
+                <button onclick="closeScriptModal()"
+                    class="w-10 h-10 rounded-full bg-black/20 text-white flex items-center justify-center hover:bg-black/40 transition"><i
                         class="fas fa-times"></i></button>
             </div>
-            <textarea id="msgTemplate" rows="6"
-                class="w-full bg-dark-900 border border-dark-700 rounded-xl p-4 text-gray-300 focus:border-primary-500 outline-none resize-none mb-4 text-sm font-mono"></textarea>
-            <div class="flex justify-end gap-3">
-                <button onclick="saveScript()"
-                    class="bg-primary-500 hover:bg-primary-600 text-white font-bold py-2 px-6 rounded-lg transition">Salvar
-                    Configuração</button>
+
+            <div class="p-8 space-y-6">
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center px-1">
+                        <label class="text-xs font-black text-gray-500 uppercase tracking-widest">Template de
+                            Mensagem</label>
+                        <span
+                            class="text-[10px] bg-brand-500/10 text-brand-500 px-2 py-0.5 rounded-md font-bold uppercase tracking-tighter">Variáveis
+                            Disponíveis: {nome}, {cidade}, {nicho}</span>
+                    </div>
+                    <textarea id="msgTemplate" rows="8"
+                        class="w-full bg-dark-950 border border-white/5 rounded-2xl p-6 text-gray-200 focus:border-brand-500 outline-none resize-none text-[15px] leading-relaxed font-medium shadow-inner"></textarea>
+                </div>
+
+                <div class="flex items-center gap-3 bg-indigo-500/5 p-4 rounded-2xl border border-indigo-500/10">
+                    <i class="fas fa-circle-info text-indigo-500"></i>
+                    <p class="text-xs text-indigo-300">O robô detecta automaticamente se o lead não tem site e sugere a
+                        abordagem correta para esse cenário.</p>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4 border-t border-white/5 text-center">
+                    <button onclick="closeScriptModal()"
+                        class="px-8 py-3 rounded-2xl text-sm font-bold font-display text-gray-500 hover:text-white transition">Cancelar</button>
+                    <button onclick="saveScript()"
+                        class="bg-white text-dark-950 hover:bg-brand-500 hover:text-white px-10 py-3 rounded-2xl text-sm font-display font-black transition-all shadow-xl active:scale-95">SALVAR
+                        ALTERAÇÕES</button>
+                </div>
             </div>
         </div>
+    </div>
 
-        <!-- Supabase Client & Logic -->
-        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-        <script src="supabase-client.js"></script>
-        <script src="credits-system.js"></script>
-        <script>
-            // --- CONFIGURAÇÕES GLOBAIS ---
-            // Detecta se está rodando no Vercel (frontend estático) ou Railway (backend)
-            const RAILWAY_URL = 'https://web-production-8968f.up.railway.app';
-            const isVercel = window.location.hostname.includes('blendagency') || window.location.hostname.includes('vercel.app');
-            const API_URL = isVercel ? `${RAILWAY_URL}/api` : '/api';
+    <!-- Styles for JS Tabs -->
+    <style>
+        .active-tab-btn {
+            background-color: #1e1e1e !important;
+            color: #fff !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+        }
+    </style>
 
-            let state = {
-                leads: [],
-                isSearching: false,
-                pollingInterval: null,
-                pollingInterval: null,
-                filterStatus: 'all',
-                currentView: 'list',
-                map: null,
-                markers: [],
-                sessionId: null,
-                user: null
-            };
+    <!-- Logic -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-client.js"></script>
+    <script src="credits-system.js"></script>
 
-            // --- INICIALIZAÇÃO ---
-            document.addEventListener('DOMContentLoaded', async () => {
-                try {
-                    // 1. Verifica Login
-                    const user = await LeadAPI.getUser();
-                    if (!user) {
-                        window.location.href = 'login.html';
-                        return;
-                    }
+    <script>
+        // CONFIG
+        const RAILWAY_URL = 'https://web-production-8968f.up.railway.app';
+        const isVercel = window.location.hostname.includes('blendagency') || window.location.hostname.includes('vercel.app');
+        const API_URL = isVercel ? `${RAILWAY_URL}/api` : '/api';
 
-                    state.user = user;
-                    state.sessionId = user.id;
+        let state = {
+            leads: [],
+            isSearching: false,
+            pollingInterval: null,
+            currentView: 'list',
+            map: null,
+            markers: [],
+            sessionId: null,
+            user: null
+        };
 
-                    // 2. Atualiza UI do Usuário
-                    const userName = user.email.split('@')[0];
-                    document.getElementById('userName').innerText = userName.charAt(0).toUpperCase() + userName.slice(1);
-                    document.getElementById('userInitials').innerText = userName.substring(0, 2).toUpperCase();
+        // UI HELPERS
+        function updateSavings() {
+            const count = state.leads.length;
+            const savings = count * 2.50; // Média de custo por lead frio no google ads
+            document.getElementById('savingsCount').innerText = savings.toLocaleString('pt-BR');
+        }
 
-                    // 3. Carrega Leads do Banco
-                    console.log('🔄 Carregando leads...');
-                    state.leads = await LeadAPI.getAll();
-                    updateFilterOptions();
-                    renderLeads();
+        // INITIALIZATION
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const user = await LeadAPI.getUser();
+                if (!user) { window.location.href = 'login.html'; return; }
 
-                    // 4. Carrega Template de Mensagem
-                    loadMessageTemplate();
+                state.user = user;
+                state.sessionId = user.id;
 
-                    // 5. Carrega Créditos
-                    const credits = await LeadAPI.checkCredits();
-                    if (credits) {
-                        const used = credits.credits_used || 0;
-                        const limit = credits.credits_limit || 500;
-                        const remaining = limit - used;
-                        document.getElementById('creditsDisplay').innerText = `${remaining.toLocaleString()} / ${limit.toLocaleString()}`;
-                    }
+                const displayName = user.email.split('@')[0];
+                document.getElementById('userName').innerText = displayName.charAt(0).toUpperCase() + displayName.slice(1);
+                document.getElementById('userInitials').innerText = displayName.substring(0, 2).toUpperCase();
 
-                } catch (error) {
-                    console.error("Erro crítico na inicialização:", error);
-                    if (error.message && error.message.includes('token')) {
-                        localStorage.clear();
-                        window.location.href = 'login.html';
-                    }
+                console.log('🔄 Sincronizando Vault...');
+                state.leads = await LeadAPI.getAll();
+                renderLeads();
+                loadMessageTemplate();
+                updateCreditsUI();
+
+            } catch (error) {
+                console.error("Critical:", error);
+                if (error.message?.includes('token')) {
+                    localStorage.clear(); window.location.href = 'login.html';
                 }
-            });
-
-            // --- FUNÇÕES DE BUSCA (CORE) ---
-            // --- FUNÇÕES DE BUSCA (CORE) ---
-            async function startSearch() {
-                const nicho = document.getElementById('nichoInput').value.trim();
-                const cidade = document.getElementById('cidadeInput').value.trim();
-                const qtd = document.getElementById('maxLeadsInput').value;
-                const siteFilter = document.getElementById('filterSiteInput').value;
-                const whatsFilter = document.getElementById('filterWhatsInput').value;
-
-                if (!nicho || !cidade) return alert('Por favor, preencha Nicho e Cidade.');
-
-                toggleSearchUI(true);
-
-                // Lógica de Retry para "Acordar" o servidor (Cold Start)
-                let attempts = 0;
-                const maxAttempts = 3;
-
-                const tryFetch = async () => {
-                    attempts++;
-                    try {
-                        console.log(`🚀 Iniciando busca (Tentativa ${attempts}/${maxAttempts}):`, { nicho, cidade, whatsFilter });
-
-                        const response = await fetch(`${API_URL}/start-search`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                nicho,
-                                cidade,
-                                max_leads: qtd,
-                                user_id: state.sessionId,
-                                filter_site: siteFilter,
-                                filter_whats: whatsFilter
-                            })
-                        });
-
-                        // Verifica se retornou JSON (não HTML de erro)
-                        const contentType = response.headers.get("content-type");
-                        if (!contentType || !contentType.includes("application/json")) {
-                            if (attempts < maxAttempts) {
-                                console.warn("Resposta inválida, tentando novamente...");
-                                await new Promise(r => setTimeout(r, 2000)); // Espera 2s
-                                return tryFetch(); // Recicla
-                            }
-                            const text = await response.text();
-                            console.error("❌ ERRO CRÍTICO API:", text);
-                            throw new Error("Erro no servidor (Retorno inválido).");
-                        }
-
-                        const data = await response.json();
-
-                        if (!response.ok) {
-                            // Se for erro 503 (busy), tenta de novo? Não, melhor avisar.
-                            throw new Error(data.error || 'Falha ao iniciar.');
-                        }
-
-                        // Sucesso!
-                        startPolling();
-
-                    } catch (error) {
-                        console.error(`Erro tentativa ${attempts}:`, error);
-
-                        // Se for Network Error (Failed to fetch) e ainda tiver tentativas
-                        if (error.message.includes("Failed to fetch") && attempts < maxAttempts) {
-                            console.log("⚠️ Servidor dormindo? Retentando em 3s...");
-                            await new Promise(r => setTimeout(r, 3000));
-                            return tryFetch();
-                        }
-
-                        // Se esgotou tentativas
-                        alert('Não foi possível conectar ao servidor.\nVerifique se o Railway está ativo.\nErro: ' + error.message);
-                        toggleSearchUI(false);
-                    }
-                };
-
-                // Dispara
-                tryFetch();
             }
+        });
 
-            function stopSearch() {
-                if (state.pollingInterval) clearInterval(state.pollingInterval);
-                toggleSearchUI(false);
+        async function updateCreditsUI() {
+            const credits = await LeadAPI.checkCredits();
+            if (credits) {
+                const used = credits.credits_used || 0;
+                const limit = credits.credits_limit || 500;
+                document.getElementById('creditsDisplay').innerText = `${(limit - used).toLocaleString()} / ${limit.toLocaleString()}`;
+            }
+        }
 
-                // Envia sinal de paragem
-                fetch(`${API_URL}/cancel-search`, {
+        // SEARCH LOGIC
+        async function startSearch() {
+            const nicho = document.getElementById('nichoInput').value.trim();
+            const cidade = document.getElementById('cidadeInput').value.trim();
+            const qtd = document.getElementById('maxLeadsInput').value;
+            const siteFilter = document.getElementById('filterSiteInput').value;
+            const whatsFilter = document.getElementById('filterWhatsInput').value;
+
+            if (!nicho || !cidade) return alert('Identifique o Nicho e a Cidade antes de iniciar.');
+
+            toggleSearchUI(true);
+
+            try {
+                const response = await fetch(`${API_URL}/start-search`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: state.sessionId })
-                }).then(() => console.log('🛑 Sinal de parada enviado.'));
+                    body: JSON.stringify({
+                        nicho, cidade, max_leads: qtd, user_id: state.sessionId,
+                        filter_site: siteFilter, filter_whats: whatsFilter
+                    })
+                });
+
+                if (!response.headers.get("content-type")?.includes("application/json")) {
+                    throw new Error("Servidor ocupado. Tentando reconectar...");
+                }
+
+                startPolling();
+            } catch (err) {
+                console.error(err);
+                alert("Erro ao conectar: " + err.message);
+                toggleSearchUI(false);
             }
+        }
 
-            // --- LÓGICA DE POLLING COM RETRY ---
-            let pollingFailures = 0;
-            const MAX_POLLING_FAILURES = 10;
+        function toggleSearchUI(searching) {
+            state.isSearching = searching;
+            const btnSearch = document.getElementById('btnSearch');
+            const btnStop = document.getElementById('btnStop');
+            const progress = document.getElementById('progressContainer');
 
-            function startPolling() {
-                if (state.pollingInterval) clearInterval(state.pollingInterval);
-                pollingFailures = 0;
+            if (searching) {
+                btnSearch.classList.add('hidden');
+                btnStop.classList.remove('hidden');
+                progress.classList.remove('hidden');
+                progress.classList.add('animate-slide-up');
+            } else {
+                btnSearch.classList.remove('hidden');
+                btnStop.classList.add('hidden');
+                // progress.classList.add('hidden');
+            }
+        }
 
-                state.pollingInterval = setInterval(async () => {
-                    try {
-                        const res = await fetch(`${API_URL}/search-status?session_id=${state.sessionId}`);
+        function startPolling() {
+            if (state.pollingInterval) clearInterval(state.pollingInterval);
+            state.pollingInterval = setInterval(async () => {
+                try {
+                    const res = await fetch(`${API_URL}/search-status?session_id=${state.sessionId}`);
+                    const data = await res.json();
 
-                        const contentType = res.headers.get("content-type");
-                        if (!contentType || !contentType.includes("application/json")) {
-                            // Se retornar HTML 502/503 (Deploy ou Crash), conta como falha de rede
-                            throw new Error("Bad response from server");
-                        }
+                    document.getElementById('currentBusiness').innerText = data.current || "Mapeando o bairro...";
+                    document.getElementById('leadsFoundCount').innerText = data.leads_found || 0;
+                    document.getElementById('progressBar').style.width = `${data.progress || 0}%`;
 
-                        const data = await res.json();
-                        pollingFailures = 0; // Reset falhas se conectar
-
-                        updateProgressUI(data);
-
-                        if (data.leads && data.leads.length > 0) {
-                            let novos = 0;
-                            data.leads.forEach(newLead => {
-                                if (!state.leads.some(l => l.nome === newLead.nome)) {
-                                    state.leads.unshift(newLead);
-                                    novos++;
-                                }
-                            });
-                            if (novos > 0) renderLeads();
-                        }
-
-                        if (data.completed || (data.status !== 'running' && data.status !== 'queued' && data.status !== 'initializing')) {
-                            stopSearch();
-
-                            if (data.status === 'error') {
-                                if (data.error && (data.error.includes("Memória") || data.error.includes("ocupado"))) {
-                                    alert("⚠️ O servidor está sobrecarregado no momento.\nAlguns leads foram salvos, mas a busca parou para proteger o sistema.\nTente novamente em 1 minuto.");
-                                } else {
-                                    alert('A busca parou: ' + (data.error || "Erro desconhecido"));
-                                }
-                            } else {
-                                // showNotification(`✅ Busca finalizada!`);
-                                setTimeout(async () => {
-                                    state.leads = await LeadAPI.getAll();
-                                    renderLeads();
-                                }, 1000);
+                    if (data.leads?.length > 0) {
+                        data.leads.forEach(newLead => {
+                            if (!state.leads.some(l => l.nome === newLead.nome)) {
+                                state.leads.unshift(newLead);
                             }
-                        }
-
-                    } catch (e) {
-                        console.warn(`Polling retry (${pollingFailures + 1}/${MAX_POLLING_FAILURES})...`);
-                        pollingFailures++;
-                        if (pollingFailures >= MAX_POLLING_FAILURES) {
-                            stopSearch();
-                            alert("A conexão com o servidor foi perdida (Timeout).\nVerifique sua internet ou tente novamente.");
-                        }
-                    }
-                }, 2000);
-            }
-
-            // --- INTERFACE (RENDERIZAÇÃO) ---
-
-            function setViewMode(mode) {
-                state.currentView = mode;
-                const btnList = document.getElementById('btnViewList');
-                const btnMap = document.getElementById('btnViewMap');
-                const grid = document.getElementById('leadsGrid');
-                const mapContainer = document.getElementById('leadsMapContainer');
-
-                if (mode === 'list') {
-                    btnList.classList.add('bg-dark-700', 'text-white', 'shadow');
-                    btnList.classList.remove('text-gray-400');
-                    btnMap.classList.remove('bg-dark-700', 'text-white', 'shadow');
-                    btnMap.classList.add('text-gray-400');
-
-                    grid.classList.remove('hidden');
-                    mapContainer.classList.add('hidden');
-                } else {
-                    btnMap.classList.add('bg-dark-700', 'text-white', 'shadow');
-                    btnMap.classList.remove('text-gray-400');
-                    btnList.classList.remove('bg-dark-700', 'text-white', 'shadow');
-                    btnList.classList.add('text-gray-400');
-
-                    grid.classList.add('hidden');
-                    mapContainer.classList.remove('hidden');
-
-                    setTimeout(() => {
-                        initMap();
-                        renderMapPoints();
-                    }, 100);
-                }
-            }
-
-            function initMap() {
-                if (state.map) {
-                    state.map.invalidateSize();
-                    return;
-                }
-
-                state.map = L.map('map').setView([-23.55052, -46.633309], 10); // Default SP
-
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                    attribution: '© OpenStreetMap contributors © CARTO',
-                    subdomains: 'abcd',
-                    maxZoom: 19
-                }).addTo(state.map);
-            }
-
-            function extractCoords(url) {
-                if (!url) return null;
-                // Tenta extrair de !3d-23.xxx!4d-46.xxx
-                const regex = /!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/;
-                const match = url.match(regex);
-                if (match) return [parseFloat(match[1]), parseFloat(match[2])];
-
-                // Tenta extrair de @-23.xxx,-46.xxx
-                const regex2 = /@(-?\d+\.\d+),(-?\d+\.\d+)/;
-                const match2 = url.match(regex2);
-                if (match2) return [parseFloat(match2[1]), parseFloat(match2[2])];
-
-                return null;
-            }
-
-            function renderMapPoints() {
-                if (!state.map) return;
-
-                // Limpa marcadores
-                state.markers.forEach(m => state.map.removeLayer(m));
-                state.markers = [];
-
-                const filtered = getFilteredLeads();
-                const bounds = [];
-
-                filtered.forEach(l => {
-                    const coords = extractCoords(l.google_maps_link);
-                    if (coords) {
-                        const hasSite = l.website && l.website.length > 5;
-                        const color = !hasSite ? '#ef4444' : '#3b82f6'; // Vermelho se sem site
-
-                        const markerHtml = `
-                            <div style="background-color: ${color}; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px ${color};"></div>
-                        `;
-
-                        const icon = L.divIcon({
-                            className: 'custom-div-icon',
-                            html: markerHtml,
-                            iconSize: [12, 12],
-                            iconAnchor: [6, 6]
                         });
-
-                        const marker = L.marker(coords, { icon }).addTo(state.map);
-
-                        marker.bindPopup(`
-                            <div class="font-sans text-sm p-1 min-w-[200px]">
-                                <strong class="block text-gray-800 text-base mb-1">${l.nome}</strong>
-                                <span class="text-xs text-gray-500 uppercase font-bold">${l.nicho || 'Geral'}</span>
-                                <div class="mt-2 flex gap-2">
-                                     ${!hasSite ? '<span class="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded font-bold">Sem Site</span>' : '<span class="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded font-bold">Com Site</span>'}
-                                </div>
-                                <div class="mt-3">
-                                   <button onclick="sendWhatsapp('${l.whatsapp}', '${l.nome}', '${l.cidade}', '${l.nicho}')" class="w-full bg-green-500 text-white py-1.5 rounded text-xs font-bold hover:bg-green-600 transition">
-                                      <i class="fab fa-whatsapp"></i> Chamar no Whats
-                                   </button>
-                                </div>
-                            </div>
-                        `);
-
-                        state.markers.push(marker);
-                        bounds.push(coords);
+                        renderLeads();
                     }
-                });
 
-                if (bounds.length > 0) {
-                    state.map.fitBounds(bounds, { padding: [50, 50] });
-                }
+                    if (data.completed || data.status === 'error') {
+                        stopSearch();
+                        if (data.status === 'error') alert("Erro: " + data.error);
+                        updateCreditsUI();
+                    }
+                } catch (e) { console.error("Polling...", e); }
+            }, 2500);
+        }
+
+        function stopSearch() {
+            if (state.pollingInterval) clearInterval(state.pollingInterval);
+            toggleSearchUI(false);
+            fetch(`${API_URL}/cancel-search`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: state.sessionId })
+            });
+        }
+
+        // DESIGN & RENDERING
+        function setViewMode(mode) {
+            state.currentView = mode;
+            const btnList = document.getElementById('btnViewList');
+            const btnMap = document.getElementById('btnViewMap');
+            const grid = document.getElementById('leadsGrid');
+            const mapContainer = document.getElementById('leadsMapContainer');
+
+            if (mode === 'list') {
+                btnList.classList.add('active-tab-btn');
+                btnMap.classList.remove('active-tab-btn', 'text-white');
+                btnMap.classList.add('text-gray-500');
+                grid.classList.remove('hidden');
+                mapContainer.classList.add('hidden');
+            } else {
+                btnMap.classList.add('active-tab-btn', 'text-white');
+                btnList.classList.remove('active-tab-btn');
+                grid.classList.add('hidden');
+                mapContainer.classList.remove('hidden');
+                initMap();
+                setTimeout(renderMapPoints, 100);
             }
+        }
 
-            function getFilteredLeads() {
-                const cityFilter = document.getElementById('filterCity').value.toLowerCase();
-                const nicheFilter = document.getElementById('filterNiche').value.toLowerCase();
-                const whatsFilter = document.getElementById('filterWhatsDisplay')?.value || 'todos';
-                const siteFilter = document.getElementById('filterSiteDisplay')?.value || 'todos';
+        function getFilteredLeads() {
+            const nicheFilter = document.getElementById('filterNiche').value.toLowerCase();
+            return state.leads.filter(l => {
+                if (nicheFilter && !l.nicho?.toLowerCase().includes(nicheFilter) && !l.nome?.toLowerCase().includes(nicheFilter)) return false;
+                return true;
+            });
+        }
 
-                return state.leads.filter(l => {
-                    if (state.filterStatus !== 'all' && (l.status || 'new') !== state.filterStatus) return false;
-                    if (cityFilter && !(l.cidade || '').toLowerCase().includes(cityFilter) && !(l.endereco || '').toLowerCase().includes(cityFilter)) return false;
-                    if (nicheFilter && !(l.nicho || '').toLowerCase().includes(nicheFilter)) return false;
+        function renderLeads() {
+            const grid = document.getElementById('leadsGrid');
+            const filtered = getFilteredLeads();
+            document.getElementById('countAll').innerText = filtered.length;
+            updateSavings();
 
-                    if (whatsFilter === 'com-whats' && !l.whatsapp) return false;
-                    if (whatsFilter === 'sem-whats' && l.whatsapp) return false;
+            if (filtered.length === 0 && !state.isSearching) return;
 
-                    const hasSite = l.website && l.website.length > 5;
-                    if (siteFilter === 'com-site' && !hasSite) return false;
-                    if (siteFilter === 'sem-site' && hasSite) return false;
+            grid.innerHTML = '';
+            filtered.forEach((l, i) => {
+                const hasSite = l.website && l.website.length > 5;
+                const hasWhats = l.whatsapp && l.whatsapp.length > 5;
 
-                    return true;
-                });
-            }
+                const card = document.createElement('div');
+                card.className = "group glass-panel rounded-3xl p-6 border-white/5 hover:border-brand-500/30 transition-all hover:-translate-y-1 animate-slide-up duration-300 relative overflow-hidden";
+                card.style.animationDelay = `${i * 0.05}s`;
 
-            function renderLeads() {
-                const grid = document.getElementById('leadsGrid');
-                grid.innerHTML = '';
-
-                const filtered = getFilteredLeads();
-
-                // Se estiver no modo mapa, atualiza os pontos também
-                if (state.currentView === 'map') {
-                    renderMapPoints();
-                }
-
-                // ... resto da renderização da grid original ...
-                document.getElementById('countAll').innerText = state.leads.length; // Total bruto ou filtrado? Melhor bruto para estatística, mas aqui é contagem da aba "Todos"
-
-                if (filtered.length === 0) {
-                    grid.innerHTML = `
-                    <div class="col-span-full py-16 text-center border-2 border-dashed border-dark-700 rounded-2xl bg-dark-800/30">
-                        <i class="fas fa-search text-3xl text-gray-600 mb-3"></i>
-                        <p class="text-gray-400">Nenhum resultado para os filtros.</p>
-                    </div>`;
-                    return;
-                }
-
-                filtered.forEach(l => {
-                    const hasSite = l.website && l.website.length > 5;
-                    const hasWhats = l.whatsapp && l.whatsapp.length > 5;
-                    const card = document.createElement('div');
-
-                    card.className = "bg-dark-800 border border-dark-700 rounded-xl p-5 shadow-lg relative group transition hover:border-dark-600 card-new";
-
-                    card.innerHTML = `
-                   <div class="flex justify-between items-start mb-3">
-                        <div class="flex gap-2">
-                            ${!hasSite ?
-                            `<span class="bg-red-500/10 text-red-500 text-[9px] font-bold px-1.5 py-0.5 rounded border border-red-500/20 flex items-center gap-1">SEM SITE</span>` :
-                            `<span class="bg-blue-500/10 text-blue-400 text-[9px] font-bold px-1.5 py-0.5 rounded border border-blue-500/20 flex items-center gap-1">COM SITE</span>`
-                        }
-                            ${hasWhats ?
-                            `<span class="bg-green-500/10 text-green-500 text-[9px] font-bold px-1.5 py-0.5 rounded border border-green-500/20 flex items-center gap-1">WHATSAPP</span>` : ''
-                        }
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="flex flex-wrap gap-2">
+                            <span class="text-[9px] font-black uppercase tracking-tighter px-2 py-0.5 rounded-lg border ${hasSite ? 'bg-blue-500/10 border-blue-500/30 text-blue-400' : 'bg-brand-500/10 border-brand-500/30 text-brand-500'}">
+                                ${hasSite ? 'Site Detectado' : '🔥 Sem Site'}
+                            </span>
+                            ${hasWhats ? '<span class="text-[9px] font-black uppercase tracking-tighter px-2 py-0.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-500">WhatsApp Ativo</span>' : ''}
                         </div>
-                        <span class="text-[10px] font-bold text-yellow-500 flex items-center gap-1 bg-yellow-500/10 px-1.5 rounded">
-                            <i class="fas fa-star"></i> ${l.avaliacao || '0.0'}
-                        </span>
+                        <div class="flex items-center gap-1 bg-white/5 px-2 py-0.5 rounded-lg">
+                            <i class="fas fa-star text-yellow-500 text-[9px]"></i>
+                            <span class="text-[10px] font-bold text-gray-300 font-display">${l.avaliacao || 'S.A'}</span>
+                        </div>
                     </div>
 
-                    <h3 class="font-bold text-white text-base mb-0.5 line-clamp-1" title="${l.nome}">${l.nome}</h3>
-                    <p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-3">${l.nicho || 'Geral'}</p>
+                    <h3 class="font-display font-bold text-lg text-white mb-1 leading-tight group-hover:text-brand-500 transition-colors truncate" title="${l.nome}">${l.nome}</h3>
+                    <p class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4">${l.nicho || 'Nicho Geral'}</p>
 
-                    <div class="space-y-2 mb-4">
-                        <p class="text-xs text-gray-400 flex items-start gap-2">
-                             <i class="fas fa-map-marker-alt text-gray-600 mt-0.5"></i> 
-                             <span class="line-clamp-2 leading-relaxed">${l.endereco || 'Endereço não disponível'}</span>
-                        </p>
+                    <div class="space-y-2.5 mb-6">
+                        <div class="flex items-start gap-3">
+                            <i class="fas fa-location-arrow text-gray-700 mt-1 text-xs"></i>
+                            <p class="text-xs text-gray-400 leading-relaxed line-clamp-2">${l.endereco || 'Localização Oculta'}</p>
+                        </div>
                         <div class="flex items-center gap-2">
-                             <div class="bg-dark-900 border border-dark-700 px-2 py-1.5 rounded text-xs font-mono text-gray-300 flex-1 truncate">
-                                ${l.telefone || 'Sem Telefone'}
+                             <div class="bg-dark-950/80 border border-white/5 px-3 py-2 rounded-xl text-xs font-bold text-gray-400 flex-1 truncate font-mono">
+                                <i class="fas fa-phone-alt text-[10px] mr-2 opacity-30"></i> ${l.telefone || 'N/A'}
                              </div>
-                             <a href="${l.google_maps_link}" target="_blank" class="bg-dark-900 border border-dark-700 px-2 py-1.5 rounded text-blue-400 hover:text-white hover:bg-blue-600 transition">
-                                <i class="fas fa-external-link-alt"></i>
+                             <a href="${l.google_maps_link}" target="_blank" class="w-9 h-9 flex items-center justify-center bg-dark-950 border border-white/5 rounded-xl text-blue-500 hover:bg-brand-500 hover:text-white transition-all shadow-lg shadow-black/20">
+                                <i class="fas fa-map-marked-alt text-xs"></i>
                              </a>
                         </div>
                     </div>
 
-                    <div class="flex gap-2 pt-3 border-t border-dark-700">
+                    <div class="pt-4 border-t border-white/5">
                         <button onclick="sendWhatsapp('${l.whatsapp}', '${l.nome}', '${l.cidade}', '${l.nicho}')" 
-                             class="flex-1 ${hasWhats ? 'bg-primary-600 hover:bg-primary-500 text-white' : 'bg-dark-700 text-gray-500 cursor-not-allowed'} font-bold py-2 rounded-lg text-xs flex items-center justify-center gap-2 transition">
-                             <i class="fab fa-whatsapp text-sm"></i> ABORDAR
+                             class="w-full ${hasWhats ? 'bg-brand-500 text-white shadow-lg shadow-brand-glow' : 'bg-dark-950 text-gray-600 border border-white/5 cursor-not-allowed'} font-display font-black py-3 rounded-2xl text-[11px] uppercase tracking-widest flex items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-95">
+                             <i class="fab fa-whatsapp text-sm"></i> ABORDAR VIA WHATSAPP
                         </button>
                     </div>
                 `;
-                    grid.appendChild(card);
-                });
-            }
+                grid.appendChild(card);
+            });
+        }
 
-            function toggleSearchUI(searching) {
-                state.isSearching = searching;
-                const btnSearch = document.getElementById('btnSearch');
-                const btnStop = document.getElementById('btnStop');
-                const progress = document.getElementById('progressContainer');
+        // MAP RADAR
+        function initMap() {
+            if (state.map) return state.map.invalidateSize();
+            state.map = L.map('map', { zoomControl: false }).setView([-23.5505, -46.6333], 12);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '© CARTO', maxZoom: 19
+            }).addTo(state.map);
+            L.control.zoom({ position: 'bottomright' }).addTo(state.map);
+        }
 
-                if (searching) {
-                    btnSearch.classList.add('hidden');
-                    btnStop.classList.remove('hidden');
-                    progress.classList.remove('hidden');
-                } else {
-                    btnSearch.classList.remove('hidden');
-                    btnStop.classList.add('hidden');
-                    progress.classList.add('hidden');
+        function extractCoords(url) {
+            if (!url) return null;
+            const regex = /!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/;
+            const match = url.match(regex);
+            if (match) return [parseFloat(match[1]), parseFloat(match[2])];
+            const regex2 = /@(-?\d+\.\d+),(-?\d+\.\d+)/;
+            const match2 = url.match(regex2);
+            if (match2) return [parseFloat(match2[1]), parseFloat(match2[2])];
+            return null;
+        }
+
+        function renderMapPoints() {
+            if (!state.map) return;
+            state.markers.forEach(m => state.map.removeLayer(m));
+            const filtered = getFilteredLeads();
+            const bounds = [];
+
+            filtered.forEach(l => {
+                const coords = extractCoords(l.google_maps_link);
+                if (coords) {
+                    const hasSite = l.website?.length > 5;
+                    const color = hasSite ? '#3b82f6' : '#E63946';
+                    const marker = L.divIcon({
+                        className: 'custom-icon',
+                        html: `<div style="background:${color};width:14px;height:14px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 15px ${color}"></div>`,
+                        iconSize: [14, 14]
+                    });
+                    const m = L.marker(coords, { icon: marker }).addTo(state.map);
+                    m.bindPopup(`<div class="bg-dark-900 border border-white/10 p-4 rounded-2xl text-white font-sans">
+                        <b class="text-brand-500 font-display text-base">${l.nome}</b><br>
+                        <p class="text-[10px] text-gray-500 uppercase mt-1">Nicho: ${l.nicho || 'Geral'}</p>
+                        <button onclick="sendWhatsapp('${l.whatsapp}', '${l.nome}', '${l.cidade}', '${l.nicho}')" class="w-full bg-emerald-500 mt-3 py-2 rounded-xl text-[10px] font-black uppercase text-white shadow-lg shadow-emerald-500/20">
+                           <i class="fab fa-whatsapp"></i> Chamar
+                        </button>
+                    </div>`, { className: 'custom-popup' });
+                    state.markers.push(m);
+                    bounds.push(coords);
                 }
-            }
+            });
+            if (bounds.length) state.map.fitBounds(bounds, { padding: [50, 50] });
+        }
 
-            function updateProgressUI(data) {
-                if (data.status === 'running' || data.status === 'initializing' || data.status === 'queued') {
-                    document.getElementById('currentBusiness').innerText = data.current || "Aguardando início...";
-                    document.getElementById('leadsFoundCount').innerText = data.leads_found || 0;
+        // UTILS
+        function applyFilters() { renderLeads(); }
 
-                    // Usa progress do backend (mais preciso)
-                    const pct = data.progress || 0;
-                    document.getElementById('progressBar').style.width = `${pct}%`;
-                }
-            }
+        function sendWhatsapp(num, nome, cidade, nicho) {
+            if (!num || num.length < 5) return alert('Ops! Este lead não possui um número de WhatsApp detectado.');
+            let msg = document.getElementById('msgTemplate').value || "Olá {nome}!";
+            msg = msg.replace(/{nome}/g, nome).replace(/{cidade}/g, cidade || '').replace(/{nicho}/g, nicho || '');
+            window.open(`https://wa.me/${num.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`, '_blank');
+        }
 
-            function filterLeads(status) {
-                state.filterStatus = status;
-                document.querySelectorAll('.filter-btn').forEach(btn => {
-                    if (btn.dataset.status === status) {
-                        btn.classList.add('bg-dark-700', 'text-white', 'shadow');
-                        btn.classList.remove('text-gray-400', 'bg-transparent');
-                    } else {
-                        btn.classList.remove('bg-dark-700', 'text-white', 'shadow');
-                        btn.classList.add('text-gray-400', 'bg-transparent');
-                    }
-                });
-                renderLeads();
-            }
+        function loadMessageTemplate() {
+            const saved = localStorage.getItem('leadManager_msg');
+            document.getElementById('msgTemplate').value = saved || "Olá! Gostaria de falar sobre a {nome} em {cidade}.";
+        }
 
-            function applyFilters() { renderLeads(); }
+        function saveScript() {
+            localStorage.setItem('leadManager_msg', document.getElementById('msgTemplate').value);
+            alert('Configuração salva com sucesso!');
+            closeScriptModal();
+        }
 
-            function updateFilterOptions() {
-                // Extrai Nichos Únicos
-                const nichos = [...new Set(state.leads.map(l => l.nicho).filter(Boolean))].sort();
-                const nicheList = document.getElementById('nicheList');
-                nicheList.innerHTML = nichos.map(n => `<option value="${n}">`).join('');
-
-                // Extrai Cidades Únicas
-                const cidades = [...new Set(state.leads.map(l => l.cidade).filter(Boolean))].sort();
-                const citiesList = document.getElementById('citiesList');
-                citiesList.innerHTML = cidades.map(c => `<option value="${c}">`).join('');
-            }
-
-            function sendWhatsapp(num, nome, cidade, nicho) {
-                if (!num || num.length < 5) return alert('Sem número de WhatsApp válido.');
-
-                let msg = getMessageTemplate();
-                msg = msg.replace(/{nome}/g, nome)
-                    .replace(/{cidade}/g, cidade || '')
-                    .replace(/{nicho}/g, nicho || '');
-
-                const cleanNum = num.replace(/\D/g, '');
-                window.open(`https://wa.me/${cleanNum}?text=${encodeURIComponent(msg)}`, '_blank');
-            }
-
-            function loadMessageTemplate() {
-                try {
-                    const saved = localStorage.getItem('leadManager_msg');
-                    if (saved) document.getElementById('msgTemplate').value = saved;
-                    else document.getElementById('msgTemplate').value = "Olá! Vi a {nome} no Google...";
-                } catch (e) { console.error(e); }
-            }
-
-            function saveScript() {
-                const val = document.getElementById('msgTemplate').value;
-                localStorage.setItem('leadManager_msg', val);
-                alert('Script de venda salvo!');
-                closeScriptModal();
-            }
-
-            function getMessageTemplate() {
-                return document.getElementById('msgTemplate').value || "Olá {nome}!";
-            }
-
-            function openScriptModal() { document.getElementById('scriptModal').classList.remove('hidden'); }
-            function closeScriptModal() { document.getElementById('scriptModal').classList.add('hidden'); }
-            function openProfileModal() { window.location.href = 'profile.html'; }
-
-            function exportToExcel() {
-                if (state.leads.length === 0) return alert("Nada para exportar.");
-                const wb = XLSX.utils.book_new();
-                const ws = XLSX.utils.json_to_sheet(state.leads);
-                XLSX.utils.book_append_sheet(wb, ws, "Leads");
-                XLSX.writeFile(wb, "LeadScraper_Export.xlsx");
-            }
-
-            async function logout() {
-                await LeadAPI.logout();
-                window.location.href = 'login.html';
-            }
-        </script>
+        function openScriptModal() { document.getElementById('scriptModal').classList.remove('hidden'); }
+        function closeScriptModal() { document.getElementById('scriptModal').classList.add('hidden'); }
+        function openProfileModal() { window.location.href = 'profile.html'; }
+        function exportToExcel() {
+            const f = getFilteredLeads();
+            if (!f.length) return;
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(f);
+            XLSX.utils.book_append_sheet(wb, ws, "Leads Extraídos");
+            XLSX.writeFile(wb, `Leads_${new Date().toLocaleDateString()}.xlsx`);
+        }
+    </script>
 </body>
 
 </html>
