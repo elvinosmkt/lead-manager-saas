@@ -28,8 +28,7 @@ CORS(app, origins=[
     "https://leadmanager-lp.vercel.app",
     "http://localhost:3000",
     "http://localhost:5001",
-    "http://127.0.0.1:3000",
-    "*"  # Fallback para desenvolvimento
+    "http://127.0.0.1:3000"
 ], supports_credentials=True)
 
 # --- CONFIGURAÇÃO DE SEGURANÇA E RECURSOS ---
