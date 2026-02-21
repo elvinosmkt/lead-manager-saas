@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preview: Seu Novo Site</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap');
+
+        body {
+            font-family: 'Outfit', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 text-slate-900 scroll-smooth">
+
+    <!-- Topbar - AI Agency Branding -->
+    <div class="bg-slate-900 text-white p-3 text-center text-xs font-bold tracking-widest fixed w-full top-0 z-50">
+        <span class="opacity-70">PROTÓTIPO GERADO POR INTELIGÊNCIA ARTIFICIAL PARA: </span>
+        <span id="brandLabel" class="text-blue-400 ml-2">NOME DA EMPRESA</span>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="pt-16 pr-8 pl-8 pb-4 flex justify-between items-center max-w-7xl mx-auto">
+        <h1 id="navLogo" class="text-2xl font-black tracking-tighter">EMPRESA</h1>
+        <div class="hidden md:flex gap-8 font-bold text-sm text-slate-500">
+            <a href="#services" class="hover:text-slate-900">Nossos Serviços</a>
+            <a href="#about" class="hover:text-slate-900">Sobre Nós</a>
+            <a href="#contact" class="hover:text-slate-900">Contato</a>
+        </div>
+        <button
+            class="bg-blue-600 text-white px-6 py-2.5 rounded-full font-bold shadow-lg hover:shadow-blue-500/30 transition-all">Agendar
+            Horário</button>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="max-w-7xl mx-auto px-8 py-20 flex flex-col md:flex-row items-center gap-16 min-h-[80vh]">
+        <div class="flex-1 space-y-8">
+            <div class="inline-block bg-blue-100 text-blue-700 font-bold px-4 py-1.5 rounded-full text-sm">
+                A referência número 1 em <span id="nicheLabel">seu nicho</span> na região.
+            </div>
+            <h2 class="text-6xl md:text-7xl font-black leading-tight tracking-tighter">
+                Sua vida com muito mais <span id="adjectiveLabel" class="text-blue-600">qualidade</span>.
+            </h2>
+            <p class="text-xl text-slate-500 font-medium leading-relaxed max-w-lg">
+                Combinamos tecnologia, experiência e foco total no seu resultado. Venha conhecer o padrão <span
+                    class="businessNameText">Empresa</span>.
+            </p>
+            <div class="flex gap-4">
+                <button
+                    class="bg-slate-900 text-white px-8 py-4 rounded-full font-bold text-lg hover:scale-105 transition-all shadow-xl shadow-slate-900/20">Falar
+                    com Especialista</button>
+                <button
+                    class="bg-white border-2 border-slate-200 text-slate-900 px-8 py-4 rounded-full font-bold text-lg hover:border-slate-400 transition-all">Ver
+                    Portfólio</button>
+            </div>
+        </div>
+        <div
+            class="flex-1 w-full bg-slate-200 rounded-[3rem] aspect-square object-cover shadow-2xl overflow-hidden relative group">
+            <img id="heroImage"
+                src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"
+                alt="Hero" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
+            <div class="absolute inset-0 bg-gradient-to-t from-slate-900/40 to-transparent"></div>
+        </div>
+    </section>
+
+    <!-- Floating AI Feedback Panel -->
+    <div
+        class="fixed bottom-8 right-8 bg-white p-6 rounded-3xl shadow-2xl border border-slate-100 max-w-sm z-50 animate-bounce cursor-pointer hover:animate-none transition-all">
+        <div class="flex items-start gap-4">
+            <div
+                class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white text-xl flex-shrink-0 shadow-lg shadow-blue-500/30">
+                <i class="fas fa-robot"></i>
+            </div>
+            <div>
+                <h4 class="font-black text-slate-900 mb-1">Gostou da proposta?</h4>
+                <p class="text-sm text-slate-500 font-medium mb-3">Isso é apenas o modelo #1 gerado pela nossa IA para a
+                    <span class="businessNameText">nossa conversa</span>.</p>
+                <a href="https://wa.me/554199999999" target="_blank"
+                    class="block w-full text-center bg-green-500 text-white font-bold py-2 rounded-xl text-sm shadow-md hover:bg-green-600">Falar
+                    com Consultor</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script to Hydrate Google Stich AI Parameters -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+
+            // Parametros aceitos: ?nome=Clinica+Vital&nicho=estética&adjetivo=beleza&cor=rose
+            const nome = urlParams.get('nome') || 'Nome da Sua Empresa';
+            const nicho = urlParams.get('nicho') || 'seu nicho';
+            const adjetivo = urlParams.get('adjetivo') || 'qualidade';
+            const imageUrl = urlParams.get('image');
+
+            // Popula os elementos
+            document.getElementById('brandLabel').innerText = nome.toUpperCase();
+            document.getElementById('navLogo').innerText = nome.toUpperCase();
+            document.getElementById('nicheLabel').innerText = nicho.toLowerCase();
+            document.getElementById('adjectiveLabel').innerText = adjetivo.toLowerCase();
+
+            const bNames = document.querySelectorAll('.businessNameText');
+            bNames.forEach(el => el.innerText = nome);
+
+            // Troca imagens de acordo com o nicho (se nao passada na URL)
+            const heroImg = document.getElementById('heroImage');
+            if (imageUrl) {
+                heroImg.src = imageUrl;
+            } else {
+                if (nicho.toLowerCase().includes('estética') || nicho.toLowerCase().includes('clinica')) {
+                    heroImg.src = 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80';
+                } else if (nicho.toLowerCase().includes('advocacia') || nicho.toLowerCase().includes('direito')) {
+                    heroImg.src = 'https://images.unsplash.com/photo-1589829085413-56de8ae18c73?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80';
+                } else if (nicho.toLowerCase().includes('consultorio') || nicho.toLowerCase().includes('dentista') || nicho.toLowerCase().includes('odonto')) {
+                    heroImg.src = 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80';
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>

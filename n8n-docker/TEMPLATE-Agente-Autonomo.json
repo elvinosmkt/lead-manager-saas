@@ -1,0 +1,229 @@
+{
+    "name": "Agente Autônomo - LeadManager",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "novo-lead",
+                "options": {}
+            },
+            "id": "webhook-entrada",
+            "name": "Recebe Lead (Webhook)",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                250,
+                300
+            ],
+            "webhookId": "aba3088b-a5d6-4e50-aab0-bc0f17b6a15e"
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "string": [
+                        {
+                            "value1": "={{$json.body.lead.whatsapp}}",
+                            "operation": "isNotEmpty"
+                        }
+                    ]
+                }
+            },
+            "id": "IF-tem-whatsapp",
+            "name": "IF Tem WhatsApp",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 1,
+            "position": [
+                450,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://api.z-api.io/instances/SUA_INSTANCIA/token/SEU_TOKEN/send-text",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "Client-Token",
+                            "value": "SEU_CLIENT_TOKEN_ZAPI"
+                        }
+                    ]
+                },
+                "sendBody": true,
+                "bodyParameters": {
+                    "parameters": [
+                        {
+                            "name": "phone",
+                            "value": "={{$json.body.lead.whatsapp}}"
+                        },
+                        {
+                            "name": "message",
+                            "value": "=Olá {{$json.body.lead.nome}}! Percebi que a clínica de vocês em {{$json.body.lead.cidade}} tem ótimas avaliações, mas reparei que não possuem um site institucional ainda. Eu montei uma estrutura baseada nas clínicas que mais atraem clientes na sua região, gostaria de dar uma olhada no protótipo (grátis)?"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "http-zapi-send",
+            "name": "Dispara Z-API (Abordagem Fria)",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 3,
+            "position": [
+                700,
+                280
+            ]
+        },
+        {
+            "parameters": {},
+            "id": "NoOp",
+            "name": "Ignora - Sem Whats",
+            "type": "n8n-nodes-base.noOp",
+            "typeVersion": 1,
+            "position": [
+                700,
+                480
+            ]
+        },
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "whatsapp-reply",
+                "options": {}
+            },
+            "id": "webhook-resposta",
+            "name": "Lead Respondeu (Webhook ZAPI)",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                250,
+                700
+            ],
+            "webhookId": "f784533a-1e43-4fc2-a2a4-b9b5a1b32ac9"
+        },
+        {
+            "parameters": {
+                "model": "gpt-4o",
+                "messages": {
+                    "messageValues": [
+                        {
+                            "content": "Você é um consultor comercial fechador de sites institucionais. O cliente respondeu à sua mensagem fria."
+                        },
+                        {
+                            "role": "user",
+                            "content": "={{$json.body.text.message}}"
+                        }
+                    ]
+                }
+            },
+            "id": "OpenAI-Negociador",
+            "name": "OpenAI Negociador",
+            "type": "n8n-nodes-base.openAi",
+            "typeVersion": 1,
+            "position": [
+                500,
+                700
+            ],
+            "credentials": {
+                "openAiApi": {
+                    "id": "PASTE_YOUR_CREDENTIAL_ID",
+                    "name": "OpenAI account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://api.z-api.io/instances/SUA_INSTANCIA/token/SEU_TOKEN/send-text",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "Client-Token",
+                            "value": "SEU_CLIENT_TOKEN_ZAPI"
+                        }
+                    ]
+                },
+                "sendBody": true,
+                "bodyParameters": {
+                    "parameters": [
+                        {
+                            "name": "phone",
+                            "value": "={{$node[\"webhook-resposta\"].json[\"body\"][\"phone\"]}}"
+                        },
+                        {
+                            "name": "message",
+                            "value": "={{$json[\"message\"][\"content\"]}}"
+                        }
+                    ]
+                }
+            },
+            "id": "http-zapi-reply",
+            "name": "Z-API (Manda Resposta da IA)",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 3,
+            "position": [
+                750,
+                700
+            ]
+        }
+    ],
+    "connections": {
+        "Recebe Lead (Webhook)": {
+            "main": [
+                [
+                    {
+                        "node": "IF Tem WhatsApp",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "IF Tem WhatsApp": {
+            "main": [
+                [
+                    {
+                        "node": "Dispara Z-API (Abordagem Fria)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Ignora - Sem Whats",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Lead Respondeu (Webhook ZAPI)": {
+            "main": [
+                [
+                    {
+                        "node": "OpenAI Negociador",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "OpenAI Negociador": {
+            "main": [
+                [
+                    {
+                        "node": "Z-API (Manda Resposta da IA)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "active": false,
+    "settings": {
+        "executionOrder": "v1"
+    },
+    "versionId": "f2ccf1fb-dbfe-4ef6-adc2-fc7431e78eb5"
+}
