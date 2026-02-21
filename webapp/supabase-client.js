@@ -43,18 +43,24 @@ const LeadAPI = {
         const { id, ...leadData } = lead;
         leadData.user_id = user.id; // Garante associação ao usuário
 
-        // Se tem ID numérico válido, é update
-        if (id && typeof id === 'number') {
+        // Se tem ID, fazemos o update (o Supabase usa UUID que é string)
+        if (id) {
+            console.log(`Atualizando lead com id ${id}...`);
             const { data, error } = await supabaseInstance
                 .from('leads')
                 .update(leadData)
                 .eq('id', id)
                 .eq('user_id', user.id) // Garante que só atualiza leads próprios
                 .select();
+
+            if (error) console.error("Erro no update do lead:", error);
+            else console.log("Lead atualizado com sucesso:", data);
+
             return { data, error };
         }
 
         // Senão, é insert
+        console.log(`Inserindo novo lead...`);
         const { data, error } = await supabaseInstance
             .from('leads')
             .insert([leadData])
