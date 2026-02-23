@@ -275,12 +275,12 @@
                 <button onclick="filterLeads('contacted')"
                     class="filter-btn px-4 py-2 rounded-lg text-xs font-bold text-gray-400 hover:text-white transition flex items-center gap-2"
                     data-status="contacted">
-                    Contactados
+                    Abordados
                 </button>
-                <button onclick="filterLeads('interested')"
+                <button onclick="filterLeads('respondeu')"
                     class="filter-btn px-4 py-2 rounded-lg text-xs font-bold text-gray-400 hover:text-white transition flex items-center gap-2"
-                    data-status="interested">
-                    Interessados
+                    data-status="respondeu">
+                    Responderam
                 </button>
             </div>
 
@@ -573,8 +573,8 @@
                             <i class="fas fa-ellipsis-v"></i>
                         </button>
                         <div class="absolute bottom-full right-0 mb-2 w-44 bg-gray-800 border border-gray-700 rounded-xl shadow-2xl hidden group-hover/menu:block p-1 z-20">
-                            <button onclick="changeStatus('${l.nome}', 'interested')" class="w-full text-left px-3 py-2 text-xs text-blue-400 hover:bg-gray-700 rounded flex items-center gap-2">
-                                <i class="fas fa-heart"></i> Potencial Cliente
+                            <button onclick="changeStatus('${l.nome}', 'respondeu')" class="w-full text-left px-3 py-2 text-xs text-blue-400 hover:bg-gray-700 rounded flex items-center gap-2">
+                                <i class="fas fa-heart"></i> Respondeu (Negociando)
                             </button>
                             <button onclick="changeStatus('${l.nome}', 'new')" class="w-full text-left px-3 py-2 text-xs text-gray-400 hover:bg-gray-700 rounded flex items-center gap-2">
                                 <i class="fas fa-undo"></i> Resetar Status
@@ -591,7 +591,7 @@
 
         // --- Actions ---
 
-        function sendWhatsapp(phone, name, city, niche, btn) {
+        async function sendWhatsapp(phone, name, city, niche, btn) {
             if (!phone) return alert('Telefone indisponível para este lead.');
 
             const msg = (localStorage.getItem('leadManager_msg') || msgTemplate)
@@ -604,17 +604,38 @@
 
             // Auto update status
             const lead = leads.find(l => l.nome === name);
-            if (lead && lead.status !== 'contacted') {
+            if (lead && lead.status !== 'contacted' && lead.status !== 'respondeu') {
                 lead.status = 'contacted';
+                lead.contatado = 'Sim';
                 renderLeads();
+                
+                try {
+                    console.log("Notificando Supabase sobre nova abordagem da Z-API...");
+                    await LeadAPI.save(lead);
+                } catch (e) {
+                    console.error("Erro ao salvar status da bordagem: ", e);
+                }
             }
         }
 
-        function changeStatus(name, status) {
+        async function changeStatus(name, status) {
             const lead = leads.find(l => l.nome === name);
             if (lead) {
                 lead.status = status;
+                
+                if (status === 'respondeu') { lead.respondeu = 'Sim'; lead.contatado = 'Sim'; }
+                if (status === 'new' || status === 'discarded') { 
+                    lead.contatado = 'Não'; 
+                    lead.respondeu = 'Não'; 
+                }
+                
                 renderLeads();
+                
+                try {
+                    await LeadAPI.save(lead);
+                } catch (e) {
+                    console.error("Erro ao salvar status manual no banco", e);
+                }
             }
         }
 

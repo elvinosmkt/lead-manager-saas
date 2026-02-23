@@ -28,7 +28,15 @@ const LeadAPI = {
             console.error('Erro ao buscar leads:', error);
             return [];
         }
-        return data || [];
+
+        return (data || []).map(lead => {
+            // Garante compatibilidade visual com o Dashboard.html
+            if (lead.respondeu === 'Sim') lead.status = 'respondeu';
+            else if (lead.contatado === 'Sim') lead.status = 'contacted';
+            else lead.status = 'new';
+
+            return lead;
+        });
     },
 
     // Salvar/Atualizar lead
@@ -39,12 +47,26 @@ const LeadAPI = {
             return { error: 'Não autenticado' };
         }
 
-        // Remove ID local se existir para deixar o banco gerar
-        const { id, ...leadData } = lead;
+        // Higienização para proteger contra campos não existentes no banco
+        const allowedFields = ['id', 'nome', 'telefone', 'whatsapp', 'whatsapp_link', 'endereco', 'avaliacao', 'num_avaliacoes', 'segmento', 'nicho', 'cidade', 'tem_site', 'website', 'google_maps_link', 'contatado', 'respondeu', 'observacoes', 'data_coleta', 'tags', 'status'];
+        const cleanLeadData = {};
+        for (let key of allowedFields) {
+            if (lead[key] !== undefined) {
+                cleanLeadData[key] = lead[key];
+            }
+        }
+
+        // Remove ID local se existir para deixar o banco gerar (ou para update)
+        const { id, ...leadData } = cleanLeadData;
         leadData.user_id = user.id; // Garante associação ao usuário
 
-        // Se tem ID, fazemos o update (o Supabase usa UUID que é string)
-        if (id) {
+        // Mapeia 'status' caso seja usado no frontend como 'contatado'
+        if (leadData.status === 'contatado') leadData.contatado = 'Sim';
+        if (leadData.status === 'respondeu') leadData.respondeu = 'Sim';
+        delete leadData.status;
+
+        // Se tem ID verdadeiro (number ou uuid vindo do banco), fazemos o update
+        if (id && String(id).length < 20) { // garante que não é timestamp
             console.log(`Atualizando lead com id ${id}...`);
             const { data, error } = await supabaseInstance
                 .from('leads')
@@ -77,10 +99,23 @@ const LeadAPI = {
             return { error: 'Não autenticado' };
         }
 
+        // Higienização para evitar erros por colunas ausentes
+        const allowedFields = ['nome', 'telefone', 'whatsapp', 'whatsapp_link', 'endereco', 'avaliacao', 'num_avaliacoes', 'segmento', 'nicho', 'cidade', 'tem_site', 'website', 'google_maps_link', 'contatado', 'respondeu', 'observacoes', 'data_coleta', 'tags', 'status'];
+
         // Limpa IDs temporários e adiciona user_id
         const cleanLeads = leads.map(l => {
-            const { id, ...rest } = l;
-            return { ...rest, user_id: user.id };
+            const cleanLead = {};
+            for (let key of allowedFields) {
+                if (l[key] !== undefined) {
+                    cleanLead[key] = l[key];
+                }
+            }
+            if (cleanLead.status === 'contatado') cleanLead.contatado = 'Sim';
+            if (cleanLead.status === 'respondeu') cleanLead.respondeu = 'Sim';
+            delete cleanLead.status;
+
+            cleanLead.user_id = user.id;
+            return cleanLead;
         });
 
         const { data, error } = await supabaseInstance
