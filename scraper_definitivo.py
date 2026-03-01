@@ -170,45 +170,48 @@ class GoogleMapsScraperDefinitivo:
         return self.businesses
 
     def _scroll_results(self):
-        """Scroll no painel de resultados"""
-        print("📜 Fazendo scroll para carregar mais resultados...")
+        """Scroll agressivo inteligente"""
+        print(f"📜 Fazendo scroll para carregar resultados (meta: {self.max_leads} leads finais)")
         try:
-            # Múltiplos seletores para o painel
-            panel_selectors = [
-                'div[role="feed"]',
-                'div.m6QErb.DxyBCb.kA9KIf.dS8AEf',
-                'div.m6QErb',
-                'div[aria-label*="Resultados"]'
-            ]
-            
+            panel_selectors = ['div[role="feed"]', 'div.m6QErb.DxyBCb.kA9KIf.dS8AEf', 'div[aria-label*="Resultados"]']
             panel = None
             for sel in panel_selectors:
                 try:
                     elements = self.driver.find_elements(By.CSS_SELECTOR, sel)
                     if elements:
                         panel = elements[0]
-                        print(f"  ✅ Painel encontrado: {sel}")
                         break
-                except:
-                    continue
+                except: continue
             
             if not panel:
-                print("  ⚠️ Painel de scroll não encontrado - tentando scroll na página")
-                for i in range(3):
-                    self.driver.execute_script("window.scrollBy(0, 1000);")
-                    time.sleep(1)
+                print("  ⚠️ Painel de resultados não encontrado.")
                 return
             
-            # Faz scroll no painel
-            for i in range(6):
-                if self.check_stop and self.check_stop(): 
+            last_height = self.driver.execute_script("return arguments[0].scrollHeight", panel)
+            target_links = self.max_leads * 5  # margem grande prós filtros (Sem Site, Com WhatsApp)
+            if target_links < 150: target_links = 150
+            
+            for i in range(40): # Até 40 scrolls
+                if self.check_stop and self.check_stop(): break
+                self.driver.execute_script("arguments[0].scrollTop = arguments[0].scrollHeight;", panel)
+                time.sleep(1.2) # sleep agressivo
+                
+                new_height = self.driver.execute_script("return arguments[0].scrollHeight", panel)
+                if new_height == last_height:
+                    self.driver.execute_script("window.scrollBy(0, 1000);")
+                    time.sleep(1)
+                    new_height = self.driver.execute_script("return arguments[0].scrollHeight", panel)
+                    if new_height == last_height:
+                        print("  🏁 Fim dos resultados alcançado no Google Maps.")
+                        break
+                last_height = new_height
+                
+                items = len(self.driver.find_elements(By.CSS_SELECTOR, 'a.hfpxzc'))
+                if i % 3 == 0:
+                    print(f"  📜 Scroll {i+1}/40 - {items} itens encontrados...")
+                if items >= target_links:
+                    print(f"  🎯 Meta de links base atingida ({items}). Parando scroll.")
                     break
-                self.driver.execute_script(
-                    "arguments[0].scrollTop = arguments[0].scrollHeight;", 
-                    panel
-                )
-                time.sleep(1.5)
-                print(f"  📜 Scroll {i+1}/6")
                 
         except Exception as e:
             print(f"  ⚠️ Erro scroll: {e}")
@@ -255,12 +258,19 @@ class GoogleMapsScraperDefinitivo:
         return unique
 
     def _extract_business_data(self, url):
-        """Extrai dados de uma página de negócio"""
+        """Extrai dados de uma página de negócio de forma otimizada"""
         data = {}
         
         try:
             self.driver.get(url)
-            time.sleep(2.5)
+            
+            # Aguarda Inteligente em vez de sleep duro
+            try:
+                WebDriverWait(self.driver, 4).until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, 'h1'))
+                )
+            except:
+                time.sleep(1.5) # Fallback
             
             data['google_maps_link'] = url
             
@@ -280,7 +290,7 @@ class GoogleMapsScraperDefinitivo:
             if not nome:
                 return None
             
-            # Pega texto da página
+            # Pega texto da página para regex rápido
             page_text = ""
             try:
                 main = self.driver.find_element(By.CSS_SELECTOR, "div[role='main']")
@@ -298,7 +308,6 @@ class GoogleMapsScraperDefinitivo:
                 telefone = phone_btn.get_attribute('aria-label') or phone_btn.text
                 telefone = re.sub(r'[^0-9()\-\s+]', '', telefone).strip()
             except:
-                # Fallback: regex no texto
                 phone_patterns = [r'\(?\d{2}\)?\s?\d{4,5}[-\s]?\d{4}']
                 for pattern in phone_patterns:
                     matches = re.findall(pattern, page_text)
@@ -307,14 +316,18 @@ class GoogleMapsScraperDefinitivo:
                         break
             data['telefone'] = telefone
             
-            # WHATSAPP
+            # WHATSAPP (VÁLIDO)
             data['whatsapp'] = ""
             if telefone:
                 nums = re.sub(r'\D', '', telefone)
                 if len(nums) >= 10:
                     if not nums.startswith('55'):
                         nums = '55' + nums
-                    data['whatsapp'] = nums
+                    # Validação básica de celular br: 55 + DDD + 9...
+                    if len(nums) == 13 and nums[4] == '9':
+                        data['whatsapp'] = nums
+                    elif len(nums) == 12: # Celular antigo ou fixo configurado com whats
+                        data['whatsapp'] = nums
             
             # WEBSITE
             website = ""
@@ -325,7 +338,12 @@ class GoogleMapsScraperDefinitivo:
                 pass
             
             data['website'] = website
-            data['tem_site'] = bool(website and len(website) > 5)
+            plataformas_nao_site = ['instagram.com', 'facebook.com', 'whatsapp.com', 'wa.me', 'linktr.ee', 'google.com']
+            data['tem_site'] = False
+            if website and len(website) > 5:
+                # Se for rede social, avalia como não tendo site próprio
+                if not any(plat in website.lower() for plat in plataformas_nao_site):
+                    data['tem_site'] = True
             
             # AVALIAÇÃO
             avaliacao = "0.0"
@@ -351,47 +369,26 @@ class GoogleMapsScraperDefinitivo:
                 pass
             data['endereco'] = endereco
             
-            # INSTAGRAM - busca link para instagram.com
+            # INSTAGRAM - Otimizado
             instagram = ""
             try:
-                # Método 1: Botão específico de redes sociais
                 social_buttons = self.driver.find_elements(By.CSS_SELECTOR, "a[href*='instagram.com']")
                 for btn in social_buttons:
                     href = btn.get_attribute('href')
                     if href and 'instagram.com' in href:
                         instagram = href
                         break
-            except:
-                pass
+            except: pass
             
             if not instagram:
-                try:
-                    # Método 2: Busca no texto da página por @username
-                    ig_match = re.search(r'@([a-zA-Z0-9_\.]+)', page_text)
-                    if ig_match:
-                        username = ig_match.group(1)
-                        # Verifica se parece ser Instagram (não email)
-                        if not '@' in username and len(username) > 2:
-                            instagram = f"https://instagram.com/{username}"
-                except:
-                    pass
-            
-            if not instagram:
-                try:
-                    # Método 3: Links em qualquer lugar da página
-                    all_links = self.driver.find_elements(By.TAG_NAME, "a")
-                    for link in all_links:
-                        href = link.get_attribute('href') or ""
-                        if 'instagram.com' in href and '/p/' not in href:  # Evita posts específicos
-                            instagram = href
-                            break
-                except:
-                    pass
+                ig_match = re.search(r'@([a-zA-Z0-9_\.]+)', page_text)
+                if ig_match:
+                    username = ig_match.group(1)
+                    if not '@' in username and len(username) > 2:
+                        instagram = f"https://instagram.com/{username}"
             
             data['instagram'] = instagram
             data['tem_instagram'] = bool(instagram)
-            
-            # Metadata
             data['nicho'] = self.nicho
             data['cidade'] = self.cidade
             
