@@ -726,7 +726,16 @@
         /* Responsive */
         @media (max-width: 968px) {
             .hero {
-                padding: 140px 0 60px;
+                padding: 120px 0 50px;
+            }
+
+            .hero h1 {
+                font-size: clamp(1.8rem, 6vw, 3rem) !important;
+            }
+
+            .hero p {
+                font-size: 1rem;
+                padding: 0 8px;
             }
 
             .pain-grid,
@@ -758,11 +767,109 @@
                 display: none;
             }
 
+            /* Landing hamburger button */
+            .landing-hamburger {
+                display: flex !important;
+            }
+
             .footer-flex {
                 flex-direction: column;
                 gap: 32px;
                 text-align: center;
             }
+
+            /* CTA full width */
+            .hero .btn {
+                width: 100%;
+                text-align: center;
+                justify-content: center;
+            }
+
+            /* Inputs */
+            input,
+            textarea,
+            select {
+                font-size: 16px !important;
+            }
+        }
+
+        /* Landing Hamburger */
+        .landing-hamburger {
+            display: none;
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Landing Mobile Drawer */
+        .landing-drawer-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 998;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .landing-drawer-overlay.show {
+            opacity: 1;
+        }
+
+        .landing-drawer {
+            position: fixed;
+            top: 0;
+            right: -300px;
+            width: 300px;
+            height: 100vh;
+            background: #0c0c0c;
+            border-left: 1px solid rgba(255, 255, 255, 0.08);
+            z-index: 999;
+            transition: right 0.3s ease;
+            padding: 80px 24px 40px;
+            overflow-y: auto;
+        }
+
+        .landing-drawer.open {
+            right: 0;
+        }
+
+        .landing-drawer a {
+            display: block;
+            padding: 16px 20px;
+            color: #a1a1aa;
+            font-family: var(--font-display);
+            font-size: 16px;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 12px;
+            transition: all 0.2s;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .landing-drawer a:active {
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+        }
+
+        .landing-drawer .drawer-cta {
+            display: block;
+            margin-top: 20px;
+            padding: 16px;
+            text-align: center;
+            background: var(--brand-red);
+            color: white;
+            border-radius: 14px;
+            font-weight: 700;
+            font-size: 15px;
         }
 
         /* Animations */
@@ -799,8 +906,21 @@
                 <a href="checkout.html" class="btn btn-primary" style="padding: 10px 24px; font-size: 0.85rem;">Assinar
                     Agora</a>
             </div>
+            <button class="landing-hamburger" onclick="toggleLandingDrawer()">
+                <i class="fas fa-bars"></i>
+            </button>
         </div>
     </nav>
+
+    <!-- Mobile Drawer -->
+    <div class="landing-drawer-overlay" id="landingDrawerOverlay" onclick="toggleLandingDrawer()"></div>
+    <div class="landing-drawer" id="landingDrawer">
+        <a href="#como-funciona" onclick="toggleLandingDrawer()">O Mecanismo</a>
+        <a href="#depoimentos" onclick="toggleLandingDrawer()">Quem Usa</a>
+        <a href="#precos" onclick="toggleLandingDrawer()">Planos</a>
+        <a href="login.html">Login</a>
+        <a href="checkout.html" class="drawer-cta">Assinar Agora</a>
+    </div>
 
     <!-- Hero Section -->
     <header class="hero container reveal active">
@@ -1140,6 +1260,24 @@
         document.querySelectorAll('.reveal').forEach((el) => {
             observer.observe(el);
         });
+
+        // Mobile Drawer Toggle
+        function toggleLandingDrawer() {
+            const overlay = document.getElementById('landingDrawerOverlay');
+            const drawer = document.getElementById('landingDrawer');
+            const isOpen = drawer.classList.contains('open');
+            if (isOpen) {
+                drawer.classList.remove('open');
+                overlay.classList.remove('show');
+                setTimeout(() => { overlay.style.display = 'none'; }, 300);
+            } else {
+                overlay.style.display = 'block';
+                requestAnimationFrame(() => {
+                    overlay.classList.add('show');
+                    drawer.classList.add('open');
+                });
+            }
+        }
     </script>
 </body>
 

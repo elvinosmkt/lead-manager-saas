@@ -83,6 +83,284 @@
         .no-scrollbar::-webkit-scrollbar {
             display: none;
         }
+
+        /* ====== MOBILE OPTIMIZATION ====== */
+
+        /* Bottom Nav - Mobile Only */
+        .mobile-bottom-nav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 60;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 8px 0 env(safe-area-inset-bottom, 8px);
+        }
+
+        .mobile-bottom-nav .nav-items {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        .mobile-bottom-nav .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            padding: 6px 12px;
+            border-radius: 12px;
+            color: #64748b;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.2s;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .mobile-bottom-nav .nav-item.active,
+        .mobile-bottom-nav .nav-item:active {
+            color: #818cf8;
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .mobile-bottom-nav .nav-item i {
+            font-size: 20px;
+        }
+
+        /* Hamburger Button */
+        .hamburger-btn {
+            display: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Mobile Slide Menu */
+        .mobile-menu-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 55;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .mobile-menu-overlay.show {
+            opacity: 1;
+        }
+
+        .mobile-slide-menu {
+            position: fixed;
+            top: 0;
+            right: -280px;
+            width: 280px;
+            height: 100vh;
+            background: #0f172a;
+            border-left: 1px solid rgba(255, 255, 255, 0.08);
+            z-index: 56;
+            transition: right 0.3s ease;
+            padding: 80px 24px 24px;
+            overflow-y: auto;
+        }
+
+        .mobile-slide-menu.open {
+            right: 0;
+        }
+
+        .mobile-slide-menu a,
+        .mobile-slide-menu button {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 12px;
+            color: #94a3b8;
+            font-size: 14px;
+            font-weight: 600;
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .mobile-slide-menu a:active,
+        .mobile-slide-menu button:active {
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+        }
+
+        /* Context Menu - Touch */
+        .context-menu-mobile {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 70;
+            background: #1e293b;
+            border-top-left-radius: 20px;
+            border-top-right-radius: 20px;
+            padding: 12px 16px env(safe-area-inset-bottom, 16px);
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .context-menu-mobile.show {
+            transform: translateY(0);
+        }
+
+        .context-menu-mobile .handle {
+            width: 40px;
+            height: 4px;
+            border-radius: 2px;
+            background: #475569;
+            margin: 0 auto 16px;
+        }
+
+        .context-menu-mobile button {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            width: 100%;
+            padding: 16px;
+            border-radius: 14px;
+            background: none;
+            border: none;
+            color: #cbd5e1;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .context-menu-mobile button:active {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .context-menu-mobile button i {
+            width: 24px;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-bottom-nav {
+                display: block;
+            }
+
+            .hamburger-btn {
+                display: flex;
+            }
+
+            body {
+                padding-bottom: 80px;
+            }
+
+            /* Navbar compact */
+            nav .max-w-7xl {
+                padding-left: 12px;
+                padding-right: 12px;
+            }
+
+            /* Hide desktop elements */
+            .desktop-only {
+                display: none !important;
+            }
+
+            /* Search form stack */
+            .search-grid-mobile {
+                grid-template-columns: 1fr !important;
+            }
+
+            /* Filter tabs scroll */
+            .filter-tabs-scroll {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+                white-space: nowrap;
+                padding-bottom: 4px;
+            }
+
+            .filter-tabs-scroll::-webkit-scrollbar {
+                display: none;
+            }
+
+            /* Leads grid single column */
+            #leadsGrid {
+                grid-template-columns: 1fr !important;
+                gap: 12px !important;
+            }
+
+            /* Cards touch-friendly */
+            .glass-card {
+                border-radius: 16px;
+            }
+
+            .glass-card button {
+                min-height: 44px;
+            }
+
+            /* Inputs prevent iOS zoom */
+            input,
+            textarea,
+            select {
+                font-size: 16px !important;
+            }
+
+            /* Progress bar vertical */
+            .progress-mobile {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+            }
+
+            /* Search section compact */
+            .search-section-mobile {
+                padding: 16px !important;
+            }
+
+            .search-section-mobile h2 {
+                font-size: 18px !important;
+            }
+
+            /* Main content */
+            main {
+                padding-top: 72px !important;
+                padding-left: 12px !important;
+                padding-right: 12px !important;
+            }
+
+            /* Modal mobile */
+            #scriptModal>div {
+                max-height: 90vh;
+                overflow-y: auto;
+                margin: 12px;
+            }
+
+            /* Desktop hover menu - hide on mobile */
+            .group\/menu:hover .group-hover\/menu\:block {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 
@@ -106,10 +384,10 @@
                 </div>
 
                 <!-- Right Side -->
-                <div class="flex items-center gap-6">
-                    <!-- Credits Balance -->
+                <div class="flex items-center gap-4">
+                    <!-- Credits Balance (desktop) -->
                     <div
-                        class="hidden md:flex items-center gap-3 bg-gray-900/50 px-4 py-2 rounded-full border border-gray-800">
+                        class="desktop-only flex items-center gap-3 bg-gray-900/50 px-4 py-2 rounded-full border border-gray-800">
                         <div class="flex flex-col items-end leading-none">
                             <span class="text-[10px] uppercase font-bold text-gray-500">Saldo Disponível</span>
                             <span id="creditsDisplay" class="font-mono font-bold text-emerald-400 text-sm">...</span>
@@ -120,10 +398,10 @@
                         </div>
                     </div>
 
-                    <!-- User Menu -->
-                    <div class="relative group h-full flex items-center">
+                    <!-- User Menu (desktop) -->
+                    <div class="relative group h-full desktop-only flex items-center">
                         <div class="flex items-center gap-3 cursor-pointer py-2">
-                            <div class="text-right hidden sm:block">
+                            <div class="text-right">
                                 <p id="userName" class="text-sm font-bold text-white leading-none">Carregando...</p>
                                 <span
                                     class="text-[10px] text-indigo-400 font-medium bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-500/20">PRO
@@ -139,8 +417,7 @@
                             </div>
                             <i class="fas fa-chevron-down text-gray-500 text-xs transition group-hover:rotate-180"></i>
                         </div>
-
-                        <!-- Dropdown Menu Improved -->
+                        <!-- Desktop Dropdown -->
                         <div
                             class="absolute right-0 top-full pt-2 w-56 hidden group-hover:block hover:block z-50 origin-top-right transition-all">
                             <div
@@ -169,10 +446,63 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Hamburger (mobile) -->
+                    <button class="hamburger-btn" onclick="toggleMobileMenu()">
+                        <i class="fas fa-bars"></i>
+                    </button>
                 </div>
             </div>
         </div>
     </nav>
+
+    <!-- Mobile Slide Menu -->
+    <div class="mobile-menu-overlay" id="mobileMenuOverlay" onclick="toggleMobileMenu()"></div>
+    <div class="mobile-slide-menu" id="mobileSlideMenu">
+        <div style="margin-bottom:24px">
+            <p class="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Saldo</p>
+            <p id="creditsDisplayMobile" class="font-mono font-bold text-emerald-400 text-xl">...</p>
+        </div>
+        <a href="#"><i class="fas fa-user-cog text-indigo-400"></i> Minha Conta</a>
+        <a href="#"><i class="fas fa-credit-card text-emerald-400"></i> Financeiro</a>
+        <a href="#"><i class="fas fa-file-excel text-green-400"></i> Exportar Excel</a>
+        <div style="border-top:1px solid rgba(255,255,255,0.06); margin:16px 0;"></div>
+        <button onclick="logout()" style="color:#f87171"><i class="fas fa-sign-out-alt"></i> Sair do Sistema</button>
+    </div>
+
+    <!-- Mobile Bottom Navigation -->
+    <div class="mobile-bottom-nav">
+        <div class="nav-items">
+            <div class="nav-item active" onclick="scrollToSearch()">
+                <i class="fas fa-search"></i>
+                <span>Buscar</span>
+            </div>
+            <div class="nav-item" onclick="scrollToLeads()">
+                <i class="fas fa-users"></i>
+                <span>Leads</span>
+            </div>
+            <div class="nav-item" onclick="openScriptModal()">
+                <i class="fab fa-whatsapp"></i>
+                <span>Script</span>
+            </div>
+            <div class="nav-item" onclick="toggleMobileMenu()">
+                <i class="fas fa-ellipsis-h"></i>
+                <span>Mais</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Context Menu (bottom sheet) -->
+    <div class="context-menu-mobile" id="mobileContextMenu">
+        <div class="handle"></div>
+        <button onclick="mobileContextAction('respondeu')"><i class="fas fa-heart text-blue-400"></i> Respondeu
+            (Negociando)</button>
+        <button onclick="mobileContextAction('new')"><i class="fas fa-undo text-gray-400"></i> Resetar Status</button>
+        <button onclick="mobileContextAction('discarded')"><i class="fas fa-trash text-red-400"></i> Descartar
+            Lead</button>
+        <button onclick="closeMobileContext()" style="color:#64748b;margin-top:8px;justify-content:center"><i
+                class="fas fa-times"></i> Cancelar</button>
+    </div>
 
     <!-- Main Content -->
     <main class="pt-24 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
@@ -183,7 +513,7 @@
                 class="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 opacity-50 group-hover:opacity-70 transition duration-500">
             </div>
 
-            <div class="relative bg-[#0f172a]/80 backdrop-blur-xl rounded-[20px] p-6 sm:p-8">
+            <div class="relative bg-[#0f172a]/80 backdrop-blur-xl rounded-[20px] p-6 sm:p-8 search-section-mobile">
                 <div class="flex flex-col gap-6">
                     <div class="flex items-center justify-between">
                         <h2 class="text-2xl font-bold text-white flex items-center gap-2">
@@ -196,7 +526,7 @@
                     </div>
 
                     <!-- Search Form -->
-                    <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-4 search-grid-mobile">
                         <div class="md:col-span-5 relative group/input">
                             <label
                                 class="text-[10px] uppercase font-bold text-gray-500 mb-1 ml-1 block group-focus-within/input:text-indigo-400 transition">Nicho
@@ -235,7 +565,7 @@
 
                     <!-- Progress Bar -->
                     <div id="progressContainer"
-                        class="hidden mt-2 bg-gray-900/50 rounded-xl p-4 border border-gray-700/50 flex items-center gap-4">
+                        class="hidden mt-2 bg-gray-900/50 rounded-xl p-4 border border-gray-700/50 flex items-center gap-4 progress-mobile">
                         <div class="relative">
                             <div
                                 class="w-12 h-12 rounded-full border-4 border-gray-700 flex items-center justify-center">
@@ -265,7 +595,7 @@
         <!-- Filters & Tools -->
         <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-6">
             <!-- Filter Tabs -->
-            <div class="flex p-1 bg-gray-900/50 rounded-xl border border-gray-800">
+            <div class="flex p-1 bg-gray-900/50 rounded-xl border border-gray-800 filter-tabs-scroll">
                 <button onclick="filterLeads('all')"
                     class="filter-btn active px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2"
                     data-status="all">
@@ -569,7 +899,7 @@
                     </button>
                     
                     <div class="relative group/menu">
-                        <button class="w-10 h-10 bg-gray-800 hover:bg-gray-700 rounded-xl flex items-center justify-center text-gray-400 hover:text-white transition border border-gray-700">
+                        <button onclick="window.innerWidth <= 768 ? openMobileContext('${l.nome}') : null" class="w-10 h-10 bg-gray-800 hover:bg-gray-700 rounded-xl flex items-center justify-center text-gray-400 hover:text-white transition border border-gray-700" style="min-height:44px;min-width:44px">
                             <i class="fas fa-ellipsis-v"></i>
                         </button>
                         <div class="absolute bottom-full right-0 mb-2 w-44 bg-gray-800 border border-gray-700 rounded-xl shadow-2xl hidden group-hover/menu:block p-1 z-20">
@@ -608,7 +938,7 @@
                 lead.status = 'contacted';
                 lead.contatado = 'Sim';
                 renderLeads();
-                
+
                 try {
                     console.log("Notificando Supabase sobre nova abordagem da Z-API...");
                     await LeadAPI.save(lead);
@@ -622,15 +952,15 @@
             const lead = leads.find(l => l.nome === name);
             if (lead) {
                 lead.status = status;
-                
+
                 if (status === 'respondeu') { lead.respondeu = 'Sim'; lead.contatado = 'Sim'; }
-                if (status === 'new' || status === 'discarded') { 
-                    lead.contatado = 'Não'; 
-                    lead.respondeu = 'Não'; 
+                if (status === 'new' || status === 'discarded') {
+                    lead.contatado = 'Não';
+                    lead.respondeu = 'Não';
                 }
-                
+
                 renderLeads();
-                
+
                 try {
                     await LeadAPI.save(lead);
                 } catch (e) {
@@ -665,6 +995,56 @@
 
         function resetScript() {
             document.getElementById('msgTemplate').value = "Olá! Encontrei a *{nome}* no Google Maps aqui de {cidade} e notei que vocês ainda não têm um Site Oficial.\n\nSou especialista em criar sites para {nicho} que passam profissionalismo e atraem clientes. Posso te mandar uma ideia sem compromisso?";
+        }
+
+        // --- Mobile Functions ---
+        function toggleMobileMenu() {
+            const overlay = document.getElementById('mobileMenuOverlay');
+            const menu = document.getElementById('mobileSlideMenu');
+            const isOpen = menu.classList.contains('open');
+            if (isOpen) {
+                menu.classList.remove('open');
+                overlay.classList.remove('show');
+                setTimeout(() => { overlay.style.display = 'none'; }, 300);
+            } else {
+                overlay.style.display = 'block';
+                requestAnimationFrame(() => {
+                    overlay.classList.add('show');
+                    menu.classList.add('open');
+                });
+                // Sync credits
+                const credits = document.getElementById('creditsDisplay').innerText;
+                document.getElementById('creditsDisplayMobile').innerText = credits;
+            }
+        }
+
+        function scrollToSearch() {
+            document.querySelector('.search-section-mobile')?.scrollIntoView({ behavior: 'smooth' });
+            updateBottomNav(0);
+        }
+        function scrollToLeads() {
+            document.getElementById('leadsGrid')?.scrollIntoView({ behavior: 'smooth' });
+            updateBottomNav(1);
+        }
+        function updateBottomNav(idx) {
+            document.querySelectorAll('.mobile-bottom-nav .nav-item').forEach((el, i) => {
+                el.classList.toggle('active', i === idx);
+            });
+        }
+
+        // Mobile Context Menu (bottom sheet for 3-dots)
+        let mobileContextLeadName = null;
+        function openMobileContext(name) {
+            mobileContextLeadName = name;
+            document.getElementById('mobileContextMenu').classList.add('show');
+        }
+        function closeMobileContext() {
+            document.getElementById('mobileContextMenu').classList.remove('show');
+            mobileContextLeadName = null;
+        }
+        function mobileContextAction(status) {
+            if (mobileContextLeadName) changeStatus(mobileContextLeadName, status);
+            closeMobileContext();
         }
     </script>
 </body>
