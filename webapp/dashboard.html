@@ -679,6 +679,10 @@
         </div>
     </div>
 
+    <!-- Supabase SDK + Client -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="supabase-client.js"></script>
+
     <!-- Application Logic -->
     <script>
         // --- State Management ---
@@ -690,10 +694,50 @@
             "Olá! Encontrei a *{nome}* no Google Maps aqui de {cidade} e notei que vocês ainda não têm um Site Oficial.\n\nSou especialista em criar sites para {nicho} que passam profissionalismo e atraem clientes. Posso te mandar uma ideia sem compromisso?";
 
         // --- Core Functions ---
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             loadUserInfo();
             document.getElementById('msgTemplate').value = msgTemplate;
+
+            // Carregar leads salvos do Supabase
+            await loadSavedLeads();
         });
+
+        async function loadSavedLeads() {
+            try {
+                console.log('📦 Carregando leads salvos do banco...');
+
+                // Tenta carregar do Supabase primeiro
+                if (window.LeadAPI) {
+                    const savedLeads = await LeadAPI.getAll();
+                    if (savedLeads && savedLeads.length > 0) {
+                        leads = savedLeads;
+                        console.log(`✅ ${leads.length} leads carregados do Supabase`);
+                        renderLeads();
+                        // Atualizar cache local
+                        localStorage.setItem('leadManager_leadsCache', JSON.stringify(leads));
+                        return;
+                    }
+                }
+
+                // Fallback: cache local
+                const cached = localStorage.getItem('leadManager_leadsCache');
+                if (cached) {
+                    leads = JSON.parse(cached);
+                    if (leads.length > 0) {
+                        console.log(`📋 ${leads.length} leads carregados do cache local`);
+                        renderLeads();
+                    }
+                }
+            } catch (e) {
+                console.error('Erro ao carregar leads salvos:', e);
+                // Tenta cache local
+                const cached = localStorage.getItem('leadManager_leadsCache');
+                if (cached) {
+                    leads = JSON.parse(cached);
+                    renderLeads();
+                }
+            }
+        }
 
         async function loadUserInfo() {
             try {
@@ -713,8 +757,9 @@
             if (!nicho || !cidade) return alert('Por favor, preencha o Nicho e a Cidade.');
 
             toggleSearchUI(true);
-            leads = []; // Reset local
-            renderLeads(); // Clear UI
+            // NÃO apaga leads existentes — mantém leads anteriores
+            // leads já foram carregados pelo loadSavedLeads()
+            renderLeads(); // Atualiza UI
 
             try {
                 const res = await fetch('/api/start-search', {
@@ -763,8 +808,18 @@
                     updateProgress(data);
 
                     if (data.leads && data.leads.length > leads.length) {
-                        leads = data.leads.map(l => ({ ...l, status: l.status || 'new' }));
+                        // Mescla novos leads mantendo status existentes
+                        const existingMap = {};
+                        leads.forEach(l => { if (l.nome) existingMap[l.nome] = l; });
+
+                        data.leads.forEach(l => {
+                            if (!existingMap[l.nome]) {
+                                leads.push({ ...l, status: l.status || 'new' });
+                            }
+                        });
                         renderLeads();
+                        // Salva cache local em tempo real
+                        localStorage.setItem('leadManager_leadsCache', JSON.stringify(leads));
                     }
 
                     if (!data.running && data.completed) {
@@ -776,11 +831,36 @@
             }, 1000);
         }
 
-        function stopSearch() {
+        async function stopSearch() {
             isSearching = false;
             clearInterval(pollingInterval);
             toggleSearchUI(false);
             fetch('/api/cancel-search', { method: 'POST' });
+
+            // Salvar todos os leads no Supabase
+            if (leads.length > 0 && window.LeadAPI) {
+                try {
+                    console.log(`💾 Salvando ${leads.length} leads no Supabase...`);
+                    // Filtra apenas leads novos (sem ID do banco)
+                    const newLeads = leads.filter(l => !l.id || String(l.id).length > 20);
+                    if (newLeads.length > 0) {
+                        const result = await LeadAPI.saveBatch(newLeads);
+                        if (result.data) {
+                            console.log(`✅ ${result.data.length} leads salvos na nuvem!`);
+                            // Atualiza IDs locais com os do banco
+                            result.data.forEach((saved, idx) => {
+                                const local = leads.find(l => l.nome === saved.nome);
+                                if (local) local.id = saved.id;
+                            });
+                        }
+                        if (result.error) console.error('Erro batch save:', result.error);
+                    }
+                    // Salva cache atualizado
+                    localStorage.setItem('leadManager_leadsCache', JSON.stringify(leads));
+                } catch (e) {
+                    console.error('Erro ao salvar leads na nuvem:', e);
+                }
+            }
         }
 
         function updateProgress(data) {
@@ -938,6 +1018,7 @@
                 lead.status = 'contacted';
                 lead.contatado = 'Sim';
                 renderLeads();
+                localStorage.setItem('leadManager_leadsCache', JSON.stringify(leads));
 
                 try {
                     console.log("Notificando Supabase sobre nova abordagem da Z-API...");
@@ -960,6 +1041,7 @@
                 }
 
                 renderLeads();
+                localStorage.setItem('leadManager_leadsCache', JSON.stringify(leads));
 
                 try {
                     await LeadAPI.save(lead);
