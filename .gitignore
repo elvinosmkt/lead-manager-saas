@@ -1,4 +1,3 @@
-
 # Python
 __pycache__/
 *.py[cod]
@@ -21,3 +20,25 @@ leads_*.xlsx
 *_leads_*.xlsx
 geckodriver.log
 mn_user_data/
+
+# Environment & Secrets (AIOS)
+.env.local
+.env.*.local
+*.key
+*.pem
+
+# Dependencies (AIOS)
+node_modules
+
+# Build & Logs (AIOS)
+logs/
+
+# IDE & OS (AIOS)
+Thumbs.db
+.idea/
+*.swp
+
+# AIOS Local (AIOS)
+.aios-core/local/
+.claude/settings.local.json
+.aios/install-log.txt

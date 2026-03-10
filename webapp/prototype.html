@@ -4,122 +4,469 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Preview: Seu Novo Site</title>
+    <title>Clínica Exclusiva</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Fonts de Luxo: Cormorant Garamond (Serif) e Lato (Sans) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Lato:wght@300;400;700&display=swap"
+        rel="stylesheet">
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap');
+        :root {
+            --color-primary: #C5A880;
+            /* Dourado suave/Bege */
+            --color-dark: #1C1C1C;
+            /* Preto elegante */
+            --color-light: #F9F9F9;
+            --color-text-body: #4A4A4A;
+        }
 
         body {
-            font-family: 'Outfit', sans-serif;
+            font-family: 'Lato', sans-serif;
+            color: var(--color-text-body);
+            background-color: #FFFFFF;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        .font-serif {
+            font-family: 'Cormorant Garamond', serif;
+        }
+
+        .text-gold {
+            color: var(--color-primary);
+        }
+
+        .bg-gold {
+            background-color: var(--color-primary);
+        }
+
+        .border-gold {
+            border-color: var(--color-primary);
+        }
+
+        /* Botão Luxuoso */
+        .btn-luxury {
+            background-color: var(--color-dark);
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            font-size: 0.8rem;
+            padding: 1rem 2.5rem;
+            border: 1px solid var(--color-dark);
+            transition: all 0.4s ease;
+            display: inline-block;
+        }
+
+        .btn-luxury:hover {
+            background-color: transparent;
+            color: var(--color-dark);
+        }
+
+        .btn-luxury-outline {
+            background-color: transparent;
+            color: var(--color-dark);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            font-size: 0.8rem;
+            padding: 1rem 2.5rem;
+            border: 1px solid var(--color-dark);
+            transition: all 0.4s ease;
+            display: inline-block;
+        }
+
+        .btn-luxury-outline:hover {
+            background-color: var(--color-dark);
+            color: white;
+        }
+
+        /* Menu de Navegação SPA Animado */
+        .page-section {
+            display: none;
+            opacity: 0;
+            animation: fadein 0.8s ease forwards;
+        }
+
+        .page-section.active {
+            display: block;
+        }
+
+        @keyframes fadein {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Efeito Parallax Simples */
+        .bg-parallax {
+            background-attachment: fixed;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
+        }
+
+        .nav-link.active-link {
+            border-bottom: 2px solid var(--color-primary);
+            color: var(--color-dark);
+            font-weight: 700;
         }
     </style>
 </head>
 
-<body class="bg-slate-50 text-slate-900 scroll-smooth">
+<body class="antialiased">
 
-    <!-- Topbar - AI Agency Branding -->
-    <div class="bg-slate-900 text-white p-3 text-center text-xs font-bold tracking-widest fixed w-full top-0 z-50">
-        <span class="opacity-70">PROTÓTIPO GERADO POR INTELIGÊNCIA ARTIFICIAL PARA: </span>
-        <span id="brandLabel" class="text-blue-400 ml-2">NOME DA EMPRESA</span>
-    </div>
+    <!-- Header / Navbar -->
+    <header
+        class="fixed w-full top-0 bg-white/95 backdrop-blur-md border-b border-gray-100 z-50 transition-all duration-300">
+        <div class="max-w-[85rem] mx-auto px-6 md:px-12 h-24 flex items-center justify-between">
+            <!-- Logo -->
+            <a href="#" onclick="navigate('home')" class="flex flex-col items-center">
+                <span id="navLogoText"
+                    class="font-serif text-2xl md:text-3xl font-medium tracking-widest text-[#1C1C1C] uppercase">CLÍNICA</span>
+                <span class="text-[0.6rem] tracking-[0.3em] text-gray-500 uppercase mt-1">Estética Avançada</span>
+            </a>
 
-    <!-- Navigation -->
-    <nav class="pt-16 pr-8 pl-8 pb-4 flex justify-between items-center max-w-7xl mx-auto">
-        <h1 id="navLogo" class="text-2xl font-black tracking-tighter">EMPRESA</h1>
-        <div class="hidden md:flex gap-8 font-bold text-sm text-slate-500">
-            <a href="#services" class="hover:text-slate-900">Nossos Serviços</a>
-            <a href="#about" class="hover:text-slate-900">Sobre Nós</a>
-            <a href="#contact" class="hover:text-slate-900">Contato</a>
+            <!-- Desktop Nav -->
+            <nav
+                class="hidden lg:flex items-center gap-10 text-[0.75rem] uppercase tracking-widest font-bold text-gray-400">
+                <a href="#" onclick="navigate('home')" class="nav-link hover:text-[#1C1C1C] transition-colors py-2"
+                    data-target="home">Início</a>
+                <a href="#" onclick="navigate('tratamentos')"
+                    class="nav-link hover:text-[#1C1C1C] transition-colors py-2"
+                    data-target="tratamentos">Protocolos</a>
+                <a href="#" onclick="navigate('resultados')"
+                    class="nav-link hover:text-[#1C1C1C] transition-colors py-2" data-target="resultados">Resultados
+                    (A&D)</a>
+                <a href="#" onclick="navigate('espaco')" class="nav-link hover:text-[#1C1C1C] transition-colors py-2"
+                    data-target="espaco">O Espaço</a>
+            </nav>
+
+            <!-- CTA -->
+            <div class="hidden lg:block">
+                <a href="#agendar"
+                    class="bg-[#1C1C1C] text-white text-[0.7rem] uppercase tracking-widest px-8 py-3 hover:bg-[#C5A880] transition-colors">Agendar
+                    Avaliação</a>
+            </div>
+
+            <!-- Mobile Menu Btn -->
+            <button class="lg:hidden text-2xl text-[#1C1C1C]">
+                <i class="fas fa-bars"></i>
+            </button>
         </div>
+    </header>
+
+    <!-- MAIN CONTAINER PARA SPA -->
+    <main class="pt-24" id="main-content">
+
+        <!-- ==================== HOME ==================== -->
+        <div id="view-home" class="page-section active">
+            <!-- Hero -->
+            <section class="relative h-[85vh] flex items-center justify-center bg-parallax"
+                style="background-image: url('https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?auto=format&fit=crop&q=80&w=2000');">
+                <!-- Overlay Escuro para requinte -->
+                <div class="absolute inset-0 bg-[#1C1C1C]/40"></div>
+
+                <div class="relative z-10 text-center text-white px-6 max-w-4xl mx-auto flex flex-col items-center">
+                    <span class="text-[0.75rem] tracking-[0.3em] uppercase mb-6 text-[#C5A880]">Excelência em
+                        Estética</span>
+                    <h1 class="font-serif text-5xl md:text-7xl font-light leading-[1.1] mb-8">
+                        Revelando Sua Beleza <br> com Naturalidade
+                    </h1>
+                    <p class="text-lg md:text-xl font-light tracking-wide max-w-2xl text-gray-200 mb-10">
+                        Bem-vinda à <span class="businessNameText font-medium">nossa clínica</span>. Protocolos
+                        exclusivos, médicos especialistas e um atendimento voltado para os seus resultados.
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-6">
+                        <button onclick="navigate('tratamentos')"
+                            class="bg-white text-[#1C1C1C] text-[0.8rem] uppercase tracking-widest px-10 py-4 hover:bg-[#C5A880] hover:text-white transition-colors">Conheça
+                            os Tratamentos</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Introdução -->
+            <section class="py-24 px-6 md:px-12 bg-white text-center">
+                <div class="max-w-3xl mx-auto">
+                    <i class="fas fa-quote-left text-3xl text-[#C5A880] mb-8 opacity-50"></i>
+                    <h2 class="font-serif text-4xl md:text-5xl text-[#1C1C1C] mb-8 leading-tight">
+                        A arte da estética avançada aliada à mais alta tecnologia do mercado.
+                    </h2>
+                    <p class="text-gray-500 leading-relaxed text-lg font-light">
+                        Na <span class="businessNameText font-medium">Clínica</span>, cada paciente é visto de forma
+                        única. Não acreditamos em padronização facial ou corporal, mas sim no realce sutil daquilo que
+                        torna você inigualável.
+                    </p>
+                    <img src="https://images.unsplash.com/photo-1542848284-8afa78f08eff?auto=format&fit=crop&w=400&q=80"
+                        alt="Assinatura" class="h-20 object-contain mx-auto mt-10 opacity-60">
+                </div>
+            </section>
+
+            <!-- Destaques -->
+            <section class="py-20 bg-[#F9F9F9] px-6 md:px-12">
+                <div class="max-w-[85rem] mx-auto grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
+                    <div>
+                        <div
+                            class="w-16 h-16 mx-auto border border-[#C5A880] rounded-full flex items-center justify-center mb-6">
+                            <i class="fas fa-user-md text-2xl text-[#C5A880]"></i>
+                        </div>
+                        <h3 class="font-serif text-2xl text-[#1C1C1C] mb-4">Corpo Clínico</h3>
+                        <p class="text-gray-500 font-light text-sm leading-relaxed">Profissionais com ampla experiência
+                            internacional e atualização constante nos melhores congressos de medicina estética.</p>
+                    </div>
+                    <div>
+                        <div
+                            class="w-16 h-16 mx-auto border border-[#C5A880] rounded-full flex items-center justify-center mb-6">
+                            <i class="fas fa-microscope text-2xl text-[#C5A880]"></i>
+                        </div>
+                        <h3 class="font-serif text-2xl text-[#1C1C1C] mb-4">Alta Tecnologia</h3>
+                        <p class="text-gray-500 font-light text-sm leading-relaxed">Empregamos os lasers e aparelhos
+                            mais modernos e seguros aprovados pelo FDA e ANVISA para resultados reais.</p>
+                    </div>
+                    <div>
+                        <div
+                            class="w-16 h-16 mx-auto border border-[#C5A880] rounded-full flex items-center justify-center mb-6">
+                            <i class="fas fa-gem text-2xl text-[#C5A880]"></i>
+                        </div>
+                        <h3 class="font-serif text-2xl text-[#1C1C1C] mb-4">Experiência Premium</h3>
+                        <p class="text-gray-500 font-light text-sm leading-relaxed">Desde a recepção até o
+                            pós-atendimento, tudo é pensado para o seu máximo conforto, luxo e bem-estar absoluto.</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- ==================== TRATAMENTOS ==================== -->
+        <div id="view-tratamentos" class="page-section">
+            <!-- Header Section -->
+            <div class="bg-[#1C1C1C] text-white py-24 text-center px-6">
+                <h1 class="font-serif text-5xl md:text-6xl mb-6">Nossos Protocolos</h1>
+                <p class="tracking-widest uppercase text-xs text-[#C5A880]">Beleza elevada à máxima potência</p>
+            </div>
+
+            <!-- Listagem -->
+            <section class="py-24 px-6 md:px-12 max-w-[85rem] mx-auto">
+                <!-- Item 1 -->
+                <div class="flex flex-col md:flex-row items-center gap-16 mb-24">
+                    <div class="flex-1">
+                        <img src="https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?auto=format&fit=crop&w=800&q=80"
+                            alt="Harmonização" class="w-full aspect-[4/5] object-cover">
+                    </div>
+                    <div class="flex-1 space-y-6">
+                        <span class="text-[#C5A880] tracking-widest uppercase text-xs font-bold">Facial</span>
+                        <h2 class="font-serif text-4xl text-[#1C1C1C]">Harmonização Facial Plena</h2>
+                        <p class="text-gray-500 font-light leading-relaxed">
+                            Um estudo minucioso da sua proporção áurea. Utilizamos os melhores fios de sustentação
+                            (PDO), toxina botulínica e ácido hialurônico de alta densidade para rejuvenescer sem alterar
+                            sua identidade.
+                        </p>
+                        <ul class="space-y-3 font-serif text-lg text-[#1C1C1C] mt-6">
+                            <li><i class="fas fa-check text-[#C5A880] text-sm mr-2"></i> Toxina Botulínica (Preventiva e
+                                Reparadora)</li>
+                            <li><i class="fas fa-check text-[#C5A880] text-sm mr-2"></i> Preenchimento Labial, Malar e
+                                Mandíbula</li>
+                            <li><i class="fas fa-check text-[#C5A880] text-sm mr-2"></i> Bioestimuladores de Colágeno
+                                (Sculptra)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Item 2 -->
+                <div class="flex flex-col md:flex-row-reverse items-center gap-16 mb-24">
+                    <div class="flex-1">
+                        <img src="https://images.unsplash.com/photo-1515377905703-c4788e51af15?auto=format&fit=crop&w=800&q=80"
+                            alt="Corporal" class="w-full aspect-[4/5] object-cover">
+                    </div>
+                    <div class="flex-1 space-y-6">
+                        <span class="text-[#C5A880] tracking-widest uppercase text-xs font-bold">Corporal</span>
+                        <h2 class="font-serif text-4xl text-[#1C1C1C]">Contorno e Redução de Medidas</h2>
+                        <p class="text-gray-500 font-light leading-relaxed">
+                            Tecnologias consagradas que atuam profundamente no combate à flacidez e gordura localizada,
+                            entregando contornos definidos.
+                        </p>
+                        <ul class="space-y-3 font-serif text-lg text-[#1C1C1C] mt-6">
+                            <li><i class="fas fa-check text-[#C5A880] text-sm mr-2"></i> Criolipólise de Placas</li>
+                            <li><i class="fas fa-check text-[#C5A880] text-sm mr-2"></i> Ultraformer III (Ultrassom
+                                Microfocado)</li>
+                            <li><i class="fas fa-check text-[#C5A880] text-sm mr-2"></i> Enzimas Lipo HD</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- ==================== RESULTADOS E DEPOIMENTOS ==================== -->
+        <div id="view-resultados" class="page-section">
+            <div class="bg-[#F9F9F9] py-24 px-6 md:px-12 text-center">
+                <h1 class="font-serif text-5xl md:text-6xl text-[#1C1C1C] mb-6">Antes & Depois</h1>
+                <p class="text-gray-500 font-light max-w-2xl mx-auto mb-16">
+                    A transparência dos nossos resultados é o que constrói nossa autoridade. Veja algumas das
+                    transformações executadas com maestria pela <span
+                        class="businessNameText font-serif italic text-lg text-[#1C1C1C]">nossa clínica</span>.
+                </p>
+
+                <div class="max-w-[70rem] mx-auto grid grid-cols-1 md:grid-cols-2 gap-12">
+                    <!-- Case 1 -->
+                    <div>
+                        <div class="relative w-full aspect-video overflow-hidden group">
+                            <!-- Image Split illusion just for layout -->
+                            <div class="flex h-full w-full">
+                                <img src="https://images.unsplash.com/photo-1588513706492-6ea440b8a3e7?auto=format&fit=crop&q=80&w=400"
+                                    class="w-1/2 object-cover grayscale brightness-75 border-r-2 border-white">
+                                <img src="https://images.unsplash.com/photo-1588513706492-6ea440b8a3e7?auto=format&fit=crop&q=80&w=400"
+                                    class="w-1/2 object-cover">
+                            </div>
+                            <div
+                                class="absolute bottom-4 left-4 right-4 flex justify-between text-xs tracking-widest font-bold text-white uppercase bg-black/40 px-4 py-2">
+                                <span>Antes</span>
+                                <span>Depois</span>
+                            </div>
+                        </div>
+                        <h4 class="font-serif text-2xl text-[#1C1C1C] mt-6 mb-2">Reestruturação Labial Clássica</h4>
+                        <p class="text-gray-500 font-light text-sm">Preenchimento de 1ml com Ácido Hialurônico visando
+                            hidratação e contorno sutil.</p>
+                    </div>
+
+                    <!-- Case 2 -->
+                    <div>
+                        <div class="relative w-full aspect-video overflow-hidden group">
+                            <div class="flex h-full w-full">
+                                <img src="https://images.unsplash.com/photo-1596525143383-e18ecebd0247?auto=format&fit=crop&q=80&w=400"
+                                    class="w-1/2 object-cover grayscale brightness-75 border-r-2 border-white">
+                                <img src="https://images.unsplash.com/photo-1596525143383-e18ecebd0247?auto=format&fit=crop&q=80&w=400"
+                                    class="w-1/2 object-cover">
+                            </div>
+                            <div
+                                class="absolute bottom-4 left-4 right-4 flex justify-between text-xs tracking-widest font-bold text-white uppercase bg-black/40 px-4 py-2">
+                                <span>Antes</span>
+                                <span>Depois</span>
+                            </div>
+                        </div>
+                        <h4 class="font-serif text-2xl text-[#1C1C1C] mt-6 mb-2">Toxina Preventiva + Full Face</h4>
+                        <p class="text-gray-500 font-light text-sm">Harmonização global da face restaurando os pontos de
+                            luz e sombra de pacientes na casa dos 40 anos.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Depoimentos -->
+            <section class="py-24 px-6 md:px-12 bg-white text-center border-t border-gray-100">
+                <h3 class="font-serif text-4xl text-[#1C1C1C] mb-16">O que dizem nossas pacientes</h3>
+                <div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10">
+                    <div class="p-8 border border-gray-100 bg-[#F9F9F9] text-left">
+                        <div class="flex text-[#C5A880] mb-4 text-sm"><i class="fas fa-star"></i><i
+                                class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i
+                                class="fas fa-star"></i></div>
+                        <p class="font-serif text-[#1C1C1C] text-xl italic mb-6">"O atendimento é absurdamente
+                            impecável. Fui ouvida e minha naturalidade foi respeitada. Me sinto 10 anos mais jovem sem
+                            parecer que fiz procedimentos."</p>
+                        <p class="text-xs uppercase tracking-widest font-bold text-gray-400">— Isabella M., Advogada</p>
+                    </div>
+                    <div class="p-8 border border-gray-100 bg-[#F9F9F9] text-left">
+                        <div class="flex text-[#C5A880] mb-4 text-sm"><i class="fas fa-star"></i><i
+                                class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i
+                                class="fas fa-star"></i></div>
+                        <p class="font-serif text-[#1C1C1C] text-xl italic mb-6">"Ambiente sofisticado, médicos
+                            atenciosos. Vale cada centavo do investimento. Mudou radicalmente minha autoestima nas fotos
+                            do dia a dia."</p>
+                        <p class="text-xs uppercase tracking-widest font-bold text-gray-400">— Dra. Carolina S., Médica
+                        </p>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- ==================== O ESPAÇO ==================== -->
+        <div id="view-espaco" class="page-section">
+            <section class="py-24 px-6 md:px-12 bg-white">
+                <div class="max-w-[85rem] mx-auto">
+                    <div class="flex flex-col md:flex-row gap-16 items-center">
+                        <div class="flex-1">
+                            <h2 class="text-[0.7rem] tracking-[0.3em] font-bold uppercase text-[#C5A880] mb-4">
+                                Experiência VIP</h2>
+                            <h3 class="font-serif text-5xl text-[#1C1C1C] mb-6">Um Refúgio de <br>Cuidado Incomparável
+                            </h3>
+                            <p class="text-gray-500 font-light leading-relaxed mb-8">
+                                Desenvolvemos uma infraestrutura física pensada para transmitir paz, segurança técnica
+                                absoluta e sofisticação. Das salas de espera conceituais às suítes de procedimento
+                                altamente equipadas, cada metro quadrado inspira luxo.
+                            </p>
+                            <img src="https://images.unsplash.com/photo-1554224424-df359fca7b5d?auto=format&fit=crop&w=600&q=80"
+                                alt="Sala Cuidado" class="w-full h-64 object-cover mt-8">
+                        </div>
+                        <div class="flex-1 grid grid-cols-2 gap-4">
+                            <img src="https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=400&q=80"
+                                class="w-full h-56 object-cover -mt-10">
+                            <img src="https://images.unsplash.com/photo-1542848284-8afa78f08eff?auto=format&fit=crop&w=400&q=80"
+                                class="w-full h-80 object-cover rounded-tl-full">
+                            <img src="https://images.unsplash.com/photo-1570172619644-defd70cb60ee?auto=format&fit=crop&w=400&q=80"
+                                class="w-full h-64 object-cover col-span-2">
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Global CTA / Footer -->
+    <section class="bg-[#1C1C1C] text-white py-24 px-6 text-center border-t-8 border-[#C5A880]" id="agendar">
+        <h3 class="font-serif text-4xl md:text-5xl mb-8">Agende sua Experiência</h3>
+        <p class="text-gray-400 font-light mb-12 max-w-xl mx-auto">
+            Abandone os tratamentos generalizados. Descubra hoje a versão de si mesma que mais lhe traz orgulho ao olhar
+            no espelho.
+        </p>
         <button
-            class="bg-blue-600 text-white px-6 py-2.5 rounded-full font-bold shadow-lg hover:shadow-blue-500/30 transition-all">Agendar
-            Horário</button>
-    </nav>
-
-    <!-- Hero Section -->
-    <section class="max-w-7xl mx-auto px-8 py-20 flex flex-col md:flex-row items-center gap-16 min-h-[80vh]">
-        <div class="flex-1 space-y-8">
-            <div class="inline-block bg-blue-100 text-blue-700 font-bold px-4 py-1.5 rounded-full text-sm">
-                A referência número 1 em <span id="nicheLabel">seu nicho</span> na região.
-            </div>
-            <h2 class="text-6xl md:text-7xl font-black leading-tight tracking-tighter">
-                Sua vida com muito mais <span id="adjectiveLabel" class="text-blue-600">qualidade</span>.
-            </h2>
-            <p class="text-xl text-slate-500 font-medium leading-relaxed max-w-lg">
-                Combinamos tecnologia, experiência e foco total no seu resultado. Venha conhecer o padrão <span
-                    class="businessNameText">Empresa</span>.
-            </p>
-            <div class="flex gap-4">
-                <button
-                    class="bg-slate-900 text-white px-8 py-4 rounded-full font-bold text-lg hover:scale-105 transition-all shadow-xl shadow-slate-900/20">Falar
-                    com Especialista</button>
-                <button
-                    class="bg-white border-2 border-slate-200 text-slate-900 px-8 py-4 rounded-full font-bold text-lg hover:border-slate-400 transition-all">Ver
-                    Portfólio</button>
-            </div>
-        </div>
-        <div
-            class="flex-1 w-full bg-slate-200 rounded-[3rem] aspect-square object-cover shadow-2xl overflow-hidden relative group">
-            <img id="heroImage"
-                src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"
-                alt="Hero" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
-            <div class="absolute inset-0 bg-gradient-to-t from-slate-900/40 to-transparent"></div>
-        </div>
+            class="bg-[#C5A880] text-white text-[0.8rem] uppercase tracking-widest px-12 py-5 hover:bg-white hover:text-[#1C1C1C] transition-all duration-300">
+            Falar pelo WhatsApp VIP
+        </button>
     </section>
 
-    <!-- Floating AI Feedback Panel -->
-    <div
-        class="fixed bottom-8 right-8 bg-white p-6 rounded-3xl shadow-2xl border border-slate-100 max-w-sm z-50 animate-bounce cursor-pointer hover:animate-none transition-all">
-        <div class="flex items-start gap-4">
-            <div
-                class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white text-xl flex-shrink-0 shadow-lg shadow-blue-500/30">
-                <i class="fas fa-robot"></i>
-            </div>
-            <div>
-                <h4 class="font-black text-slate-900 mb-1">Gostou da proposta?</h4>
-                <p class="text-sm text-slate-500 font-medium mb-3">Isso é apenas o modelo #1 gerado pela nossa IA para a
-                    <span class="businessNameText">nossa conversa</span>.</p>
-                <a href="https://wa.me/554199999999" target="_blank"
-                    class="block w-full text-center bg-green-500 text-white font-bold py-2 rounded-xl text-sm shadow-md hover:bg-green-600">Falar
-                    com Consultor</a>
-            </div>
-        </div>
-    </div>
+    <footer class="bg-[#1C1C1C] text-gray-600 py-12 text-center text-xs border-t border-gray-800">
+        <p class="mb-2 tracking-widest uppercase">Copyright &copy; 2024 - <span
+                class="businessNameText font-bold text-gray-500">Clínica</span>. Todos os Direitos Reservados.</p>
+    </footer>
 
-    <!-- Script to Hydrate Google Stich AI Parameters -->
+    <!-- Script SPA Router & Hydration -->
     <script>
+        // SPA Logic
+        function navigate(viewId) {
+            document.querySelectorAll('.page-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active-link'));
+
+            const targetView = document.getElementById('view-' + viewId);
+            if (targetView) targetView.classList.add('active');
+
+            const targetLinks = document.querySelectorAll(`.nav-link[data-target="${viewId}"]`);
+            targetLinks.forEach(link => link.classList.add('active-link'));
+
+            window.scrollTo({ top: 0, behavior: 'instant' });
+        }
+
+        // Hydration Logic (Pegar o nome da empresa e sumir com os traços de IA)
         document.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
 
-            // Parametros aceitos: ?nome=Clinica+Vital&nicho=estética&adjetivo=beleza&cor=rose
-            const nome = urlParams.get('nome') || 'Nome da Sua Empresa';
-            const nicho = urlParams.get('nicho') || 'seu nicho';
-            const adjetivo = urlParams.get('adjetivo') || 'qualidade';
-            const imageUrl = urlParams.get('image');
+            const nomeStr = urlParams.get('nome');
+            let nome = nomeStr ? decodeURIComponent(nomeStr) : 'Instituto Exemplo';
 
-            // Popula os elementos
-            document.getElementById('brandLabel').innerText = nome.toUpperCase();
-            document.getElementById('navLogo').innerText = nome.toUpperCase();
-            document.getElementById('nicheLabel').innerText = nicho.toLowerCase();
-            document.getElementById('adjectiveLabel').innerText = adjetivo.toLowerCase();
+            document.getElementById('navLogoText').innerText = nome.toUpperCase();
 
             const bNames = document.querySelectorAll('.businessNameText');
             bNames.forEach(el => el.innerText = nome);
 
-            // Troca imagens de acordo com o nicho (se nao passada na URL)
-            const heroImg = document.getElementById('heroImage');
-            if (imageUrl) {
-                heroImg.src = imageUrl;
-            } else {
-                if (nicho.toLowerCase().includes('estética') || nicho.toLowerCase().includes('clinica')) {
-                    heroImg.src = 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80';
-                } else if (nicho.toLowerCase().includes('advocacia') || nicho.toLowerCase().includes('direito')) {
-                    heroImg.src = 'https://images.unsplash.com/photo-1589829085413-56de8ae18c73?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80';
-                } else if (nicho.toLowerCase().includes('consultorio') || nicho.toLowerCase().includes('dentista') || nicho.toLowerCase().includes('odonto')) {
-                    heroImg.src = 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80';
-                }
-            }
+            navigate('home');
         });
     </script>
 </body>

@@ -91,15 +91,22 @@ def check_user_credits(user_id):
         return True, 10 # Fallback para não bloquear em erro
 
 def deduct_user_credits(user_id, amount=1):
-    """Deduz créditos do usuário (incrementa used)"""
+    """Deduz créditos do usuário usando RPC para garantir atomicidade"""
     try:
         if not user_id or len(user_id) < 10: return
         
-        # RPC seria ideal para atomicidade, mas vamos de read-modify-write simples por enquanto
-        res = supabase.table("users").select("credits_used").eq("id", user_id).single().execute()
+        # Chama a função RPC deduct_credits criada no banco
+        # Isso substitui o read-modify-write inseguro por uma transação atômica no banco
+        res = supabase.rpc("deduct_credits", {
+            "p_user_id": user_id,
+            "p_amount": amount
+        }).execute()
+        
         if res.data:
-            current = res.data.get('credits_used', 0)
-            supabase.table("users").update({"credits_used": current + amount}).eq("id", user_id).execute()
+            print(f"✅ [CREDITS] {amount} crédito(s) deduzido(s) para {user_id}")
+        else:
+            print(f"⚠️ [CREDITS] Falha ao deduzir créditos (Saldo Insuficiente?) para {user_id}")
+            
     except Exception as e:
-        print(f"⚠️ Erro ao deduzir créditos: {e}")
+        print(f"❌ Erro ao deduzir créditos via RPC: {e}")
 

@@ -17,6 +17,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from scraper_otimizado import GoogleMapsScraperOtimizado
 from config import CONFIG
+from webhook_trigger import send_n8n_webhook
 
 app = Flask(__name__, static_folder='webapp', static_url_path='')
 CORS(app)
@@ -53,6 +54,10 @@ def progress_callback(data):
         # Verifica se já não está na lista (por segurança)
         if not any(l.get('nome') == lead.get('nome') for l in search_state['leads']):
             search_state['leads'].append(lead)
+            
+            # AUTOMATION TRIGGER: Gatilho Autônomo para envio da IA (Fase 1)
+            send_n8n_webhook(lead)
+            
         search_state['current_business'] = lead.get('nome', '')
 
 

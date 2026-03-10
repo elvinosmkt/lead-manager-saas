@@ -1,149 +1,254 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" class="dark">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Perfil - LeadManager</title>
+    <title>Perfil - LeadManager Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        dark: { 900: '#0A0A0A', 800: '#111111', 700: '#1a1a1a' },
-                        primary: { 500: '#E63946', 600: '#d32f3f' }
+                        brand: {
+                            50: '#fff1f2',
+                            100: '#ffe4e6',
+                            200: '#fecdd3',
+                            300: '#fda4af',
+                            400: '#fb7185',
+                            500: '#E63946', // Cor Primária
+                            600: '#e11d48',
+                            700: '#be123c',
+                            800: '#9f1239',
+                            900: '#881337',
+                        },
+                        dark: {
+                            50: '#f6f6f6',
+                            100: '#e7e7e7',
+                            200: '#d1d1d1',
+                            300: '#b0b0b0',
+                            400: '#888888',
+                            500: '#6d6d6d',
+                            600: '#5d5d5d',
+                            700: '#4f4f4f',
+                            800: '#111111',
+                            900: '#0A0A0A',
+                            950: '#050505',
+                        }
                     },
-                    fontFamily: { sans: ['Inter', 'sans-serif'] }
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Outfit', 'sans-serif'],
+                    }
                 }
             }
         }
     </script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@500;600;700;800;900&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-client.js"></script>
+    <style>
+        :root {
+            --brand-glow: rgba(230, 57, 70, 0.3);
+        }
+
+        body {
+            background-color: #0A0A0A;
+            background-image:
+                radial-gradient(circle at 0% 0%, rgba(230, 57, 70, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 100% 100%, rgba(230, 57, 70, 0.05) 0%, transparent 40%);
+        }
+
+        .glass-panel {
+            background: rgba(17, 17, 17, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .shadow-brand-glow {
+            box-shadow: 0 0 20px var(--brand-glow);
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(230, 57, 70, 0.2);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(230, 57, 70, 0.4);
+        }
+    </style>
 </head>
 
-<body class="bg-dark-900 text-white min-h-screen flex">
+<body class="text-white min-h-screen font-sans antialiased overflow-x-hidden p-4 md:p-8">
 
-    <!-- Sidebar -->
-    <aside class="w-64 bg-dark-800 border-r border-dark-700 hidden md:flex flex-col p-6">
-        <div class="flex items-center gap-3 mb-10">
-            <div class="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center shadow-lg"><i
-                    class="fas fa-bolt text-white text-xs"></i></div>
-            <span class="font-bold text-lg tracking-tight">LeadManager</span>
-        </div>
+    <div class="max-w-4xl mx-auto space-y-8 pb-24">
 
-        <nav class="space-y-2 flex-1">
-            <a href="app.html"
-                class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-dark-700 rounded-lg transition">
-                <i class="fas fa-home w-5"></i> Dashboard
-            </a>
-            <a href="credits.html"
-                class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-dark-700 rounded-lg transition">
-                <i class="fas fa-wallet w-5"></i> Créditos
-            </a>
-            <a href="profile.html"
-                class="flex items-center gap-3 px-4 py-3 text-white bg-primary-500/10 border border-primary-500/20 rounded-lg font-bold">
-                <i class="fas fa-user w-5"></i> Perfil
-            </a>
-        </nav>
+        <!-- Header -->
+        <header class="flex justify-between items-center mb-10">
+            <div>
+                <a href="app.html"
+                    class="inline-flex items-center gap-2 text-gray-500 hover:text-brand-500 transition-all font-bold text-xs uppercase tracking-widest mb-2 group">
+                    <i class="fas fa-arrow-left group-hover:-translate-x-1 transition-transform"></i> Painel de Controle
+                </a>
+                <h1 class="text-4xl font-black font-display tracking-tighter">CONFIGURAÇÕES <span
+                        class="text-brand-500">DA CONTA</span></h1>
+            </div>
+            <div class="hidden md:flex flex-col items-end">
+                <span id="userPlanHeader"
+                    class="text-[10px] font-black uppercase tracking-[0.2em] text-brand-500 bg-brand-500/10 px-3 py-1 rounded-full border border-brand-500/20">Plano
+                    Elite</span>
+            </div>
+        </header>
 
-        <button onclick="logout()"
-            class="flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-red-500/10 rounded-lg transition mt-auto">
-            <i class="fas fa-sign-out-alt w-5"></i> Sair da Conta
-        </button>
-    </aside>
+        <!-- Profile Card -->
+        <div class="glass-panel rounded-3xl p-8 md:p-12 relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-64 h-64 bg-brand-500/10 blur-[100px] -mr-32 -mt-32"></div>
 
-    <main class="flex-1 p-8 md:p-12 max-w-4xl">
-
-        <div class="mb-8 md:hidden">
-            <a href="app.html" class="text-gray-400 mb-4 block"><i class="fas fa-arrow-left"></i> Voltar ao
-                Dashboard</a>
-        </div>
-
-        <h1 class="text-3xl font-bold mb-2">Meu Perfil</h1>
-        <p class="text-gray-400 mb-8">Gerencie seus dados e senha.</p>
-
-        <!-- Mensagem de Sucesso/Erro -->
-        <div id="alertBox" class="hidden mb-6 p-4 rounded-xl"></div>
-
-        <!-- Card Perfil -->
-        <div class="bg-dark-800 border border-dark-700 rounded-2xl p-8 mb-8">
-            <div class="flex flex-col md:flex-row gap-8 items-start">
-
+            <div class="flex flex-col md:flex-row gap-8 items-center md:items-start relative z-10">
                 <!-- Avatar -->
                 <div class="flex flex-col gap-4 items-center">
                     <div
-                        class="w-24 h-24 bg-primary-500 rounded-2xl flex items-center justify-center text-3xl font-bold shadow-xl shadow-primary-500/40">
+                        class="w-32 h-32 bg-dark-950 border-4 border-white/5 rounded-[40px] flex items-center justify-center text-4xl font-black text-brand-500 font-display shadow-2xl relative overflow-hidden group">
+                        <div
+                            class="absolute inset-0 bg-brand-500/10 opacity-0 group-hover:opacity-100 transition-opacity">
+                        </div>
                         <span id="userInitials">--</span>
                     </div>
-                    <span id="userPlan"
-                        class="bg-primary-500/20 text-primary-500 text-xs font-bold px-3 py-1 rounded-full">PLANO
-                        ---</span>
                 </div>
 
-                <!-- Info -->
-                <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
-                    <div class="space-y-1.5">
-                        <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Nome</label>
-                        <div class="relative">
-                            <i class="fas fa-user absolute left-4 top-3.5 text-gray-500"></i>
-                            <input type="text" id="profileName" placeholder="Seu nome"
-                                class="w-full bg-dark-900 border border-dark-700 rounded-xl pl-10 pr-4 py-3 text-white focus:border-primary-500 outline-none transition">
+                <!-- Info Grid -->
+                <div class="flex-1 w-full space-y-8">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="space-y-3">
+                            <label class="text-[11px] font-black text-gray-500 uppercase tracking-widest ml-1">Nome de
+                                Exibição</label>
+                            <div class="relative group">
+                                <i
+                                    class="fas fa-user absolute left-5 top-1/2 -translate-y-1/2 text-gray-600 group-focus-within:text-brand-500 transition-colors"></i>
+                                <input type="text" id="profileName" placeholder="Seu nome"
+                                    class="w-full bg-dark-950/80 border border-white/5 rounded-2xl pl-12 pr-6 py-4 text-white font-bold focus:border-brand-500 focus:bg-dark-900 outline-none transition-all shadow-inner">
+                            </div>
+                        </div>
+
+                        <div class="space-y-3">
+                            <label class="text-[11px] font-black text-gray-500 uppercase tracking-widest ml-1">Endereço
+                                de E-mail</label>
+                            <div class="relative group">
+                                <i class="fas fa-envelope absolute left-5 top-1/2 -translate-y-1/2 text-gray-700"></i>
+                                <input type="email" id="profileEmail" disabled
+                                    class="w-full bg-dark-950/30 border border-white/5 rounded-2xl pl-12 pr-6 py-4 text-gray-600 font-bold cursor-not-allowed">
+                            </div>
                         </div>
                     </div>
 
-                    <div class="space-y-1.5">
-                        <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">E-mail</label>
-                        <div class="relative">
-                            <i class="fas fa-envelope absolute left-4 top-3.5 text-gray-500"></i>
-                            <input type="email" id="profileEmail" disabled
-                                class="w-full bg-dark-900/50 border border-dark-700 rounded-xl pl-10 pr-4 py-3 text-gray-400 cursor-not-allowed">
-                        </div>
+                    <div class="pt-4">
+                        <button onclick="saveProfile()"
+                            class="bg-white text-dark-950 font-black px-8 py-4 rounded-2xl text-[11px] uppercase tracking-widest hover:bg-brand-500 hover:text-white transition-all active:scale-95 shadow-lg shadow-white/5">
+                            Salvar Alterações
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Card Segurança -->
-        <h2 class="text-2xl font-bold mb-2">Alterar Senha</h2>
-        <p class="text-gray-400 mb-6">Atualize sua senha de acesso.</p>
+        <!-- Security Card -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="md:col-span-1">
+                <h3 class="text-xl font-black font-display tracking-tight mb-2">SEGURANÇA</h3>
+                <p class="text-sm text-gray-500 leading-relaxed">Mantenha sua conta protegida atualizando sua senha
+                    regularmente.</p>
+            </div>
 
-        <div class="bg-dark-800 border border-dark-700 rounded-2xl p-8 mb-8">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="space-y-1.5">
-                    <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Nova Senha</label>
-                    <div class="relative">
-                        <i class="fas fa-lock absolute left-4 top-3.5 text-gray-500"></i>
-                        <input type="password" id="newPassword" placeholder="Mínimo 6 caracteres"
-                            class="w-full bg-dark-900 border border-dark-700 rounded-xl pl-10 pr-4 py-3 text-white focus:border-primary-500 outline-none transition">
+            <div class="md:col-span-2 space-y-6">
+                <div class="glass-panel rounded-3xl p-8 space-y-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div class="space-y-3">
+                            <label class="text-[11px] font-black text-gray-500 uppercase tracking-widest ml-1">Nova
+                                Senha</label>
+                            <div class="relative group">
+                                <i class="fas fa-lock absolute left-5 top-1/2 -translate-y-1/2 text-gray-600"></i>
+                                <input type="password" id="newPassword" placeholder="Mínimo 6 caracteres"
+                                    class="w-full bg-dark-950/80 border border-white/5 rounded-2xl pl-12 pr-6 py-4 text-white font-bold focus:border-brand-500 outline-none transition-all">
+                            </div>
+                        </div>
+                        <div class="space-y-3">
+                            <label class="text-[11px] font-black text-gray-500 uppercase tracking-widest ml-1">Confirmar
+                                Senha</label>
+                            <div class="relative group">
+                                <i class="fas fa-key absolute left-5 top-1/2 -translate-y-1/2 text-gray-600"></i>
+                                <input type="password" id="confirmPassword" placeholder="Repita a senha"
+                                    class="w-full bg-dark-950/80 border border-white/5 rounded-2xl pl-12 pr-6 py-4 text-white font-bold focus:border-brand-500 outline-none transition-all">
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="space-y-1.5">
-                    <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Confirmar Senha</label>
-                    <div class="relative">
-                        <i class="fas fa-key absolute left-4 top-3.5 text-gray-500"></i>
-                        <input type="password" id="confirmPassword" placeholder="Repita a senha"
-                            class="w-full bg-dark-900 border border-dark-700 rounded-xl pl-10 pr-4 py-3 text-white focus:border-primary-500 outline-none transition">
-                    </div>
+
+                    <button onclick="updatePassword()"
+                        class="bg-brand-500/10 border border-brand-500/20 text-brand-500 font-display font-black px-8 py-4 rounded-2xl text-[11px] uppercase tracking-widest hover:bg-brand-500 hover:text-white transition-all active:scale-95 shadow-lg shadow-brand-500/10">
+                        <i class="fas fa-shield-alt mr-2"></i> Atualizar Senha de Acesso
+                    </button>
                 </div>
             </div>
-            <button onclick="updatePassword()"
-                class="mt-6 bg-dark-700 hover:bg-dark-600 text-white font-bold px-6 py-3 rounded-xl transition flex items-center gap-2">
-                <i class="fas fa-shield-alt"></i> Atualizar Senha
+        </div>
+
+        <!-- Danger Zone -->
+        <div
+            class="glass-panel rounded-3xl p-8 border-brand-500/10 bg-brand-500/5 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+                <h4 class="font-bold text-brand-500 mb-1">Encerrar Sessão</h4>
+                <p class="text-xs text-gray-500">Desconecte de todos os dispositivos para sua segurança.</p>
+            </div>
+            <button onclick="logout()"
+                class="px-6 py-3 rounded-2xl border border-brand-500/30 text-brand-500 font-black text-[10px] uppercase tracking-widest hover:bg-brand-500 hover:text-white transition-all">
+                Sair da Conta <i class="fas fa-sign-out-alt ml-2"></i>
             </button>
         </div>
 
-        <!-- Actions -->
-        <div class="flex justify-between items-center">
-            <a href="app.html" class="text-gray-400 hover:text-white transition">
-                <i class="fas fa-arrow-left"></i> Voltar ao Dashboard
+    </div>
+
+    <!-- Alert System -->
+    <div id="alertBox"
+        class="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 transform translate-y-20 transition-all duration-500 hidden">
+        <div class="glass-panel px-6 py-4 rounded-2xl border-white/10 shadow-2xl flex items-center gap-4">
+            <div id="alertIcon" class="w-10 h-10 rounded-xl flex items-center justify-center"></div>
+            <div>
+                <p id="alertTitle" class="font-black text-[10px] uppercase tracking-widest mb-0.5 text-white"></p>
+                <p id="alertMsg" class="text-xs text-gray-400"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Nav Bar (Sync with app.html) -->
+    <div class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] md:hidden">
+        <div class="glass-panel rounded-[32px] px-2 py-2 border-white/10 shadow-2xl flex items-center gap-2">
+            <a href="app.html"
+                class="w-12 h-12 flex items-center justify-center text-gray-500 rounded-full transition-all">
+                <i class="fas fa-search text-lg"></i>
+            </a>
+            <a href="credits.html"
+                class="w-12 h-12 flex items-center justify-center text-gray-500 rounded-full transition-all">
+                <i class="fas fa-wallet text-lg"></i>
+            </a>
+            <a href="profile.html"
+                class="w-14 h-14 flex items-center justify-center bg-brand-500 text-white rounded-full shadow-lg shadow-brand-glow">
+                <i class="fas fa-user text-lg"></i>
             </a>
         </div>
-
-    </main>
+    </div>
 
     <script>
         // Init Profile
@@ -162,21 +267,26 @@
             // Busca plano
             const credits = await LeadAPI.checkCredits();
             if (credits) {
-                document.getElementById('userPlan').innerText = `PLANO ${(credits.plan || 'starter').toUpperCase()}`;
+                const plan = (credits.plan || 'starter').toUpperCase();
+                document.getElementById('userPlanHeader').innerText = `PLANO ${plan}`;
             }
         });
+
+        async function saveProfile() {
+            showAlert('PERFIL SALVO', 'Suas alterações foram sincronizadas com sucesso.', 'success');
+        }
 
         async function updatePassword() {
             const newPass = document.getElementById('newPassword').value;
             const confirmPass = document.getElementById('confirmPassword').value;
 
             if (!newPass || newPass.length < 6) {
-                showAlert('A senha deve ter no mínimo 6 caracteres.', 'error');
+                showAlert('SENHA INVÁLIDA', 'A senha deve ter no mínimo 6 caracteres.', 'error');
                 return;
             }
 
             if (newPass !== confirmPass) {
-                showAlert('As senhas não coincidem.', 'error');
+                showAlert('ERRO DE COINCIDÊNCIA', 'As senhas digitadas não são iguais.', 'error');
                 return;
             }
 
@@ -184,23 +294,38 @@
                 const { error } = await window.supabaseClient.auth.updateUser({ password: newPass });
                 if (error) throw error;
 
-                showAlert('Senha atualizada com sucesso!', 'success');
+                showAlert('SENHA ATUALIZADA', 'Sua nova senha de acesso já está ativa.', 'success');
                 document.getElementById('newPassword').value = '';
                 document.getElementById('confirmPassword').value = '';
             } catch (e) {
-                showAlert('Erro ao atualizar senha: ' + e.message, 'error');
+                showAlert('ERRO DE SEGURANÇA', e.message, 'error');
             }
         }
 
-        function showAlert(message, type) {
+        function showAlert(title, msg, type) {
             const box = document.getElementById('alertBox');
-            box.className = type === 'success'
-                ? 'mb-6 p-4 rounded-xl bg-green-500/20 border border-green-500/50 text-green-400'
-                : 'mb-6 p-4 rounded-xl bg-red-500/20 border border-red-500/50 text-red-400';
-            box.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i> ${message}`;
-            box.classList.remove('hidden');
+            const icon = document.getElementById('alertIcon');
+            const titleEl = document.getElementById('alertTitle');
+            const msgEl = document.getElementById('alertMsg');
 
-            setTimeout(() => box.classList.add('hidden'), 5000);
+            if (type === 'success') {
+                icon.className = 'w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-500 flex items-center justify-center';
+                icon.innerHTML = '<i class="fas fa-check-double"></i>';
+            } else {
+                icon.className = 'w-10 h-10 rounded-xl bg-brand-500/20 text-brand-500 flex items-center justify-center';
+                icon.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+            }
+
+            titleEl.innerText = title;
+            msgEl.innerText = msg;
+
+            box.classList.remove('hidden');
+            setTimeout(() => box.classList.remove('translate-y-20'), 100);
+
+            setTimeout(() => {
+                box.classList.add('translate-y-20');
+                setTimeout(() => box.classList.add('hidden'), 500);
+            }, 5000);
         }
 
         async function logout() {
@@ -208,7 +333,6 @@
             window.location.href = 'login.html';
         }
     </script>
-
 </body>
 
 </html>

@@ -1,5 +1,5 @@
 {
-    "name": "Agente Autônomo - LeadManager",
+    "name": "AIOS Sales Agent V2 - Vendedor de Elite",
     "nodes": [
         {
             "parameters": {
@@ -12,7 +12,7 @@
             "type": "n8n-nodes-base.webhook",
             "typeVersion": 1,
             "position": [
-                250,
+                0,
                 300
             ],
             "webhookId": "aba3088b-a5d6-4e50-aab0-bc0f17b6a15e"
@@ -33,20 +33,20 @@
             "type": "n8n-nodes-base.if",
             "typeVersion": 1,
             "position": [
-                450,
+                200,
                 300
             ]
         },
         {
             "parameters": {
                 "method": "POST",
-                "url": "https://api.z-api.io/instances/SUA_INSTANCIA/token/SEU_TOKEN/send-text",
+                "url": "https://api.z-api.io/instances/3EF1A2DBE69B601BEBE82AEF10587F5A/token/81DEE4FECC6144598C003A63/send-text",
                 "sendHeaders": true,
                 "headerParameters": {
                     "parameters": [
                         {
                             "name": "Client-Token",
-                            "value": "SEU_CLIENT_TOKEN_ZAPI"
+                            "value": "F35b7c0a3669c4c279ce20eb060e4e6e4S"
                         }
                     ]
                 },
@@ -59,19 +59,71 @@
                         },
                         {
                             "name": "message",
-                            "value": "=Olá {{$json.body.lead.nome}}! Percebi que a clínica de vocês em {{$json.body.lead.cidade}} tem ótimas avaliações, mas reparei que não possuem um site institucional ainda. Eu montei uma estrutura baseada nas clínicas que mais atraem clientes na sua região, gostaria de dar uma olhada no protótipo (grátis)?"
+                            "value": "=Oi, tudo bem? \ud83d\ude03 Fiz algo r\u00e1pido pra a oficina {{$json.body.lead.nome}} e queria que voc\u00ea me dissesse se faz sentido pra voc\u00eas.\n\nComo hoje \u00e9 {{$now.setLocale('pt-br').toFormat('EEEE')}}, ent\u00e3o vou ser bem breve \ud83d\ude0a\n\nMe mudei recentemente para {{$json.body.lead.cidade}} e passei os \u00faltimos dias pesquisando algumas mec\u00e2nicas da regi\u00e3o.\n\nPercebi que muitas ainda n\u00e3o t\u00eam um site profissional ou n\u00e3o est\u00e3o bem posicionadas no Google Maps, e isso n\u00e3o passa credibilidade para clientes novos e faz perder revis\u00f5es.\n\nPreparei um preview gratuito de como ficaria um site profissional pra sua oficina, com:\n\u2022 p\u00e1gina de servi\u00e7os e especialidades\n\u2022 fotos da estrutura e equipamentos\n\u2022 depoimentos de clientes\n\u2022 bot\u00e3o de agendamento de revis\u00e3o / WhatsApp\n\u2022 integra\u00e7\u00e3o com GPS do Google\n\nConsigo entregar tudo em 24h, e o valor \u00e9 R$ 1000. Sendo metade em dinheiro e metade em servi\u00e7os (como troca de \u00f3leo ou revis\u00e3o), e com pagamento s\u00f3 depois de ver pronto.\n\nQuer que eu te envie o preview que fiz pra voc\u00eas?"
                         }
                     ]
                 },
                 "options": {}
             },
             "id": "http-zapi-send",
-            "name": "Dispara Z-API (Abordagem Fria)",
+            "name": "Z-API (Fria)",
             "type": "n8n-nodes-base.httpRequest",
             "typeVersion": 3,
             "position": [
-                700,
+                400,
                 280
+            ]
+        },
+        {
+            "parameters": {
+                "amount": 24,
+                "unit": "hours"
+            },
+            "id": "wait-follow-up",
+            "name": "Wait (Follow-up D+1)",
+            "type": "n8n-nodes-base.wait",
+            "typeVersion": 1,
+            "position": [
+                600,
+                150
+            ],
+            "webhookId": "cb8db8a1-6a2a-4389-9b9f-6bed4fecc431"
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://api.z-api.io/instances/3EF1A2DBE69B601BEBE82AEF10587F5A/token/81DEE4FECC6144598C003A63/send-text",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "Client-Token",
+                            "value": "F35b7c0a3669c4c279ce20eb060e4e6e4S"
+                        }
+                    ]
+                },
+                "sendBody": true,
+                "bodyParameters": {
+                    "parameters": [
+                        {
+                            "name": "phone",
+                            "value": "={{$node[\"Recebe Lead (Webhook)\"].json[\"body\"][\"lead\"][\"whatsapp\"]}}"
+                        },
+                        {
+                            "name": "message",
+                            "value": "=Oi de novo! S\u00f3 subindo nossa conversa porque n\u00e3o queria descartar a estrutura profissional que gerei pra voc\u00eas no Google. Conseguiu dar uma espiada na mensagem acima?"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "http-zapi-followup",
+            "name": "Z-API (Follow-up 24h)",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 3,
+            "position": [
+                800,
+                150
             ]
         },
         {
@@ -81,7 +133,7 @@
             "type": "n8n-nodes-base.noOp",
             "typeVersion": 1,
             "position": [
-                700,
+                400,
                 480
             ]
         },
@@ -92,41 +144,46 @@
                 "options": {}
             },
             "id": "webhook-resposta",
-            "name": "Lead Respondeu (Webhook ZAPI)",
+            "name": "Lead Respondeu",
             "type": "n8n-nodes-base.webhook",
             "typeVersion": 1,
             "position": [
-                250,
+                0,
                 700
             ],
             "webhookId": "f784533a-1e43-4fc2-a2a4-b9b5a1b32ac9"
         },
         {
             "parameters": {
-                "model": "gpt-4o",
-                "messages": {
-                    "messageValues": [
+                "method": "POST",
+                "url": "https://api.openai.com/v1/chat/completions",
+                "authentication": "predefinedCredentialType",
+                "nodeCredentialType": "openAiApi",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
                         {
-                            "content": "Você é um consultor comercial fechador de sites institucionais. O cliente respondeu à sua mensagem fria."
-                        },
-                        {
-                            "role": "user",
-                            "content": "={{$json.body.text.message}}"
+                            "name": "Content-Type",
+                            "value": "application/json"
                         }
                     ]
-                }
+                },
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={\n  \"model\": \"gpt-4o\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"Voc\\u00ea \\u00e9 o Alexandre, um desenvolvedor web amig\\u00e1vel, educado, brasileiro e focado no nicho de oficinas mec\\u00e2nicas e servi\\u00e7os automotivos. Voc\\u00ea est\\u00e1 conversando no WhatsApp com o dono de uma mec\\u00e2nica que acabou de responder sua mensagem fria.\\n\\nDIRETRIZES FUNDAMENTAIS:\\n- Aja EXATAMENTE como humano. Seja amig\\u00e1vel, prestativo e comercial. Use emojis adequados. NUNCA diga que \\u00e9 uma Intelig\\u00eancia Artificial. Nem fale como um rob\\u00f4.\\n- O SEU OBJETIVO: Fechar a venda do site.\\n- Voc\\u00ea j\\u00e1 ofereceu na mensagem anterior um 'preview' do site pronto por R$1000.\\n\\nQUANDO O LEAD PEDIR O LINK OU MOSTRAR INTERESSE:\\n- Envie IMEDIATAMENTE este link do prot\\u00f3tipo: https://leads.blendagency.com.br/prototype.html?nome=Sua%20Oficina&nicho=mecanica\\n\\nREGRAS DE NEGOCIA\\u00c7\\u00c3O E FECHAMENTO:\\n- O pre\\u00e7o inicial \\u00e9 R$ 1000.\\n- Voc\\u00ea tem autonomia para reduzir at\\u00e9 R$ 500 para n\\u00e3o perder a venda. Aceite permuta em servi\\u00e7os (ex: troca de \\u00f3leo).\\n\\nCOMO FECHAR A VENDA:\\n- Use as exatas palavras: 'Show! Fechado ent\\u00e3o. Vou preparar rapidinho nosso contrato de presta\\u00e7\\u00e3o e te mando aqui embaixo pra gente dar andamento.'\\n- Resolva d\\u00favidas simples e SEJA FECHADOR.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"{{$json.body.text.message}}\"\n    }\n  ]\n}",
+                "options": {}
             },
             "id": "OpenAI-Negociador",
             "name": "OpenAI Negociador",
-            "type": "n8n-nodes-base.openAi",
-            "typeVersion": 1,
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 3,
             "position": [
-                500,
+                250,
                 700
             ],
             "credentials": {
                 "openAiApi": {
-                    "id": "PASTE_YOUR_CREDENTIAL_ID",
+                    "id": "otqSahYJDGNJs6ex",
                     "name": "OpenAI account"
                 }
             }
@@ -134,13 +191,13 @@
         {
             "parameters": {
                 "method": "POST",
-                "url": "https://api.z-api.io/instances/SUA_INSTANCIA/token/SEU_TOKEN/send-text",
+                "url": "https://api.z-api.io/instances/3EF1A2DBE69B601BEBE82AEF10587F5A/token/81DEE4FECC6144598C003A63/send-text",
                 "sendHeaders": true,
                 "headerParameters": {
                     "parameters": [
                         {
                             "name": "Client-Token",
-                            "value": "SEU_CLIENT_TOKEN_ZAPI"
+                            "value": "F35b7c0a3669c4c279ce20eb060e4e6e4S"
                         }
                     ]
                 },
@@ -149,21 +206,21 @@
                     "parameters": [
                         {
                             "name": "phone",
-                            "value": "={{$node[\"webhook-resposta\"].json[\"body\"][\"phone\"]}}"
+                            "value": "={{$node[\"Lead Respondeu\"].json[\"body\"][\"phone\"]}}"
                         },
                         {
                             "name": "message",
-                            "value": "={{$json[\"message\"][\"content\"]}}"
+                            "value": "={{$json[\"choices\"][0][\"message\"][\"content\"]}}"
                         }
                     ]
                 }
             },
             "id": "http-zapi-reply",
-            "name": "Z-API (Manda Resposta da IA)",
+            "name": "Z-API (Resposta)",
             "type": "n8n-nodes-base.httpRequest",
             "typeVersion": 3,
             "position": [
-                750,
+                500,
                 700
             ]
         }
@@ -184,7 +241,7 @@
             "main": [
                 [
                     {
-                        "node": "Dispara Z-API (Abordagem Fria)",
+                        "node": "Z-API (Fria)",
                         "type": "main",
                         "index": 0
                     }
@@ -198,7 +255,29 @@
                 ]
             ]
         },
-        "Lead Respondeu (Webhook ZAPI)": {
+        "Z-API (Fria)": {
+            "main": [
+                [
+                    {
+                        "node": "Wait (Follow-up D+1)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Wait (Follow-up D+1)": {
+            "main": [
+                [
+                    {
+                        "node": "Z-API (Follow-up 24h)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Lead Respondeu": {
             "main": [
                 [
                     {
@@ -213,7 +292,7 @@
             "main": [
                 [
                     {
-                        "node": "Z-API (Manda Resposta da IA)",
+                        "node": "Z-API (Resposta)",
                         "type": "main",
                         "index": 0
                     }
