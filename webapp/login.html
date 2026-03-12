@@ -154,7 +154,7 @@
             errorMsgContainer.classList.add('hidden');
 
             try {
-                // Usa Supabase Auth diretamente
+                // Autentica via Supabase Auth (fonte única de verdade)
                 const { data, error } = await LeadAPI.login(email, password);
 
                 if (error) {
@@ -173,26 +173,11 @@
                 }
 
                 if (data && data.user) {
-                    // Além do Supabase, autentica na sessão Python (Flask) para verificar o Pagamento real
-                    const flaskRes = await fetch('/api/login', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email: email, password: password })
-                    });
-
-                    const flaskData = await flaskRes.json();
-
-                    if (flaskRes.ok && flaskData.success) {
-                        btnText.textContent = 'Sucesso! Redirecionando...';
-                        btnIcon.className = 'fas fa-check';
-                        btnIcon.classList.add('text-green-400');
-                        // Redireciona para o painel novo protegido
-                        setTimeout(() => window.location.href = '/dashboard.html', 500);
-                    } else {
-                        // Usuário "fantasma" que acessou via cURL sem pagar. Derruba ele.
-                        await LeadAPI.logout();
-                        showError('Acesso não autorizado. Assinatura não localizada.');
-                    }
+                    // Login com sucesso via Supabase — redireciona ao dashboard
+                    btnText.textContent = 'Sucesso! Redirecionando...';
+                    btnIcon.className = 'fas fa-check';
+                    btnIcon.classList.add('text-green-400');
+                    setTimeout(() => window.location.href = '/dashboard.html', 500);
                 } else {
                     showError('Erro inesperado. Tente novamente.');
                 }

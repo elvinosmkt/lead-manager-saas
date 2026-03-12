@@ -65,17 +65,7 @@ CREATE POLICY "templates_update_own" ON templates
 CREATE POLICY "templates_delete_own" ON templates
     FOR DELETE USING (auth.uid() = user_id);
 
--- 6. SETTINGS - Policies granulares
-DROP POLICY IF EXISTS "Users can only see their own settings" ON settings;
-
-CREATE POLICY "settings_select_own" ON settings
-    FOR SELECT USING (auth.uid() = user_id);
-
-CREATE POLICY "settings_insert_own" ON settings
-    FOR INSERT WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "settings_update_own" ON settings
-    FOR UPDATE USING (auth.uid() = user_id);
+-- 6. SETTINGS - Tabela não existe neste schema, pulando
 
 -- Verificação final
 SELECT tablename, policyname, permissive, roles, cmd, qual
