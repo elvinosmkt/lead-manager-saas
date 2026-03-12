@@ -5,7 +5,7 @@
 
 ---
 
-## ✅ CORRIGIDO AGORA
+## ✅ CORRIGIDO AGORAs
 
 ### 1. Texto da Landing Page
 - **Problema:** Headline principal invisível (opacity: 0)
