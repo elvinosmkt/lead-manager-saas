@@ -3,7 +3,7 @@
 Este arquivo define as instrucoes do projeto para o Codex CLI.
 
 <!-- AIOS-MANAGED-START: core -->
-## Core Rules
+## Core Ruless
 
 1. Siga a Constitution em `.aios-core/constitution.md`
 2. Priorize `CLI First -> Observability Second -> UI Third`
