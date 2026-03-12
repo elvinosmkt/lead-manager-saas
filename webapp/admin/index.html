@@ -67,11 +67,44 @@
 
     <script type="module">
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-        import { SUPABASE_URL, SUPABASE_KEY } from '../supabase-client.js';
 
-        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+        const SUPABASE_URL = 'https://wpgrollhyfoszmlotfyg.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndwZ3JvbGxoeWZvc3ptbG90ZnlnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc2NDcwNjksImV4cCI6MjA4MzIyMzA2OX0.NQNWmwHxSMtcAUfMee3848r8OccACXhuuZjhvNnw3bM';
+        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // ADMIN EMAILS AUTORIZADOS (adicione os emails dos admins aqui)
+        const ADMIN_EMAILS = [
+            'lindo@gmail.com',
+            // Adicione outros emails admin aqui
+        ];
+
+        async function checkAdminAuth() {
+            const { data: { user } } = await supabase.auth.getUser();
+            
+            if (!user) {
+                alert('Acesso negado. Faça login primeiro.');
+                window.location.href = '/login.html';
+                return false;
+            }
+
+            // Verifica se é admin por email ou user_metadata.role
+            const isAdmin = ADMIN_EMAILS.includes(user.email) || 
+                            user.user_metadata?.role === 'admin';
+            
+            if (!isAdmin) {
+                alert('Acesso restrito a administradores.');
+                window.location.href = '/dashboard.html';
+                return false;
+            }
+
+            return true;
+        }
 
         async function loadDashboard() {
+            // Verifica autenticação admin ANTES de carregar dados
+            const isAdmin = await checkAdminAuth();
+            if (!isAdmin) return;
+
             // Count users
             const { count: userCount } = await supabase.from('users').select('*', { count: 'exact', head: true });
             document.getElementById('totalUsers').textContent = userCount || 0;
@@ -80,18 +113,20 @@
             const { data: users } = await supabase.from('users').select('*').order('created_at', { ascending: false }).limit(5);
 
             const tbody = document.getElementById('lastUsersTable');
-            tbody.innerHTML = users.map(u => `
-                <tr>
-                    <td>${u.email}</td>
-                    <td><span class="status-badge" style="background:#333">${u.plan || 'free'}</span></td>
-                    <td>${u.credits_used} / ${u.credits_limit || 0}</td>
-                    <td><span class="status-badge status-active">Ativo</span></td>
-                    <td>${new Date(u.created_at).toLocaleDateString()}</td>
-                </tr>
-            `).join('');
+            if (users) {
+                tbody.innerHTML = users.map(u => `
+                    <tr>
+                        <td>${u.email}</td>
+                        <td><span class="status-badge" style="background:#333">${u.plan || 'free'}</span></td>
+                        <td>${u.credits_used} / ${u.credits_limit || 0}</td>
+                        <td><span class="status-badge status-active">Ativo</span></td>
+                        <td>${new Date(u.created_at).toLocaleDateString()}</td>
+                    </tr>
+                `).join('');
+            }
 
             // Mock Data for now (until tables are populated)
-            document.getElementById('activeSubs').textContent = Math.floor(userCount * 0.2); // Mock 20% conversion
+            document.getElementById('activeSubs').textContent = Math.floor(userCount * 0.2);
             document.getElementById('mrr').textContent = 'R$ ' + (Math.floor(userCount * 0.2) * 299).toLocaleString();
             document.getElementById('leadsExtracted').textContent = '12,450';
         }

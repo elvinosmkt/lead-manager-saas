@@ -1077,54 +1077,39 @@
                     }
                 }
 
-                // 1. Criar ou Logar Usuário no Supabase Auth
-                let user = null;
-                const { data: signUpData, error: signUpError } = await supabaseAuth.auth.signUp({
+                // 1. APENAS LOGIN — NÃO cria conta no checkout
+                // O usuário precisa ter conta criada previamente (pelo admin ou via fluxo autorizado)
+                const { data: loginData, error: loginError } = await supabaseAuth.auth.signInWithPassword({
                     email: email,
-                    password: password,
-                    options: {
-                        data: {
-                            name: name,
-                            cpf: cpf,
-                            phone: phone,
-                            birth_date: birthDate
-                        }
-                    }
+                    password: password
                 });
 
-                if (signUpError) {
-                    if (signUpError.message.includes("User already registered") || signUpError.code === 'user_already_exists') {
-                        // Tenta login
-                        const { data: loginData, error: loginError } = await supabaseAuth.auth.signInWithPassword({
-                            email: email,
-                            password: password
-                        });
-
-                        if (loginError) {
-                            alert("E-mail já cadastrado. Verifique a senha ou use outro e-mail.");
-                            resetButton();
-                            return;
-                        }
-                        user = loginData.user;
-                    } else {
-                        throw signUpError;
-                    }
-                } else {
-                    user = signUpData.user;
+                if (loginError) {
+                    alert("E-mail ou senha incorretos. Se você ainda não tem uma conta, entre em contato conosco.");
+                    resetButton();
+                    return;
                 }
+
+                const user = loginData.user;
+                const session = loginData.session;
 
                 // Parâmetros
                 const params = new URLSearchParams(window.location.search);
                 const plan = params.get('plan') || 'pro';
                 const billing = params.get('billing') || 'mensal';
-                const upsell = document.querySelector('.upsell-checkbox.checked') ? 'true' : 'false';
-                const total = upsellAdded ? basePrice + 149 : basePrice;
+                const upsell = document.querySelector('.upsell-checkbox.checked') ? true : false;
+
+                // Headers com token JWT para autenticação no backend
+                const authHeaders = {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                };
 
                 if (selectedPaymentMethod === 'pix') {
                     // PIX - Redireciona para página de PIX
                     window.location.href = `pix.html?plan=${plan}&billing=${billing}&upsell=${upsell}`;
                 } else {
-                    // CARTÃO DE CRÉDITO - Processa via API
+                    // CARTÃO DE CRÉDITO — NÃO envia 'price' (servidor calcula)
                     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> PROCESSANDO CARTÃO...';
 
                     const cardHolder = document.getElementById('card-holder').value.trim().toUpperCase();
@@ -1137,7 +1122,7 @@
 
                     const response = await fetch(`${API_URL}/create-card-subscription`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: authHeaders,
                         body: JSON.stringify({
                             user_id: user.id,
                             email: email,
@@ -1146,7 +1131,8 @@
                             phone: phone,
                             plan: plan,
                             billing_cycle: billing,
-                            price: total,
+                            upsell: upsell,
+                            // NÃO envia 'price' — servidor calcula o preço real
                             postalCode: cardCep,
                             addressNumber: cardAddressNum,
                             card: {
@@ -1162,7 +1148,6 @@
                     const data = await response.json();
 
                     if (data.success) {
-                        // Sucesso! Redireciona para página de sucesso
                         window.location.href = `sucesso.html?subscription=${data.subscription_id}`;
                     } else {
                         alert("Erro no pagamento: " + (data.error || "Verifique os dados do cartão."));

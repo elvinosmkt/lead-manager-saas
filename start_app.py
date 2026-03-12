@@ -8,6 +8,8 @@ import threading
 import time
 import sys
 import uuid
+import jwt
+from functools import wraps
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from queue import Queue
@@ -18,7 +20,6 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from scraper_definitivo import GoogleMapsScraperDefinitivo
 from config import CONFIG
-from config import CONFIG
 from db_config import save_lead_to_cloud, check_user_credits, deduct_user_credits, supabase
 from payment_service import create_pix_payment
 
@@ -26,17 +27,74 @@ app = Flask(__name__, static_folder='webapp', static_url_path='')
 CORS(app, origins=[
     "https://leads.blendagency.com.br",
     "https://leadmanager-lp.vercel.app",
-    "http://localhost:3000",
-    "http://localhost:5001",
-    "http://127.0.0.1:3000"
 ], supports_credentials=True)
+
+# --- TABELA DE PREÇOS SERVER-SIDE (Fonte de verdade) ---
+PRICING = {
+    'starter': {'mensal': 199, 'trimestral': 299},
+    'pro':     {'mensal': 299, 'trimestral': 449},
+    'elite':   {'mensal': 459, 'trimestral': 689},
+}
+UPSELL_PRICE = 149  # Vibe Coding add-on
 
 # --- CONFIGURAÇÃO DE SEGURANÇA E RECURSOS ---
 MAX_CONCURRENT_SEARCHES = 1  # Segurança máxima para plano Free/Hobby (evita OOM)
 MAX_RAM_PERCENT = 85.0       # Se passar disso, rejeita novas buscas
+SUPABASE_JWT_SECRET = os.environ.get("SUPABASE_JWT_SECRET", "")
+WEBHOOK_TOKEN = os.environ.get("ASAAS_WEBHOOK_TOKEN", "")
 
 semaphore = threading.Semaphore(MAX_CONCURRENT_SEARCHES)
 active_searches = {}
+
+def get_server_price(plan, billing_cycle, upsell=False):
+    """Retorna o preço REAL do plano. Nunca confiar no frontend."""
+    plan_prices = PRICING.get(plan)
+    if not plan_prices:
+        return None
+    price = plan_prices.get(billing_cycle)
+    if price is None:
+        return None
+    if upsell:
+        price += UPSELL_PRICE
+    return price
+
+def verify_supabase_token(f):
+    """Decorator que verifica JWT do Supabase no header Authorization."""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth_header = request.headers.get('Authorization', '')
+        if not auth_header.startswith('Bearer '):
+            return jsonify({'error': 'Token de autenticação ausente'}), 401
+        
+        token = auth_header.split(' ', 1)[1]
+        try:
+            if SUPABASE_JWT_SECRET:
+                payload = jwt.decode(token, SUPABASE_JWT_SECRET, algorithms=['HS256'], audience='authenticated')
+                request.user_id = payload.get('sub')
+                request.user_email = payload.get('email')
+            else:
+                # Fallback: verifica via Supabase API (mais lento)
+                from supabase import create_client
+                anon_url = os.environ.get('SUPABASE_URL', '')
+                anon_key = os.environ.get('SUPABASE_ANON_KEY', '')
+                if anon_url and anon_key:
+                    temp_client = create_client(anon_url, anon_key)
+                    user_resp = temp_client.auth.get_user(token)
+                    if user_resp and user_resp.user:
+                        request.user_id = user_resp.user.id
+                        request.user_email = user_resp.user.email
+                    else:
+                        return jsonify({'error': 'Token inválido'}), 401
+                else:
+                    # Se nenhum secret configurado, aceita o user_id do body (legado)
+                    request.user_id = None
+        except jwt.ExpiredSignatureError:
+            return jsonify({'error': 'Token expirado. Faça login novamente.'}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({'error': 'Token inválido'}), 401
+        
+        return f(*args, **kwargs)
+    return decorated
 
 def check_system_health():
     """Verifica se o servidor tem recursos para aceitar nova busca"""
@@ -46,13 +104,13 @@ def check_system_health():
     return True, "OK"
 
 class SearchWorker(threading.Thread):
-    def __init__(self, session_id, nicho, cidade, max_leads, filters={}):
+    def __init__(self, session_id, nicho, cidade, max_leads, filters=None):
         super().__init__()
         self.session_id = session_id
         self.nicho = nicho
         self.cidade = cidade
         self.max_leads = max_leads
-        self.filters = filters
+        self.filters = filters or {}
         self.daemon = True
 
     def run(self):
@@ -61,7 +119,7 @@ class SearchWorker(threading.Thread):
         if not state: return
 
         state['status'] = 'queued'
-        print(f"⏳ [ID: {self.session_id}] Na fila...")
+        print(f"⏳ [ID: {self.session_id[:8]}...] Na fila...")
 
         with semaphore:
             # Double check health antes de abrir o Chrome
@@ -71,26 +129,33 @@ class SearchWorker(threading.Thread):
                 state['error'] = "Servidor ocupado (Memória Cheia). Tente novamente."
                 state['status'] = 'error'
                 state['completed'] = True
+                state['running'] = False
                 return
 
+            scraper = None
             try:
-                if state.get('stop_requested'): return
+                if state.get('stop_requested'):
+                    state['running'] = False
+                    return
 
                 state['status'] = 'running'
-                print(f"🚀 [ID: {self.session_id}] Iniciando Chrome...")
+                state['running'] = True
+                print(f"🚀 [ID: {self.session_id[:8]}...] Iniciando Chrome...")
 
-                CONFIG['MAX_BUSINESSES'] = self.max_leads
-                CONFIG['FILTERS'] = self.filters
-
+                # NÃO muta CONFIG global — passa max_leads direto ao scraper
                 def on_lead_found(lead):
                     if state.get('stop_requested'): return
                     state['leads'].append(lead)
                     state['leads_found'] += 1
-                    # Atualiza info de progresso em tempo real
                     state['current'] = lead.get('nome', 'Processando...')[:40]
                     state['progress'] = min(100, int((state['leads_found'] / self.max_leads) * 100))
-                    # Salva no Supabase (Thread separada)
-                    threading.Thread(target=save_lead_to_cloud, args=(lead, self.session_id)).start()
+                    
+                    # Salva no Supabase (Thread separada para não bloquear)
+                    threading.Thread(
+                        target=save_lead_to_cloud, 
+                        args=(lead, self.session_id),
+                        daemon=True
+                    ).start()
 
                     # Deduz Crédito
                     deduct_user_credits(self.session_id, 1)
@@ -98,10 +163,12 @@ class SearchWorker(threading.Thread):
                     
                     if not has_now:
                         print("⚠️ Créditos acabaram. Parando busca.")
-                        active_searches[self.session_id]['stop_requested'] = True
+                        state['stop_requested'] = True
                         state['error'] = 'Limite de créditos atingido.'
 
-                scraper = GoogleMapsScraperDefinitivo(self.nicho, self.cidade, self.max_leads, self.filters)
+                scraper = GoogleMapsScraperDefinitivo(
+                    self.nicho, self.cidade, self.max_leads, self.filters
+                )
                 scraper.on_lead_found_callback = on_lead_found
                 scraper.check_stop = lambda: state.get('stop_requested', False)
 
@@ -112,21 +179,24 @@ class SearchWorker(threading.Thread):
                     state['completed'] = True
                     state['status'] = 'completed'
                 else:
+                    state['completed'] = True
                     state['status'] = 'cancelled'
 
             except Exception as e:
                 print(f"❌ Erro Thread: {e}")
+                import traceback
+                traceback.print_exc()
                 state['error'] = str(e)
                 state['status'] = 'error'
                 state['completed'] = True
             finally:
-                # GARBAGE COLLECTION FORÇADO
+                state['running'] = False
                 # Garante que o Chrome Driver morreu
                 try:
-                    if 'scraper' in locals() and scraper.driver:
+                    if scraper and scraper.driver:
                         scraper.driver.quit()
                 except: pass
-                print(f"🏁 [ID: {self.session_id}] Busca finalizada/limpa.")
+                print(f"🏁 [ID: {self.session_id[:8]}...] Busca finalizada/limpa.")
 
 # --- ENDPOINTS ---
 
@@ -139,6 +209,7 @@ def static_files(path):
     return send_from_directory('webapp', path)
 
 @app.route('/api/start-search', methods=['POST'])
+@verify_supabase_token
 def start_search():
     try:
         # 1. Health Check
@@ -147,20 +218,22 @@ def start_search():
             return jsonify({'error': msg}), 503
 
         data = request.json
-        user_id = data.get('user_id')
+        # Usa user_id do token JWT (seguro), com fallback para body (legado)
+        user_id = getattr(request, 'user_id', None) or data.get('user_id')
         
         if not user_id: return jsonify({'error': 'User ID missing'}), 400
 
-        # 2. Limpa buscas antigas deste usuário (previne lixo)
-        if user_id in active_searches:
-            # Se estava rodando a muito tempo, mata.
-            pass 
+        # 2. Limpa buscas anteriores deste usuário
+        old = active_searches.get(user_id)
+        if old and old.get('running'):
+            old['stop_requested'] = True
+            print(f"⚠️ Parando busca anterior do user {user_id[:8]}...")
 
         # 3. VERIFICA CRÉDITOS
         has_credits, remaining = check_user_credits(user_id)
         if not has_credits:
              return jsonify({
-                 'error': 'CRÉDITOS ESCOTADOS', 
+                 'error': 'CRÉDITOS ESGOTADOS', 
                  'code': 'no_credits',
                  'message': 'Você atingiu seu limite mensal. Faça upgrade para continuar.'
              }), 402
@@ -173,11 +246,14 @@ def start_search():
 
         active_searches[user_id] = {
             'status': 'initializing',
+            'running': True,
             'leads': [],
             'leads_found': 0,
             'completed': False,
             'stop_requested': False,
-            'error': None
+            'error': None,
+            'progress': 0,
+            'current': 'Iniciando motor de busca...'
         }
 
         worker = SearchWorker(
@@ -216,7 +292,8 @@ def search_status():
     
     return jsonify({
         'status': state.get('status'),
-        'leads': state.get('leads', [])[-15:],
+        'running': state.get('running', False),
+        'leads': state.get('leads', [])[-50:],  # Últimos 50 para o frontend mergear
         'leads_found': state.get('leads_found', 0),
         'current': state.get('current', 'Aguardando...'),
         'progress': state.get('progress', 0),
@@ -234,30 +311,39 @@ def cancel_search():
     return jsonify({'error': 'Not found'}), 404
 
 @app.route('/api/create-pix', methods=['POST'])
+@verify_supabase_token
 def api_create_pix():
     try:
         data = request.json
-        # data = { user_id, email, name, cpf, plan, price, billing_cycle }
+        plan = data.get('plan', 'pro')
+        billing_cycle = data.get('billing_cycle', 'mensal')
+        upsell = data.get('upsell', False)
+        user_id = getattr(request, 'user_id', None) or data.get('user_id')
         
-        description = f"Assinatura LeadManager - Plano {data.get('plan')} ({data.get('billing_cycle')})"
-        external_ref = f"{data.get('user_id')}_{int(time.time())}"
+        # PREÇO CALCULADO NO SERVIDOR — ignora qualquer 'price' do frontend
+        server_price = get_server_price(plan, billing_cycle, upsell)
+        if server_price is None:
+            return jsonify({'error': f'Plano "{plan}" ou ciclo "{billing_cycle}" inválido'}), 400
+        
+        print(f"💰 [SECURITY] Preço server-side: R${server_price} (plano={plan}, ciclo={billing_cycle}, upsell={upsell})")
+        
+        description = f"Assinatura LeadManager - Plano {plan} ({billing_cycle})"
+        external_ref = f"{user_id}_{int(time.time())}"
         
         result = create_pix_payment(
             data, 
-            data.get('price'), 
+            server_price,  # Preço do servidor, NÃO do frontend
             description, 
             external_ref
         )
         
         if result:
-            # Salva intenção de assinatura no Supabase
-            # (Código ideal usaria INSERT no Supabase aqui)
             try:
                 supabase.table("subscriptions").insert({
-                    "user_id": data.get('user_id'),
-                    "plan": data.get('plan'),
-                    "billing_cycle": data.get('billing_cycle'),
-                    "price": data.get('price'),
+                    "user_id": user_id,
+                    "plan": plan,
+                    "billing_cycle": billing_cycle,
+                    "price": server_price,  # Preço real
                     "status": "pending_payment",
                     "provider": "asaas",
                     "provider_subscription_id": result['payment_id']
@@ -280,9 +366,10 @@ def payment_status():
         if not payment_id:
             return jsonify({'error': 'payment_id obrigatório'}), 400
         
-        # Consulta no Asaas
         import requests
-        ASAAS_API_KEY = os.environ.get("ASAAS_API_KEY", "$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjUxN2ViODFiLTU4YWEtNDExYS05OTM3LTJmZWI1YzI1ODVjYTo6JGFhY2hfY2MwMzRiODctZmJiNy00YWFkLTk5NTctZWZkMTk2NGE5N2I2")
+        ASAAS_API_KEY = os.environ.get("ASAAS_API_KEY", "")
+        if not ASAAS_API_KEY:
+            return jsonify({'error': 'Configuração de pagamento ausente'}), 500
         
         response = requests.get(
             f"https://api.asaas.com/v3/payments/{payment_id}",
@@ -307,15 +394,27 @@ def payment_status():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/create-card-subscription', methods=['POST'])
+@verify_supabase_token
 def api_create_card_subscription():
     """Cria assinatura recorrente com cartão de crédito no Asaas"""
     try:
         data = request.json
-        # data = { user_id, email, name, cpf, plan, price, billing_cycle, card }
-        # card = { holderName, number, expiryMonth, expiryYear, ccv }
+        plan = data.get('plan', 'pro')
+        billing_cycle = data.get('billing_cycle', 'mensal')
+        upsell = data.get('upsell', False)
+        user_id = getattr(request, 'user_id', None) or data.get('user_id')
+        
+        # PREÇO CALCULADO NO SERVIDOR — ignora 'price' do frontend
+        server_price = get_server_price(plan, billing_cycle, upsell)
+        if server_price is None:
+            return jsonify({'error': f'Plano "{plan}" ou ciclo "{billing_cycle}" inválido'}), 400
+        
+        print(f"💰 [SECURITY] Cartão server-side: R${server_price} (plano={plan}, ciclo={billing_cycle})")
         
         import requests
-        ASAAS_API_KEY = os.environ.get("ASAAS_API_KEY", "$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjUxN2ViODFiLTU4YWEtNDExYS05OTM3LTJmZWI1YzI1ODVjYTo6JGFhY2hfY2MwMzRiODctZmJiNy00YWFkLTk5NTctZWZkMTk2NGE5N2I2")
+        ASAAS_API_KEY = os.environ.get("ASAAS_API_KEY", "")
+        if not ASAAS_API_KEY:
+            return jsonify({'error': 'Configuração de pagamento ausente'}), 500
         ASAAS_API_URL = "https://api.asaas.com/v3"
         
         headers = {
@@ -353,7 +452,6 @@ def api_create_card_subscription():
             return jsonify({'error': 'Não foi possível criar/encontrar cliente'}), 400
         
         # 2. Determinar ciclo de cobrança
-        billing_cycle = data.get('billing_cycle', 'mensal')
         cycle_map = {
             'mensal': 'MONTHLY',
             'trimestral': 'QUARTERLY',
@@ -361,16 +459,16 @@ def api_create_card_subscription():
         }
         asaas_cycle = cycle_map.get(billing_cycle, 'MONTHLY')
         
-        # 3. Criar assinatura com cartão
+        # 3. Criar assinatura com cartão — usa server_price
         card_data = data.get('card', {})
         
         subscription_payload = {
             "customer": customer_id,
             "billingType": "CREDIT_CARD",
-            "value": float(data.get('price', 299)),
+            "value": float(server_price),  # PREÇO DO SERVIDOR
             "nextDueDate": (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d"),
             "cycle": asaas_cycle,
-            "description": f"Assinatura LeadManager - Plano {data.get('plan')} ({billing_cycle})",
+            "description": f"Assinatura LeadManager - Plano {plan} ({billing_cycle})",
             "creditCard": {
                 "holderName": card_data.get('holderName'),
                 "number": card_data.get('number', '').replace(' ', ''),
@@ -401,13 +499,13 @@ def api_create_card_subscription():
         if 'id' in sub_data:
             print(f"✅ Assinatura criada: {sub_data['id']}")
             
-            # Salva no Supabase
+            # Salva no Supabase com preço real
             try:
                 supabase.table("subscriptions").insert({
-                    "user_id": data.get('user_id'),
-                    "plan": data.get('plan'),
+                    "user_id": user_id,
+                    "plan": plan,
                     "billing_cycle": billing_cycle,
-                    "price": data.get('price'),
+                    "price": server_price,  # Preço real do servidor
                     "status": "active",
                     "provider": "asaas",
                     "provider_subscription_id": sub_data['id']
@@ -433,6 +531,13 @@ def api_create_card_subscription():
 @app.route('/api/webhook/asaas', methods=['POST'])
 def webhook_asaas():
     try:
+        # VERIFICAÇÃO DE SEGURANÇA DO WEBHOOK
+        # Opção 1: Token no query string (configurável no painel Asaas)
+        webhook_token = request.args.get('token', '')
+        if WEBHOOK_TOKEN and webhook_token != WEBHOOK_TOKEN:
+            print(f"⚠️ [SECURITY] Webhook rejeitado: token inválido")
+            return jsonify({'error': 'Unauthorized'}), 403
+        
         event = request.json
         print(f"🔔 [Webhook Asaas] Evento: {event.get('event')}")
         
@@ -456,18 +561,19 @@ def webhook_asaas():
                 credits_map = {'starter': 500, 'pro': 1500, 'elite': 5000}
                 new_credits = credits_map.get(plan, 500)
                 
-                # Se for trimestral, multiplica por 3?
+                # Se for trimestral, multiplica por 3
                 if sub.get('billing_cycle') == 'trimestral':
                     new_credits *= 3
                 
                 supabase.table("users").update({
                     "plan": plan,
                     "credits_limit": new_credits,
-                    "credits_used": 0 # Reseta usados? Ou soma acumulativo?
-                    # Se for acumulativo, faria: credits_limit = current_limit + new_credits
+                    "credits_used": 0
                 }).eq("id", sub['user_id']).execute()
                 
                 print(f"✅ Assinatura ativada para User {sub['user_id']}")
+            else:
+                print(f"⚠️ [Webhook] Nenhuma subscription encontrada para payment_id={payment_id}")
                 
         return jsonify({'received': True})
     except Exception as e:

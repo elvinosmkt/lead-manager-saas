@@ -1,8 +1,12 @@
 from supabase import create_client, Client
-import random
+import os
 
-url = "https://wpgrollhyfoszmlotfyg.supabase.co"
-key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndwZ3JvbGxoeWZvc3ptbG90ZnlnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NzY0NzA2OSwiZXhwIjoyMDgzMjIzMDY5fQ.gWboCPWDqFLpyuT5dgx74slhgsvwkyXPWYZ3qspspZE"
+url = os.environ.get("SUPABASE_URL", "")
+key = os.environ.get("SUPABASE_KEY", "")
+
+if not url or not key:
+    print("❌ Defina SUPABASE_URL e SUPABASE_KEY como variáveis de ambiente!")
+    exit(1)
 
 supabase: Client = create_client(url, key)
 

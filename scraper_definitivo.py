@@ -318,16 +318,21 @@ class GoogleMapsScraperDefinitivo:
             
             # WHATSAPP (VÁLIDO)
             data['whatsapp'] = ""
+            data['whatsapp_link'] = ""
             if telefone:
                 nums = re.sub(r'\D', '', telefone)
                 if len(nums) >= 10:
                     if not nums.startswith('55'):
                         nums = '55' + nums
-                    # Validação básica de celular br: 55 + DDD + 9...
-                    if len(nums) == 13 and nums[4] == '9':
-                        data['whatsapp'] = nums
-                    elif len(nums) == 12: # Celular antigo ou fixo configurado com whats
-                        data['whatsapp'] = nums
+                    # Celular BR válido: 55 + DDD(2) + número(8 ou 9 dígitos)
+                    # 13 dígitos: 55 + XX + 9XXXX-XXXX (celular com 9o dígito)
+                    # 12 dígitos: 55 + XX + XXXX-XXXX (celular legado ou fixo)
+                    if len(nums) in (12, 13):
+                        ddd = nums[2:4]
+                        # DDDs válidos: 11-99
+                        if 11 <= int(ddd) <= 99:
+                            data['whatsapp'] = nums
+                            data['whatsapp_link'] = f"https://wa.me/{nums}"
             
             # WEBSITE
             website = ""
@@ -381,10 +386,13 @@ class GoogleMapsScraperDefinitivo:
             except: pass
             
             if not instagram:
-                ig_match = re.search(r'@([a-zA-Z0-9_\.]+)', page_text)
+                # Regex mais restritivo: captura @username mas evita emails e palavras genéricas
+                ig_match = re.search(r'(?:^|\s)@([a-zA-Z][a-zA-Z0-9_\.]{2,29})(?=\s|$)', page_text)
                 if ig_match:
                     username = ig_match.group(1)
-                    if not '@' in username and len(username) > 2:
+                    # Ignora usernames genéricos e que parecem emails
+                    skip_words = {'gmail', 'hotmail', 'yahoo', 'outlook', 'email', 'com', 'google'}
+                    if username.lower() not in skip_words and '.' not in username[-4:]:
                         instagram = f"https://instagram.com/{username}"
             
             data['instagram'] = instagram

@@ -2,7 +2,10 @@ import requests
 from datetime import datetime, timedelta
 
 # Chave fornecida pelo usuário
-ASAAS_API_KEY = "$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjUxN2ViODFiLTU4YWEtNDExYS05OTM3LTJmZWI1YzI1ODVjYTo6JGFhY2hfY2MwMzRiODctZmJiNy00YWFkLTk5NTctZWZkMTk2NGE5N2I2"
+ASAAS_API_KEY = os.environ.get("ASAAS_API_KEY", "")
+if not ASAAS_API_KEY:
+    print("❌ Defina ASAAS_API_KEY como variável de ambiente!")
+    exit(1)
 ASAAS_API_URL = "https://api.asaas.com/v3"
 
 def teste_criar_pix():

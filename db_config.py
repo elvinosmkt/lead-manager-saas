@@ -3,8 +3,12 @@ import os
 from supabase import create_client, Client
 
 # Configuração
-url: str = os.environ.get("SUPABASE_URL", "https://wpgrollhyfoszmlotfyg.supabase.co")
-key: str = os.environ.get("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndwZ3JvbGxoeWZvc3ptbG90ZnlnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NzY0NzA2OSwiZXhwIjoyMDgzMjIzMDY5fQ.gWboCPWDqFLpyuT5dgx74slhgsvwkyXPWYZ3qspspZE")
+url: str = os.environ.get("SUPABASE_URL", "")
+key: str = os.environ.get("SUPABASE_KEY", "")
+
+if not url or not key:
+    print("⚠️ [SECURITY] SUPABASE_URL e SUPABASE_KEY devem ser configuradas como variáveis de ambiente!")
+    print("   Defina: SUPABASE_URL=https://xxx.supabase.co SUPABASE_KEY=sua_service_role_key")
 
 supabase: Client = create_client(url, key)
 
@@ -21,11 +25,14 @@ def save_lead_to_cloud(lead_data, user_id=None):
             payload['website'] = payload.pop('site')
             
         # 3. Sanitização (Remove campos que não existem no banco para evitar erro)
-        # Lista de colunas seguras baseadas no Create Table comum
+        # Lista de colunas seguras baseadas no schema real do Supabase
         SAFE_COLUMNS = [
-            'user_id', 'nome', 'telefone', 'whatsapp', 'website', 
-            'avaliacao', 'endereco', 'cidade', 'nicho', 'status',
-            'google_maps_link', 'created_at', 'id' 
+            'user_id', 'nome', 'telefone', 'whatsapp', 'whatsapp_link',
+            'website', 'avaliacao', 'num_avaliacoes', 'segmento', 
+            'endereco', 'cidade', 'nicho', 
+            'tem_site', 'google_maps_link',
+            'contatado', 'respondeu', 'observacoes',
+            'data_coleta', 'tags'
         ]
         
         # Remove chaves extras (ex: 'tem_site', 'whatsapp_link' dinâmico)

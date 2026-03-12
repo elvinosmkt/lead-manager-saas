@@ -60,9 +60,18 @@ const LeadAPI = {
         const { id, ...leadData } = cleanLeadData;
         leadData.user_id = user.id; // Garante associação ao usuário
 
-        // Mapeia 'status' caso seja usado no frontend como 'contatado'
-        if (leadData.status === 'contatado') leadData.contatado = 'Sim';
-        if (leadData.status === 'respondeu') leadData.respondeu = 'Sim';
+        // Mapeia 'status' do frontend para campos do banco
+        if (leadData.status === 'contacted' || leadData.status === 'contatado') {
+            leadData.contatado = 'Sim';
+        }
+        if (leadData.status === 'respondeu') {
+            leadData.respondeu = 'Sim';
+            leadData.contatado = 'Sim';
+        }
+        if (leadData.status === 'new' || leadData.status === 'discarded') {
+            leadData.contatado = 'Não';
+            leadData.respondeu = 'Não';
+        }
         delete leadData.status;
 
         // Se tem ID verdadeiro (number ou uuid vindo do banco), fazemos o update
@@ -81,12 +90,45 @@ const LeadAPI = {
             return { data, error };
         }
 
-        // Senão, é insert
+        // Sem ID válido: tenta encontrar pelo nome e atualizar
+        if (lead.nome) {
+            const { data: existing } = await supabaseInstance
+                .from('leads')
+                .select('id')
+                .eq('nome', lead.nome)
+                .eq('user_id', user.id)
+                .limit(1)
+                .maybeSingle();
+
+            if (existing) {
+                console.log(`Lead "${lead.nome}" já existe no banco (id=${existing.id}), atualizando...`);
+                // Atualiza o ID no objeto local para futuros saves
+                lead.id = existing.id;
+                const { data, error } = await supabaseInstance
+                    .from('leads')
+                    .update(leadData)
+                    .eq('id', existing.id)
+                    .eq('user_id', user.id)
+                    .select();
+
+                if (error) console.error("Erro no update do lead existente:", error);
+                else console.log("Lead existente atualizado:", data);
+
+                return { data, error };
+            }
+        }
+
+        // Senão, é insert de fato
         console.log(`Inserindo novo lead...`);
         const { data, error } = await supabaseInstance
             .from('leads')
             .insert([leadData])
             .select();
+
+        // Atualiza ID local se inseriu com sucesso
+        if (data && data[0]) {
+            lead.id = data[0].id;
+        }
 
         return { data, error };
     },
@@ -110,8 +152,17 @@ const LeadAPI = {
                     cleanLead[key] = l[key];
                 }
             }
-            if (cleanLead.status === 'contatado') cleanLead.contatado = 'Sim';
-            if (cleanLead.status === 'respondeu') cleanLead.respondeu = 'Sim';
+            if (cleanLead.status === 'contacted' || cleanLead.status === 'contatado') {
+                cleanLead.contatado = 'Sim';
+            }
+            if (cleanLead.status === 'respondeu') {
+                cleanLead.respondeu = 'Sim';
+                cleanLead.contatado = 'Sim';
+            }
+            if (cleanLead.status === 'new' || cleanLead.status === 'discarded') {
+                cleanLead.contatado = 'Não';
+                cleanLead.respondeu = 'Não';
+            }
             delete cleanLead.status;
 
             cleanLead.user_id = user.id;

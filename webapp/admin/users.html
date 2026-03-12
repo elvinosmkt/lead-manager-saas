@@ -50,11 +50,42 @@
 
     <script type="module">
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-        import { SUPABASE_URL, SUPABASE_KEY } from '../supabase-client.js';
 
-        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+        const SUPABASE_URL = 'https://wpgrollhyfoszmlotfyg.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndwZ3JvbGxoeWZvc3ptbG90ZnlnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc2NDcwNjksImV4cCI6MjA4MzIyMzA2OX0.NQNWmwHxSMtcAUfMee3848r8OccACXhuuZjhvNnw3bM';
+        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // ADMIN EMAILS AUTORIZADOS
+        const ADMIN_EMAILS = [
+            'lindo@gmail.com',
+            // Adicione outros emails admin aqui
+        ];
+
+        async function checkAdminAuth() {
+            const { data: { user } } = await supabase.auth.getUser();
+            
+            if (!user) {
+                alert('Acesso negado. Faça login primeiro.');
+                window.location.href = '/login.html';
+                return false;
+            }
+
+            const isAdmin = ADMIN_EMAILS.includes(user.email) || 
+                            user.user_metadata?.role === 'admin';
+            
+            if (!isAdmin) {
+                alert('Acesso restrito a administradores.');
+                window.location.href = '/dashboard.html';
+                return false;
+            }
+
+            return true;
+        }
 
         async function loadUsers() {
+            const isAdmin = await checkAdminAuth();
+            if (!isAdmin) return;
+
             const { data: users, error } = await supabase
                 .from('users')
                 .select('*')
@@ -105,7 +136,6 @@
         window.addCredits = async (userId) => {
             const amount = prompt("Quantos créditos adicionar?");
             if (amount) {
-                // Here we would ideally use an RPC or increment transaction, but simple update for now
                 const { data } = await supabase.from('users').select('credits_limit').eq('id', userId).single();
                 const newLimit = (data.credits_limit || 0) + parseInt(amount);
                 await supabase.from('users').update({ credits_limit: newLimit }).eq('id', userId);

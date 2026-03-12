@@ -435,6 +435,7 @@
         async function init() {
             // Check Auth
             const { data: { user } } = await supabaseClient.auth.getUser();
+            const { data: { session } } = await supabaseClient.auth.getSession();
             document.querySelector('.nav-email').textContent = user ? user.email : 'Visitante';
 
             const params = new URLSearchParams(window.location.search);
@@ -442,15 +443,14 @@
             const billing = params.get('billing') || 'mensal';
             const upsell = params.get('upsell') === 'true';
 
-            let price = plans[plan]?.[billing] || 299;
-            if (upsell) price += 149;
-
-            document.querySelector('.pix-value').textContent = `R$ ${price},00`;
+            // Mostra preço estimado na UI (apenas visual — servidor calcula o real)
+            let displayPrice = plans[plan]?.[billing] || 299;
+            if (upsell) displayPrice += 149;
+            document.querySelector('.pix-value').textContent = `R$ ${displayPrice},00`;
 
             // Só gera PIX se tiver logado
-            if (!user) {
+            if (!user || !session) {
                 document.querySelector('.status-bar span').textContent = 'FAÇA LOGIN PARA GERAR O PIX';
-                // Redireciona para checkout após 2s
                 setTimeout(() => {
                     window.location.href = 'checkout.html?plan=' + plan + '&billing=' + billing;
                 }, 2000);
@@ -472,7 +472,10 @@
             try {
                 const response = await fetch(`${API_URL}/create-pix`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session.access_token}`
+                    },
                     body: JSON.stringify({
                         user_id: user.id,
                         email: user.email,
@@ -480,7 +483,8 @@
                         cpf: cpf,
                         plan: plan,
                         billing_cycle: billing,
-                        price: price
+                        upsell: upsell
+                        // NÃO envia 'price' — servidor calcula
                     })
                 });
 

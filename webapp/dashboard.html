@@ -44,6 +44,7 @@
         .gradient-text {
             background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
@@ -690,8 +691,23 @@
         let isSearching = false;
         let pollingInterval = null;
         let currentStatusFilter = 'all';
+        let currentSessionId = null; // ID da busca ativa
         let msgTemplate = localStorage.getItem('leadManager_msg') ||
             "Olá! Encontrei a *{nome}* no Google Maps aqui de {cidade} e notei que vocês ainda não têm um Site Oficial.\n\nSou especialista em criar sites para {nicho} que passam profissionalismo e atraem clientes. Posso te mandar uma ideia sem compromisso?";
+
+        // Helper: retorna headers com JWT do Supabase
+        async function getAuthHeaders() {
+            const headers = { 'Content-Type': 'application/json' };
+            try {
+                if (window.supabaseClient) {
+                    const { data: { session } } = await supabaseClient.auth.getSession();
+                    if (session?.access_token) {
+                        headers['Authorization'] = `Bearer ${session.access_token}`;
+                    }
+                }
+            } catch (e) { console.warn('Auth header error:', e); }
+            return headers;
+        }
 
         // --- Core Functions ---
         document.addEventListener('DOMContentLoaded', async () => {
@@ -757,25 +773,33 @@
             if (!nicho || !cidade) return alert('Por favor, preencha o Nicho e a Cidade.');
 
             toggleSearchUI(true);
-            // NÃO apaga leads existentes — mantém leads anteriores
-            // leads já foram carregados pelo loadSavedLeads()
-            renderLeads(); // Atualiza UI
+            renderLeads();
 
             try {
+                const headers = await getAuthHeaders();
                 const res = await fetch('/api/start-search', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ nicho, cidade, max_leads: 50 }) // Default 50 for simplicity
+                    headers,
+                    body: JSON.stringify({ nicho, cidade, max_leads: 50 })
                 });
 
                 if (res.ok) {
+                    const result = await res.json();
+                    currentSessionId = result.session_id;
+                    console.log(`🚀 Busca iniciada, session: ${currentSessionId}`);
                     startPolling();
+                } else if (res.status === 402) {
+                    const err = await res.json();
+                    alert(err.message || 'Créditos esgotados. Faça upgrade para continuar.');
+                    toggleSearchUI(false);
                 } else {
-                    alert('Erro ao iniciar busca.');
+                    const err = await res.json().catch(() => ({}));
+                    alert(err.error || 'Erro ao iniciar busca.');
                     toggleSearchUI(false);
                 }
             } catch (e) {
                 console.error(e);
+                alert('Erro de conexão com o servidor.');
                 toggleSearchUI(false);
             }
         }
@@ -799,81 +823,94 @@
         function startPolling() {
             if (pollingInterval) clearInterval(pollingInterval);
             pollingInterval = setInterval(async () => {
-                if (!isSearching) return;
+                if (!isSearching || !currentSessionId) return;
 
                 try {
-                    const res = await fetch('/api/search-status');
+                    const res = await fetch(`/api/search-status?session_id=${encodeURIComponent(currentSessionId)}`);
                     const data = await res.json();
 
                     updateProgress(data);
 
-                    if (data.leads && data.leads.length > leads.length) {
-                        // Mescla novos leads mantendo status existentes
-                        const existingMap = {};
-                        leads.forEach(l => { if (l.nome) existingMap[l.nome] = l; });
+                    // Mescla novos leads do backend usando map por nome
+                    if (data.leads && data.leads.length > 0) {
+                        const existingNames = new Set(leads.map(l => l.nome));
+                        let hasNew = false;
 
                         data.leads.forEach(l => {
-                            if (!existingMap[l.nome]) {
+                            if (l.nome && !existingNames.has(l.nome)) {
                                 leads.push({ ...l, status: l.status || 'new' });
+                                existingNames.add(l.nome);
+                                hasNew = true;
                             }
                         });
-                        renderLeads();
-                        // Salva cache local em tempo real
-                        localStorage.setItem('leadManager_leadsCache', JSON.stringify(leads));
+
+                        if (hasNew) {
+                            renderLeads();
+                            localStorage.setItem('leadManager_leadsCache', JSON.stringify(leads));
+                        }
                     }
 
-                    if (!data.running && data.completed) {
-                        stopSearch();
-                        loadUserInfo();
-                        // alert('Busca Finalizada!'); // Less intrusive
+                    // Verifica se finalizou
+                    if (data.completed || data.status === 'completed' || data.status === 'error') {
+                        finishSearch(data);
                     }
-                } catch (e) { console.error(e); }
-            }, 1000);
+                } catch (e) { console.error('Polling error:', e); }
+            }, 1500);
         }
 
-        async function stopSearch() {
+        async function finishSearch(data) {
             isSearching = false;
             clearInterval(pollingInterval);
             toggleSearchUI(false);
-            fetch('/api/cancel-search', { method: 'POST' });
 
-            // Salvar todos os leads no Supabase
-            if (leads.length > 0 && window.LeadAPI) {
-                try {
-                    console.log(`💾 Salvando ${leads.length} leads no Supabase...`);
-                    // Filtra apenas leads novos (sem ID do banco)
-                    const newLeads = leads.filter(l => !l.id || String(l.id).length > 20);
-                    if (newLeads.length > 0) {
-                        const result = await LeadAPI.saveBatch(newLeads);
-                        if (result.data) {
-                            console.log(`✅ ${result.data.length} leads salvos na nuvem!`);
-                            // Atualiza IDs locais com os do banco
-                            result.data.forEach((saved, idx) => {
-                                const local = leads.find(l => l.nome === saved.nome);
-                                if (local) local.id = saved.id;
-                            });
-                        }
-                        if (result.error) console.error('Erro batch save:', result.error);
-                    }
-                    // Salva cache atualizado
-                    localStorage.setItem('leadManager_leadsCache', JSON.stringify(leads));
-                } catch (e) {
-                    console.error('Erro ao salvar leads na nuvem:', e);
-                }
+            if (data.error) {
+                alert(`Busca finalizada com erro: ${data.error}`);
             }
+
+            // Recarrega leads do Supabase para ter os dados corretos + IDs do banco
+            // O backend já salvou cada lead em tempo real via save_lead_to_cloud
+            console.log('🔄 Recarregando leads do banco após busca...');
+            await loadSavedLeads();
+            loadUserInfo(); // Atualiza créditos
+
+            currentSessionId = null;
+        }
+
+        async function stopSearch() {
+            if (!currentSessionId) return;
+
+            isSearching = false;
+            clearInterval(pollingInterval);
+            toggleSearchUI(false);
+
+            try {
+                const headers = await getAuthHeaders();
+                await fetch('/api/cancel-search', {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({ user_id: currentSessionId })
+                });
+                console.log('🛑 Busca cancelada');
+            } catch (e) {
+                console.error('Erro ao cancelar:', e);
+            }
+
+            // Recarrega do banco (backend já salvou leads encontrados até aqui)
+            await loadSavedLeads();
+            loadUserInfo();
+            currentSessionId = null;
         }
 
         function updateProgress(data) {
-            const total = data.total || 1;
-            const current = data.processados || 0;
-            const pct = Math.min(100, Math.round((current / total) * 100));
+            // Backend retorna: progress (0-100), current (nome), leads_found (int)
+            const pct = Math.min(100, data.progress || 0);
 
             // Update Circle
             const offset = 125 - (125 * pct / 100);
             document.getElementById('circleProgress').style.strokeDashoffset = offset;
             document.getElementById('progressPct').innerText = `${pct}%`;
 
-            document.getElementById('currentBusiness').innerText = data.current || 'Finalizando...';
+            document.getElementById('currentBusiness').innerText = data.current || 'Processando...';
             document.getElementById('leadsFoundCount').innerText = data.leads_found || 0;
         }
 

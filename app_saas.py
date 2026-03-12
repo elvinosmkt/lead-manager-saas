@@ -24,7 +24,7 @@ if not os.path.exists("lead_manager.db"):
     init_db()
 
 app = Flask(__name__, static_folder='webapp', static_url_path='')
-app.secret_key = 'supersearch_secret_key_change_in_production'
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', os.urandom(32).hex())
 CORS(app)
 
 # Estado global das buscas (mapeado por user_id)
