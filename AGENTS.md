@@ -8,7 +8,7 @@ Este arquivo define as instrucoes do projeto para o Codex CLI.
 1. Siga a Constitution em `.aios-core/constitution.md`
 2. Priorize `CLI First -> Observability Second -> UI Third`
 3. Trabalhe por stories em `docs/stories/`
-4. Nao invente requisitos fora dos artefatos existentes
+4. Nao invente requisitos fora dos artefatos existentesa
 <!-- AIOS-MANAGED-END: core -->
 
 <!-- AIOS-MANAGED-START: quality -->
